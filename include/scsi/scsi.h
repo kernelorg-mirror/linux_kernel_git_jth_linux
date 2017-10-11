@@ -161,21 +161,24 @@ enum scsi_host_byte {
 	DID_ALLOC_FAILURE,	/* Space allocation on the device failed */
 	DID_MEDIUM_ERROR,	/* Medium error */
 };
-#define DRIVER_OK       0x00	/* Driver status                           */
 
-/*
- *  These indicate the error that occurred, and what is available.
- */
+enum scsi_driver_byte {
+	DRIVER_OK,	/* Driver status */
 
-#define DRIVER_BUSY         0x01
-#define DRIVER_SOFT         0x02
-#define DRIVER_MEDIA        0x03
-#define DRIVER_ERROR        0x04
+	/*
+	 *  These indicate the error that occurred, and what is available.
+	 */
 
-#define DRIVER_INVALID      0x05
-#define DRIVER_TIMEOUT      0x06
-#define DRIVER_HARD         0x07
-#define DRIVER_SENSE	    0x08
+	DRIVER_BUSY,
+	DRIVER_SOFT,
+	DRIVER_MEDIA,
+	DRIVER_ERROR,
+
+	DRIVER_INVALID,
+	DRIVER_TIMEOUT,
+	DRIVER_HARD,
+	DRIVER_SENSE,
+};
 
 /*
  * Internal return values.
@@ -215,7 +218,11 @@ static inline enum scsi_host_byte host_byte(int result)
 {
 	return (result >> 16) & 0xff;
 }
-#define driver_byte(result) (((result) >> 24) & 0xff)
+
+static inline enum scsi_driver_byte driver_byte(int result)
+{
+	return (result >> 24) & 0xff;
+}
 
 #define sense_class(sense)  (((sense) >> 4) & 0x7)
 #define sense_error(sense)  ((sense) & 0xf)
