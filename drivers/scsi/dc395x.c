@@ -173,7 +173,6 @@
 #define SET_RES_TARGET(who,tgt) { who &= ~RES_TARGET; who |= (int)(tgt); }
 #define SET_RES_TARGET_LNX(who,tgt) { who &= ~RES_TARGET_LNX; who |= (int)(tgt) << 1; }
 #define SET_RES_MSG(who,msg) { who &= ~RES_ENDMSG; who |= (int)(msg) << 8; }
-#define SET_RES_DID(who,did) { who &= ~RES_DID; who |= (int)(did) << 16; }
 #define SET_RES_DRV(who,drv) { who &= ~RES_DRV; who |= (int)(drv) << 24; }
 
 #define TAG_NONE 255
@@ -3443,7 +3442,7 @@ static void srb_done(struct AdapterCtlBlk *acb, struct DeviceCtlBlk *dcb,
 
 			srb->adapter_status = 0;
 			srb->target_status = 0;
-			SET_RES_DID(cmd->result, DID_OK);
+			set_host_byte(cmd, DID_OK);
 		}
 	}
 

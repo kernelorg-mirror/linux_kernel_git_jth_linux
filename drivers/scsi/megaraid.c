@@ -1473,7 +1473,8 @@ mega_cmd_done(adapter_t *adapter, u8 completed[], int nstatus, int status)
 					"aborted cmd [%x] complete\n",
 					scb->idx);
 
-				scb->cmd->result = (DID_ABORT << 16);
+				scb->cmd->result = 0;
+				set_host_byte(scb->cmd, DID_ABORT);
 
 				list_add_tail(SCSI_LIST(scb->cmd),
 						&adapter->completed_list);
@@ -1492,7 +1493,8 @@ mega_cmd_done(adapter_t *adapter, u8 completed[], int nstatus, int status)
 					"reset cmd [%x] complete\n",
 					scb->idx);
 
-				scb->cmd->result = (DID_RESET << 16);
+				scb->cmd->result = 0;
+				set_host_byte(scb->cmd, DID_RESET);
 
 				list_add_tail(SCSI_LIST(scb->cmd),
 						&adapter->completed_list);

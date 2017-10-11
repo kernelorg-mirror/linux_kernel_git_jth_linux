@@ -342,7 +342,8 @@ static inline void set_msg_byte(struct scsi_cmnd *cmd, char status)
 	cmd->result = (cmd->result & 0xffff00ff) | (status << 8);
 }
 
-static inline void set_host_byte(struct scsi_cmnd *cmd, char status)
+static inline void set_host_byte(struct scsi_cmnd *cmd,
+				 enum scsi_host_byte status)
 {
 	cmd->result = (cmd->result & 0xff00ffff) | (status << 16);
 }
