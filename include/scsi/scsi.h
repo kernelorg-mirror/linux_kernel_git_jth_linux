@@ -92,42 +92,43 @@ static inline int scsi_is_wlun(u64 lun)
 /*
  *  MESSAGE CODES
  */
+enum scsi_msg_byte {
+	COMMAND_COMPLETE = 0x00,
+	EXTENDED_MESSAGE = 0x01,
+	EXTENDED_MODIFY_DATA_POINTER = 0x00,
+	EXTENDED_SDTR = 0x01,
+	EXTENDED_EXTENDED_IDENTIFY = 0x02,   /* SCSI-I only */
+	EXTENDED_WDTR = 0x03,
+	EXTENDED_PPR = 0x04,
+	EXTENDED_MODIFY_BIDI_DATA_PTR = 0x05,
+	SAVE_POINTERS = 0x02,
+	RESTORE_POINTERS = 0x03,
+	DISCONNECT = 0x04,
+	INITIATOR_ERROR = 0x05,
+	ABORT_TASK_SET = 0x06,
+	MESSAGE_REJECT = 0x07,
+	NOP = 0x08,
+	MSG_PARITY_ERROR = 0x09,
+	LINKED_CMD_COMPLETE = 0x0a,
+	LINKED_FLG_CMD_COMPLETE = 0x0b,
+	TARGET_RESET = 0x0c,
+	ABORT_TASK = 0x0d,
+	CLEAR_TASK_SET = 0x0e,
+	INITIATE_RECOVERY = 0x0f,            /* SCSI-II only */
+	RELEASE_RECOVERY = 0x10,             /* SCSI-II only */
+	CLEAR_ACA = 0x16,
+	LOGICAL_UNIT_RESET = 0x17,
+	SIMPLE_QUEUE_TAG = 0x20,
+	HEAD_OF_QUEUE_TAG = 0x21,
+	ORDERED_QUEUE_TAG = 0x22,
+	IGNORE_WIDE_RESIDUE = 0x23,
+	ACA = 0x24,
+	QAS_REQUEST = 0x55,
 
-#define COMMAND_COMPLETE    0x00
-#define EXTENDED_MESSAGE    0x01
-#define     EXTENDED_MODIFY_DATA_POINTER    0x00
-#define     EXTENDED_SDTR                   0x01
-#define     EXTENDED_EXTENDED_IDENTIFY      0x02    /* SCSI-I only */
-#define     EXTENDED_WDTR                   0x03
-#define     EXTENDED_PPR                    0x04
-#define     EXTENDED_MODIFY_BIDI_DATA_PTR   0x05
-#define SAVE_POINTERS       0x02
-#define RESTORE_POINTERS    0x03
-#define DISCONNECT          0x04
-#define INITIATOR_ERROR     0x05
-#define ABORT_TASK_SET      0x06
-#define MESSAGE_REJECT      0x07
-#define NOP                 0x08
-#define MSG_PARITY_ERROR    0x09
-#define LINKED_CMD_COMPLETE 0x0a
-#define LINKED_FLG_CMD_COMPLETE 0x0b
-#define TARGET_RESET        0x0c
-#define ABORT_TASK          0x0d
-#define CLEAR_TASK_SET      0x0e
-#define INITIATE_RECOVERY   0x0f            /* SCSI-II only */
-#define RELEASE_RECOVERY    0x10            /* SCSI-II only */
-#define CLEAR_ACA           0x16
-#define LOGICAL_UNIT_RESET  0x17
-#define SIMPLE_QUEUE_TAG    0x20
-#define HEAD_OF_QUEUE_TAG   0x21
-#define ORDERED_QUEUE_TAG   0x22
-#define IGNORE_WIDE_RESIDUE 0x23
-#define ACA                 0x24
-#define QAS_REQUEST         0x55
-
-/* Old SCSI2 names, don't use in new code */
-#define BUS_DEVICE_RESET    TARGET_RESET
-#define ABORT               ABORT_TASK_SET
+	/* Old SCSI2 names, don't use in new code */
+	BUS_DEVICE_RESET = TARGET_RESET,
+	ABORT = ABORT_TASK_SET,
+};
 
 /*
  * Host byte codes
@@ -213,7 +214,11 @@ enum scsi_driver_byte {
  *      driver_byte = set by mid-level.
  */
 #define status_byte(result) (((result) >> 1) & 0x7f)
-#define msg_byte(result)    (((result) >> 8) & 0xff)
+static inline enum scsi_msg_byte msg_byte(int result)
+{
+	return (result >> 8) & 0xff;
+}
+
 static inline enum scsi_host_byte host_byte(int result)
 {
 	return (result >> 16) & 0xff;
