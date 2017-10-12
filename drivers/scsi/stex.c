@@ -630,7 +630,7 @@ stex_queuecommand_lck(struct scsi_cmnd *cmd, void (*done)(struct scsi_cmnd *))
 		if (page == 0x8 || page == 0x3f) {
 			scsi_sg_copy_from_buffer(cmd, ms10_caching_page,
 						 sizeof(ms10_caching_page));
-			cmd->result = DID_OK << 16 | COMMAND_COMPLETE << 8;
+			set_scsi_result(cmd, 0, DID_OK, COMMAND_COMPLETE, 0);
 			done(cmd);
 		} else
 			stex_invalid_field(cmd, done);
@@ -649,7 +649,7 @@ stex_queuecommand_lck(struct scsi_cmnd *cmd, void (*done)(struct scsi_cmnd *))
 		break;
 	case TEST_UNIT_READY:
 		if (id == host->max_id - 1) {
-			cmd->result = DID_OK << 16 | COMMAND_COMPLETE << 8;
+			set_scsi_result(cmd, 0, DID_OK, COMMAND_COMPLETE, 0);
 			done(cmd);
 			return 0;
 		}
@@ -666,7 +666,7 @@ stex_queuecommand_lck(struct scsi_cmnd *cmd, void (*done)(struct scsi_cmnd *))
 			(cmd->cmnd[1] & INQUIRY_EVPD) == 0) {
 			scsi_sg_copy_from_buffer(cmd, (void *)console_inq_page,
 						 sizeof(console_inq_page));
-			cmd->result = DID_OK << 16 | COMMAND_COMPLETE << 8;
+			set_scsi_result(cmd, 0, DID_OK, COMMAND_COMPLETE, 0);
 			done(cmd);
 		} else
 			stex_invalid_field(cmd, done);
