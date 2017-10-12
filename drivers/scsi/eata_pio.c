@@ -255,12 +255,15 @@ static irqreturn_t eata_pio_int_handler(int irq, void *dev_id)
 		 * way to get HBA&SCSI status so far */
 
 		if (!(inb(base + HA_RSTATUS) & HA_SERROR)) {
-			cmd->result = (DID_OK << 16);
+			cmd->result = 0;
+			set_host_byte(cmd, DID_OK);
 			hd->devflags |= (1 << cp->cp_id);
 		} else if (hd->devflags & (1 << cp->cp_id))
 			cmd->result = (DID_OK << 16) + 0x02;
-		else
-			cmd->result = (DID_NO_CONNECT << 16);
+		else {
+			cmd->result = 0;
+			set_host_byte(cmd, DID_NO_CONNECT);
+		}
 
 		if (cp->status == LOCKED) {
 			cp->status = FREE;
@@ -378,7 +381,8 @@ static int eata_pio_queue_lck(struct scsi_cmnd *cmd,
 								 * are to transfer */
 
 	if (eata_pio_send_command(base, EATA_CMD_PIO_SEND_CP)) {
-		cmd->result = DID_BUS_BUSY << 16;
+		cmd->result = 0;
+		set_host_byte(cmd, DID_BUS_BUSY);
 		scmd_printk(KERN_NOTICE, cmd,
 			"eata_pio_queue pid 0x%p, HBA busy, "
 			"returning DID_BUS_BUSY, done.\n", cmd);
@@ -487,7 +491,8 @@ static int eata_pio_host_reset(struct scsi_cmnd *cmd)
 			continue;
 
 		sp = HD(cmd)->ccb[x].cmd;
-		sp->result = DID_RESET << 16;
+		sp->result = 0;
+		set_host_byte(sp, DID_RESET);
 
 		/* This mailbox is terminated */
 		printk(KERN_WARNING "eata_pio_reset: reset ccb %d.\n", x);

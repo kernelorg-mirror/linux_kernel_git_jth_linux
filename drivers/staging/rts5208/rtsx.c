@@ -145,7 +145,8 @@ static int queuecommand_lck(struct scsi_cmnd *srb,
 	/* fail the command if we are disconnecting */
 	if (rtsx_chk_stat(chip, RTSX_STAT_DISCONNECT)) {
 		dev_info(&dev->pci->dev, "Fail command during disconnect\n");
-		srb->result = DID_NO_CONNECT << 16;
+		srb->result = 0;
+		set_host_byte(srb, DID_NO_CONNECT);
 		done(srb);
 		return 0;
 	}

@@ -1320,10 +1320,10 @@ static void mvumi_complete_cmd(struct mvumi_hba *mhba, struct mvumi_cmd *cmd,
 
 	switch (ob_frame->req_status) {
 	case SAM_STAT_GOOD:
-		scmd->result |= DID_OK << 16;
+		set_host_byte(scmd, DID_OK);
 		break;
 	case SAM_STAT_BUSY:
-		scmd->result |= DID_BUS_BUSY << 16;
+		set_host_byte(scmd, DID_BUS_BUSY);
 		break;
 	case SAM_STAT_CHECK_CONDITION:
 		scmd->result |= (DID_OK << 16);
@@ -2145,7 +2145,9 @@ static enum blk_eh_timer_return mvumi_timed_out(struct scsi_cmnd *scmd)
 	else
 		atomic_dec(&mhba->fw_outstanding);
 
-	scmd->result = (DRIVER_INVALID << 24) | (DID_ABORT << 16);
+	scmd->result = 0;
+	set_host_byte(scmd, DID_ABORT);
+	scmd->result |= (DRIVER_INVALID << 24);
 	scmd->SCp.ptr = NULL;
 	if (scsi_bufflen(scmd)) {
 		pci_unmap_sg(mhba->pdev, scsi_sglist(scmd),

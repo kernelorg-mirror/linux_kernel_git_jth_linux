@@ -922,7 +922,8 @@ static int imm_queuecommand_lck(struct scsi_cmnd *cmd,
 	dev->jstart = jiffies;
 	dev->cur_cmd = cmd;
 	cmd->scsi_done = done;
-	cmd->result = DID_ERROR << 16;	/* default return code */
+	cmd->result = 0;
+	set_host_byte(cmd, DID_ERROR);	/* default return code */
 	cmd->SCp.phase = 0;	/* bus free */
 
 	schedule_delayed_work(&dev->imm_tq, 0);

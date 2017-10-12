@@ -582,7 +582,8 @@ ahd_linux_queue_lck(struct scsi_cmnd * cmd, void (*scsi_done) (struct scsi_cmnd 
 	ahd = *(struct ahd_softc **)cmd->device->host->hostdata;
 
 	cmd->scsi_done = scsi_done;
-	cmd->result = CAM_REQ_INPROG << 16;
+	cmd->result = 0;
+	set_host_byte(cmd, CAM_REQ_INPROG);
 	rtn = ahd_linux_run_command(ahd, dev, cmd);
 
 	return rtn;

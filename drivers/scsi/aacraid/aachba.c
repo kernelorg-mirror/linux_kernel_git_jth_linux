@@ -627,7 +627,8 @@ static int aac_probe_container_callback2(struct scsi_cmnd * scsicmd)
 	if ((fsa_dev_ptr[scmd_id(scsicmd)].valid & 1))
 		return aac_scsi_cmd(scsicmd);
 
-	scsicmd->result = DID_NO_CONNECT << 16;
+	scsicmd->result = 0;
+	set_host_byte(scsicmd, DID_NO_CONNECT);
 	scsicmd->scsi_done(scsicmd);
 	return 0;
 }
@@ -2711,7 +2712,8 @@ int aac_scsi_cmd(struct scsi_cmnd * scsicmd)
 		if (scmd_channel(scsicmd) == CONTAINER_CHANNEL) {
 			if((cid >= dev->maximum_num_containers) ||
 					(scsicmd->device->lun != 0)) {
-				scsicmd->result = DID_NO_CONNECT << 16;
+				scsicmd->result = 0;
+				set_host_byte(scsicmd, DID_NO_CONNECT);
 				goto scsi_done_ret;
 			}
 
@@ -2745,7 +2747,8 @@ int aac_scsi_cmd(struct scsi_cmnd * scsicmd)
 				(dev->hba_map[bus][cid].expose
 						== AAC_HIDE_DISK)){
 				if (scsicmd->cmnd[0] == INQUIRY) {
-					scsicmd->result = DID_NO_CONNECT << 16;
+					scsicmd->result = 0;
+					set_host_byte(scsicmd, DID_NO_CONNECT);
 					goto scsi_done_ret;
 				}
 			}
@@ -2762,7 +2765,8 @@ int aac_scsi_cmd(struct scsi_cmnd * scsicmd)
 					return -1;
 				return aac_send_srb_fib(scsicmd);
 			} else {
-				scsicmd->result = DID_NO_CONNECT << 16;
+				scsicmd->result = 0;
+				set_host_byte(scsicmd, DID_NO_CONNECT);
 				goto scsi_done_ret;
 			}
 		}
@@ -3518,7 +3522,8 @@ static void hba_resp_task_complete(struct aac_dev *dev,
 
 	switch (err->status) {
 	case SAM_STAT_GOOD:
-		scsicmd->result |= DID_OK << 16 | COMMAND_COMPLETE << 8;
+		set_host_byte(scsicmd, DID_OK);
+		scsicmd->result |= COMMAND_COMPLETE << 8;
 		break;
 	case SAM_STAT_CHECK_CONDITION:
 	{
@@ -3529,19 +3534,23 @@ static void hba_resp_task_complete(struct aac_dev *dev,
 		if (len)
 			memcpy(scsicmd->sense_buffer,
 				err->sense_response_buf, len);
-		scsicmd->result |= DID_OK << 16 | COMMAND_COMPLETE << 8;
+		set_host_byte(scsicmd, DID_OK);
+		scsicmd->result |= COMMAND_COMPLETE << 8;
 		break;
 	}
 	case SAM_STAT_BUSY:
-		scsicmd->result |= DID_BUS_BUSY << 16 | COMMAND_COMPLETE << 8;
+		set_host_byte(scsicmd, DID_BUS_BUSY);
+		scsicmd->result |= COMMAND_COMPLETE << 8;
 		break;
 	case SAM_STAT_TASK_ABORTED:
-		scsicmd->result |= DID_ABORT << 16 | ABORT << 8;
+		set_host_byte(scsicmd, DID_ABORT);
+		scsicmd->result |= ABORT << 8;
 		break;
 	case SAM_STAT_RESERVATION_CONFLICT:
 	case SAM_STAT_TASK_SET_FULL:
 	default:
-		scsicmd->result |= DID_ERROR << 16 | COMMAND_COMPLETE << 8;
+		set_host_byte(scsicmd, DID_ERROR);
+		scsicmd->result |= COMMAND_COMPLETE << 8;
 		break;
 	}
 }
@@ -3669,7 +3678,8 @@ static int aac_send_srb_fib(struct scsi_cmnd* scsicmd)
 	dev = (struct aac_dev *)scsicmd->device->host->hostdata;
 	if (scmd_id(scsicmd) >= dev->maximum_num_physicals ||
 			scsicmd->device->lun > 7) {
-		scsicmd->result = DID_NO_CONNECT << 16;
+		scsicmd->result = 0;
+		set_host_byte(scsicmd, DID_NO_CONNECT);
 		scsicmd->scsi_done(scsicmd);
 		return 0;
 	}
@@ -3711,7 +3721,8 @@ static int aac_send_hba_fib(struct scsi_cmnd *scsicmd)
 	dev = shost_priv(scsicmd->device->host);
 	if (scmd_id(scsicmd) >= dev->maximum_num_physicals ||
 			scsicmd->device->lun > AAC_MAX_LUN - 1) {
-		scsicmd->result = DID_NO_CONNECT << 16;
+		scsicmd->result = 0;
+		set_host_byte(scsicmd, DID_NO_CONNECT);
 		scsicmd->scsi_done(scsicmd);
 		return 0;
 	}

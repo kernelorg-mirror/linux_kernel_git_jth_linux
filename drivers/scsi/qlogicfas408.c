@@ -444,7 +444,8 @@ static int qlogicfas408_queuecommand_lck(struct scsi_cmnd *cmd,
 {
 	struct qlogicfas408_priv *priv = get_priv_by_cmd(cmd);
 	if (scmd_id(cmd) == priv->qinitid) {
-		cmd->result = DID_BAD_TARGET << 16;
+		cmd->result = 0;
+		set_host_byte(cmd, DID_BAD_TARGET);
 		done(cmd);
 		return 0;
 	}

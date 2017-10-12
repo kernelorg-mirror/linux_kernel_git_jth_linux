@@ -314,7 +314,8 @@ static irqreturn_t ps3rom_interrupt(int irq, void *data)
 
 			scsi_set_resid(cmd, scsi_bufflen(cmd) - len);
 		}
-		cmd->result = DID_OK << 16;
+		cmd->result = 0;
+		set_host_byte(cmd, DID_OK);
 		goto done;
 	}
 
@@ -322,12 +323,15 @@ static irqreturn_t ps3rom_interrupt(int irq, void *data)
 		/* SCSI spec says request sense should never get error */
 		dev_err(&dev->sbd.core, "%s:%u: end error without autosense\n",
 			__func__, __LINE__);
-		cmd->result = DID_ERROR << 16 | SAM_STAT_CHECK_CONDITION;
+		cmd->result = 0;
+		set_host_byte(cmd, DID_ERROR);
+		cmd->result |= SAM_STAT_CHECK_CONDITION;
 		goto done;
 	}
 
 	if (decode_lv1_status(status, &sense_key, &asc, &ascq)) {
-		cmd->result = DID_ERROR << 16;
+		cmd->result = 0;
+		set_host_byte(cmd, DID_ERROR);
 		goto done;
 	}
 

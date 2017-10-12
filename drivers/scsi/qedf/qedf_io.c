@@ -926,7 +926,8 @@ qedf_queuecommand(struct Scsi_Host *host, struct scsi_cmnd *sc_cmd)
 
 	if (test_bit(QEDF_UNLOADING, &qedf->flags) ||
 	    test_bit(QEDF_DBG_STOP_IO, &qedf->flags)) {
-		sc_cmd->result = DID_NO_CONNECT << 16;
+		sc_cmd->result = 0;
+		set_host_byte(sc_cmd, DID_NO_CONNECT);
 		sc_cmd->scsi_done(sc_cmd);
 		return 0;
 	}
@@ -1124,7 +1125,8 @@ void qedf_scsi_completion(struct qedf_ctx *qedf, struct fcoe_cqe *cqe,
 		    "FCP I/O protocol failure xid=0x%x fcp_rsp_len=%d "
 		    "fcp_rsp_code=%d.\n", io_req->xid, io_req->fcp_rsp_len,
 		    io_req->fcp_rsp_code);
-		sc_cmd->result = DID_BUS_BUSY << 16;
+		sc_cmd->result = 0;
+		set_host_byte(sc_cmd, DID_BUS_BUSY);
 		goto out;
 	}
 
@@ -1137,17 +1139,24 @@ void qedf_scsi_completion(struct qedf_ctx *qedf, struct fcoe_cqe *cqe,
 		    fcp_rsp->rsp_flags.flags, io_req->fcp_resid,
 		    cqe->cqe_info.rsp_info.fw_residual);
 
-		if (io_req->cdb_status == 0)
-			sc_cmd->result = (DID_ERROR << 16) | io_req->cdb_status;
-		else
-			sc_cmd->result = (DID_OK << 16) | io_req->cdb_status;
+		if (io_req->cdb_status == 0) {
+			sc_cmd->result = 0;
+			set_host_byte(sc_cmd, DID_ERROR);
+			sc_cmd->result |= io_req->cdb_status;
+		} else {
+			sc_cmd->result = 0;
+			set_host_byte(sc_cmd, DID_OK);
+			sc_cmd->result |= io_req->cdb_status;
+		}
 
 		/* Abort the command since we did not get all the data */
 		init_completion(&io_req->abts_done);
 		rval = qedf_initiate_abts(io_req, true);
 		if (rval) {
 			QEDF_ERR(&(qedf->dbg_ctx), "Failed to queue ABTS.\n");
-			sc_cmd->result = (DID_ERROR << 16) | io_req->cdb_status;
+			sc_cmd->result = 0;
+			set_host_byte(sc_cmd, DID_ERROR);
+			sc_cmd->result |= io_req->cdb_status;
 		}
 
 		/*
@@ -1162,7 +1171,8 @@ void qedf_scsi_completion(struct qedf_ctx *qedf, struct fcoe_cqe *cqe,
 	case FC_GOOD:
 		if (io_req->cdb_status == 0) {
 			/* Good I/O completion */
-			sc_cmd->result = DID_OK << 16;
+			sc_cmd->result = 0;
+			set_host_byte(sc_cmd, DID_OK);
 		} else {
 			refcount = kref_read(&io_req->refcount);
 			QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_IO,
@@ -1175,7 +1185,9 @@ void qedf_scsi_completion(struct qedf_ctx *qedf, struct fcoe_cqe *cqe,
 			    sc_cmd->cmnd[4], sc_cmd->cmnd[5],
 			    io_req->cdb_status, io_req->fcp_resid,
 			    refcount);
-			sc_cmd->result = (DID_OK << 16) | io_req->cdb_status;
+			sc_cmd->result = 0;
+			set_host_byte(sc_cmd, DID_OK);
+			sc_cmd->result |= io_req->cdb_status;
 
 			if (io_req->cdb_status == SAM_STAT_TASK_SET_FULL ||
 			    io_req->cdb_status == SAM_STAT_BUSY) {
@@ -1248,7 +1260,8 @@ void qedf_scsi_done(struct qedf_ctx *qedf, struct qedf_ioreq *io_req,
 
 	qedf_unmap_sg_list(qedf, io_req);
 
-	sc_cmd->result = result << 16;
+	sc_cmd->result = 0;
+	set_host_byte(sc_cmd, result);
 	refcount = kref_read(&io_req->refcount);
 	QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_IO, "%d:0:%d:%lld: Completing "
 	    "sc_cmd=%p result=0x%08x op=0x%02x lba=0x%02x%02x%02x%02x, "

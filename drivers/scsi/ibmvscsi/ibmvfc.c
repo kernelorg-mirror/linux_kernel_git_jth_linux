@@ -1557,15 +1557,19 @@ static void ibmvfc_scsi_done(struct ibmvfc_event *evt)
 			    (be16_to_cpu(vfc_cmd->error) == IBMVFC_PLOGI_REQUIRED))
 				ibmvfc_relogin(cmnd->device);
 
-			if (!cmnd->result && (!scsi_get_resid(cmnd) || (rsp->flags & FCP_RESID_OVER)))
-				cmnd->result = (DID_ERROR << 16);
+			if (!cmnd->result && (!scsi_get_resid(cmnd) || (rsp->flags & FCP_RESID_OVER))) {
+				cmnd->result = 0;
+				set_host_byte(cmnd, DID_ERROR);
+			}
 
 			ibmvfc_log_error(evt);
 		}
 
 		if (!cmnd->result &&
-		    (scsi_bufflen(cmnd) - scsi_get_resid(cmnd) < cmnd->underflow))
-			cmnd->result = (DID_ERROR << 16);
+		    (scsi_bufflen(cmnd) - scsi_get_resid(cmnd) < cmnd->underflow)) {
+			cmnd->result = 0;
+			set_host_byte(cmnd, DID_ERROR);
+		}
 
 		scsi_dma_unmap(cmnd);
 		cmnd->scsi_done(cmnd);
@@ -1631,7 +1635,8 @@ static int ibmvfc_queuecommand_lck(struct scsi_cmnd *cmnd,
 		return 0;
 	}
 
-	cmnd->result = (DID_OK << 16);
+	cmnd->result = 0;
+	set_host_byte(cmnd, DID_OK);
 	evt = ibmvfc_get_event(vhost);
 	ibmvfc_init_event(evt, ibmvfc_scsi_done, IBMVFC_CMD_FORMAT);
 	evt->cmnd = cmnd;
@@ -1665,7 +1670,8 @@ static int ibmvfc_queuecommand_lck(struct scsi_cmnd *cmnd,
 		scmd_printk(KERN_ERR, cmnd,
 			    "Failed to map DMA buffer for command. rc=%d\n", rc);
 
-	cmnd->result = DID_ERROR << 16;
+	cmnd->result = 0;
+	set_host_byte(cmnd, DID_ERROR);
 	done(cmnd);
 	return 0;
 }

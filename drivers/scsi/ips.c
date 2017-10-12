@@ -979,7 +979,8 @@ static int __ips_eh_reset(struct scsi_cmnd *SC)
 			  ips_name, ha->host_num);
 
 		while ((scsi_cmd = ips_removeq_wait_head(&ha->scb_waitlist))) {
-			scsi_cmd->result = DID_ERROR << 16;
+			scsi_cmd->result = 0;
+			set_host_byte(scsi_cmd, DID_ERROR);
 			scsi_cmd->scsi_done(scsi_cmd);
 		}
 
@@ -1060,13 +1061,15 @@ static int ips_queue_lck(struct scsi_cmnd *SC, void (*done) (struct scsi_cmnd *)
 
 	if (ips_is_passthru(SC)) {
 		if (ha->copp_waitlist.count == IPS_MAX_IOCTL_QUEUE) {
-			SC->result = DID_BUS_BUSY << 16;
+			SC->result = 0;
+			set_host_byte(SC, DID_BUS_BUSY);
 			done(SC);
 
 			return (0);
 		}
 	} else if (ha->scb_waitlist.count == IPS_MAX_QUEUE) {
-		SC->result = DID_BUS_BUSY << 16;
+		SC->result = 0;
+		set_host_byte(SC, DID_BUS_BUSY);
 		done(SC);
 
 		return (0);
@@ -1083,7 +1086,8 @@ static int ips_queue_lck(struct scsi_cmnd *SC, void (*done) (struct scsi_cmnd *)
 	/* Check for command to initiator IDs */
 	if ((scmd_channel(SC) > 0)
 	    && (scmd_id(SC) == ha->ha_id[scmd_channel(SC)])) {
-		SC->result = DID_NO_CONNECT << 16;
+		SC->result = 0;
+		set_host_byte(SC, DID_NO_CONNECT);
 		done(SC);
 
 		return (0);
@@ -1100,13 +1104,15 @@ static int ips_queue_lck(struct scsi_cmnd *SC, void (*done) (struct scsi_cmnd *)
 		if ((pt->CoppCP.cmd.reset.op_code == IPS_CMD_RESET_CHANNEL) &&
 		    (pt->CoppCP.cmd.reset.adapter_flag == 1)) {
 			if (ha->scb_activelist.count != 0) {
-				SC->result = DID_BUS_BUSY << 16;
+				SC->result = 0;
+				set_host_byte(SC, DID_BUS_BUSY);
 				done(SC);
 				return (0);
 			}
 			ha->ioctl_reset = 1;	/* This reset request is from an IOCTL */
 			__ips_eh_reset(SC);
-			SC->result = DID_OK << 16;
+			SC->result = 0;
+			set_host_byte(SC, DID_OK);
 			SC->scsi_done(SC);
 			return (0);
 		}
@@ -1115,7 +1121,8 @@ static int ips_queue_lck(struct scsi_cmnd *SC, void (*done) (struct scsi_cmnd *)
 		scratch = kmalloc(sizeof (ips_copp_wait_item_t), GFP_ATOMIC);
 
 		if (!scratch) {
-			SC->result = DID_ERROR << 16;
+			SC->result = 0;
+			set_host_byte(SC, DID_ERROR);
 			done(SC);
 
 			return (0);
@@ -1612,7 +1619,8 @@ ips_make_passthru(ips_ha_t *ha, struct scsi_cmnd *SC, ips_scb_t *scb, int intr)
 		       &ips_num_controllers, sizeof (int));
 		ips_scmd_buf_write(SC, ha->ioctl_data,
 				   sizeof (ips_passthru_t) + sizeof (int));
-		SC->result = DID_OK << 16;
+		SC->result = 0;
+		set_host_byte(SC, DID_OK);
 
 		return (IPS_SUCCESS_IMM);
 

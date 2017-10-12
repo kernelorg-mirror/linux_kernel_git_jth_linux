@@ -872,7 +872,9 @@ static struct ata_queued_cmd *ata_scsi_qc_new(struct ata_device *dev,
 		qc->sg = scsi_sglist(cmd);
 		qc->n_elem = scsi_sg_count(cmd);
 	} else {
-		cmd->result = (DID_OK << 16) | (QUEUE_FULL << 1);
+		cmd->result = 0;
+		set_host_byte(cmd, DID_OK);
+		cmd->result |= (QUEUE_FULL << 1);
 		cmd->scsi_done(cmd);
 	}
 
@@ -2033,7 +2035,8 @@ early_finish:
 
 err_did:
 	ata_qc_free(qc);
-	cmd->result = (DID_ERROR << 16);
+	cmd->result = 0;
+	set_host_byte(cmd, DID_ERROR);
 	cmd->scsi_done(cmd);
 err_mem:
 	DPRINTK("EXIT - internal\n");
@@ -4331,7 +4334,8 @@ static inline int __ata_scsi_queuecmd(struct scsi_cmnd *scmd,
  bad_cdb_len:
 	DPRINTK("bad CDB len=%u, scsi_op=0x%02x, max=%u\n",
 		scmd->cmd_len, scsi_op, dev->cdb_len);
-	scmd->result = DID_ERROR << 16;
+	scmd->result = 0;
+	set_host_byte(scmd, DID_ERROR);
 	scmd->scsi_done(scmd);
 	return 0;
 }
@@ -4373,7 +4377,8 @@ int ata_scsi_queuecmd(struct Scsi_Host *shost, struct scsi_cmnd *cmd)
 	if (likely(dev))
 		rc = __ata_scsi_queuecmd(cmd, dev);
 	else {
-		cmd->result = (DID_BAD_TARGET << 16);
+		cmd->result = 0;
+		set_host_byte(cmd, DID_BAD_TARGET);
 		cmd->scsi_done(cmd);
 	}
 
@@ -5092,7 +5097,8 @@ int ata_sas_queuecmd(struct scsi_cmnd *cmd, struct ata_port *ap)
 	if (likely(ata_dev_enabled(ap->link.device)))
 		rc = __ata_scsi_queuecmd(cmd, ap->link.device);
 	else {
-		cmd->result = (DID_BAD_TARGET << 16);
+		cmd->result = 0;
+		set_host_byte(cmd, DID_BAD_TARGET);
 		cmd->scsi_done(cmd);
 	}
 	return rc;

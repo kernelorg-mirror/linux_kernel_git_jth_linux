@@ -2335,7 +2335,8 @@ megaraid_mbox_dpc(unsigned long devp)
 
 		case 0x00:
 
-			scp->result = (DID_OK << 16);
+			scp->result = 0;
+			set_host_byte(scp, DID_OK);
 			break;
 
 		case 0x02:
@@ -2369,7 +2370,9 @@ megaraid_mbox_dpc(unsigned long devp)
 
 		case 0x08:
 
-			scp->result = DID_BUS_BUSY << 16 | status;
+			scp->result = 0;
+			set_host_byte(scp, DID_BUS_BUSY);
+			scp->result |= status;
 			break;
 
 		default:
@@ -2379,8 +2382,9 @@ megaraid_mbox_dpc(unsigned long devp)
 			 * failed
 			 */
 			if (scp->cmnd[0] == TEST_UNIT_READY) {
-				scp->result = DID_ERROR << 16 |
-					RESERVATION_CONFLICT << 1;
+				scp->result = 0;
+				set_host_byte(scp, DID_ERROR);
+				scp->result |= RESERVATION_CONFLICT << 1;
 			}
 			else
 			/*
@@ -2390,11 +2394,14 @@ megaraid_mbox_dpc(unsigned long devp)
 			if (status == 1 && (scp->cmnd[0] == RESERVE ||
 					 scp->cmnd[0] == RELEASE)) {
 
-				scp->result = DID_ERROR << 16 |
-					RESERVATION_CONFLICT << 1;
+				scp->result = 0;
+				set_host_byte(scp, DID_ERROR);
+				scp->result |= RESERVATION_CONFLICT << 1;
 			}
 			else {
-				scp->result = DID_BAD_TARGET << 16 | status;
+				scp->result = 0;
+				set_host_byte(scp, DID_BAD_TARGET);
+				scp->result |= status;
 			}
 		}
 
@@ -2471,7 +2478,8 @@ megaraid_abort_handler(struct scsi_cmnd *scp)
 			"megaraid: %d[%d:%d], abort from completed list\n",
 				scb->sno, scb->dev_channel, scb->dev_target));
 
-			scp->result = (DID_ABORT << 16);
+			scp->result = 0;
+			set_host_byte(scp, DID_ABORT);
 			scp->scsi_done(scp);
 
 			megaraid_dealloc_scb(adapter, scb);
@@ -2501,7 +2509,8 @@ megaraid_abort_handler(struct scsi_cmnd *scp)
 				"megaraid abort: [%d:%d], driver owner\n",
 				scb->dev_channel, scb->dev_target));
 
-			scp->result = (DID_ABORT << 16);
+			scp->result = 0;
+			set_host_byte(scp, DID_ABORT);
 			scp->scsi_done(scp);
 
 			megaraid_dealloc_scb(adapter, scb);

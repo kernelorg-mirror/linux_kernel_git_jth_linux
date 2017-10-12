@@ -551,7 +551,8 @@ static int scsifront_queuecommand(struct Scsi_Host *shost,
 		spin_unlock_irqrestore(shost->host_lock, flags);
 		if (err == -ENOMEM)
 			return SCSI_MLQUEUE_HOST_BUSY;
-		sc->result = DID_ERROR << 16;
+		sc->result = 0;
+		set_host_byte(sc, DID_ERROR);
 		sc->scsi_done(sc);
 		return 0;
 	}

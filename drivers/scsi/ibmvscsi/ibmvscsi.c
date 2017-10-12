@@ -1044,7 +1044,8 @@ static int ibmvscsi_queuecommand_lck(struct scsi_cmnd *cmnd,
 	u16 lun = lun_from_dev(cmnd->device);
 	u8 out_fmt, in_fmt;
 
-	cmnd->result = (DID_OK << 16);
+	cmnd->result = 0;
+	set_host_byte(cmnd, DID_OK);
 	evt_struct = get_event_struct(&hostdata->pool);
 	if (!evt_struct)
 		return SCSI_MLQUEUE_HOST_BUSY;
@@ -1605,7 +1606,8 @@ static int ibmvscsi_eh_abort_handler(struct scsi_cmnd *cmd)
 	sdev_printk(KERN_INFO, cmd->device, "successfully aborted task tag 0x%llx\n",
 		    tsk_mgmt->task_tag);
 
-	cmd->result = (DID_ABORT << 16);
+	cmd->result = 0;
+	set_host_byte(cmd, DID_ABORT);
 	list_del(&found_evt->list);
 	unmap_cmd_data(&found_evt->iu.srp.cmd, found_evt,
 		       found_evt->hostdata->dev);

@@ -1799,7 +1799,8 @@ csio_queuecommand(struct Scsi_Host *host, struct scsi_cmnd *cmnd)
 	}
 
 	if (unlikely(!csio_is_hw_ready(hw))) {
-		cmnd->result = (DID_REQUEUE << 16);
+		cmnd->result = 0;
+		set_host_byte(cmnd, DID_REQUEUE);
 		CSIO_INC_STATS(scsim, n_hw_nr_error);
 		goto err_done;
 	}
@@ -1981,7 +1982,8 @@ inval_scmnd:
 		csio_scsi_cmnd(ioreq) = NULL;
 		spin_unlock_irq(&hw->lock);
 
-		cmnd->result = (DID_ERROR << 16);
+		cmnd->result = 0;
+		set_host_byte(cmnd, DID_ERROR);
 		cmnd->scsi_done(cmnd);
 
 		return FAILED;

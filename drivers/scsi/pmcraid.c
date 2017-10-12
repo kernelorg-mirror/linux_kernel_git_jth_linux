@@ -2044,7 +2044,7 @@ static void pmcraid_fail_outstanding_cmds(struct pmcraid_instance *pinstance)
 			struct scsi_cmnd *scsi_cmd = cmd->scsi_cmd;
 			__le32 resp = cmd->ioa_cb->ioarcb.response_handle;
 
-			scsi_cmd->result |= DID_ERROR << 16;
+			set_host_byte(scsi_cmd, DID_ERROR);
 
 			scsi_dma_unmap(scsi_cmd);
 			pmcraid_return_cmd(cmd);
@@ -3405,14 +3405,16 @@ static int pmcraid_queuecommand_lck(
 	fw_version = be16_to_cpu(pinstance->inq_data->fw_version);
 	scsi_cmd->scsi_done = done;
 	res = scsi_cmd->device->hostdata;
-	scsi_cmd->result = (DID_OK << 16);
+	scsi_cmd->result = 0;
+	set_host_byte(scsi_cmd, DID_OK);
 
 	/* if adapter is marked as dead, set result to DID_NO_CONNECT complete
 	 * the command
 	 */
 	if (pinstance->ioa_state == IOA_STATE_DEAD) {
 		pmcraid_info("IOA is dead, but queuecommand is scheduled\n");
-		scsi_cmd->result = (DID_NO_CONNECT << 16);
+		scsi_cmd->result = 0;
+		set_host_byte(scsi_cmd, DID_NO_CONNECT);
 		scsi_cmd->scsi_done(scsi_cmd);
 		return 0;
 	}

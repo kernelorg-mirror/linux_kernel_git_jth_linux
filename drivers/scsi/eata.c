@@ -1998,7 +1998,8 @@ static int eata2x_eh_host_reset(struct scsi_cmnd *SCarg)
 		if (ha->cp_stat[i] == IN_RESET) {
 			SCpnt = ha->cp[i].SCpnt;
 			unmap_dma(i, ha);
-			SCpnt->result = DID_RESET << 16;
+			SCpnt->result = 0;
+			set_host_byte(SCpnt, DID_RESET);
 			SCpnt->host_scribble = NULL;
 
 			/* This mailbox is still waiting for its interrupt */
@@ -2012,7 +2013,8 @@ static int eata2x_eh_host_reset(struct scsi_cmnd *SCarg)
 		else if (ha->cp_stat[i] == ABORTING) {
 			SCpnt = ha->cp[i].SCpnt;
 			unmap_dma(i, ha);
-			SCpnt->result = DID_RESET << 16;
+			SCpnt->result = 0;
+			set_host_byte(SCpnt, DID_RESET);
 			SCpnt->host_scribble = NULL;
 
 			/* This mailbox was never queued to the adapter */

@@ -1294,7 +1294,8 @@ static int tw_reset_device_extension(TW_Device_Extension *tw_dev)
 		    (tw_dev->state[i] != TW_S_COMPLETED)) {
 			srb = tw_dev->srb[i];
 			if (srb != NULL) {
-				srb->result = (DID_RESET << 16);
+				srb->result = 0;
+				set_host_byte(srb, DID_RESET);
 				scsi_dma_unmap(srb);
 				srb->scsi_done(srb);
 			}
@@ -1978,7 +1979,8 @@ static int tw_scsi_queue_lck(struct scsi_cmnd *SCpnt, void (*done)(struct scsi_c
 	if (retval) {
 		tw_dev->state[request_id] = TW_S_COMPLETED;
 		tw_state_request_finish(tw_dev, request_id);
-		SCpnt->result = (DID_ERROR << 16);
+		SCpnt->result = 0;
+		set_host_byte(SCpnt, DID_ERROR);
 		done(SCpnt);
 		retval = 0;
 	}

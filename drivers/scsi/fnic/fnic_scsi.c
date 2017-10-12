@@ -450,7 +450,8 @@ static int fnic_queuecommand_lck(struct scsi_cmnd *sc, void (*done)(struct scsi_
 	if (!rport) {
 		FNIC_SCSI_DBG(KERN_DEBUG, fnic->lport->host,
 				"returning DID_NO_CONNECT for IO as rport is NULL\n");
-		sc->result = DID_NO_CONNECT << 16;
+		sc->result = 0;
+		set_host_byte(sc, DID_NO_CONNECT);
 		done(sc);
 		return 0;
 	}
@@ -472,7 +473,8 @@ static int fnic_queuecommand_lck(struct scsi_cmnd *sc, void (*done)(struct scsi_
 			rport->port_id);
 
 		atomic64_inc(&fnic_stats->misc_stats.rport_not_ready);
-		sc->result = DID_NO_CONNECT<<16;
+		sc->result = 0;
+		set_host_byte(sc, DID_NO_CONNECT);
 		done(sc);
 		return 0;
 	}
@@ -482,7 +484,8 @@ static int fnic_queuecommand_lck(struct scsi_cmnd *sc, void (*done)(struct scsi_
 			"rport 0x%x in state 0x%x, returning DID_IMM_RETRY\n",
 			rport->port_id, rp->rp_state);
 
-		sc->result = DID_IMM_RETRY << 16;
+		sc->result = 0;
+		set_host_byte(sc, DID_IMM_RETRY);
 		done(sc);
 		return 0;
 	}
@@ -922,7 +925,9 @@ static void fnic_fcpio_icmnd_cmpl_handler(struct fnic *fnic,
 
 	switch (hdr_status) {
 	case FCPIO_SUCCESS:
-		sc->result = (DID_OK << 16) | icmnd_cmpl->scsi_status;
+		sc->result = 0;
+		set_host_byte(sc, DID_OK);
+		sc->result |= icmnd_cmpl->scsi_status;
 		xfer_len = scsi_bufflen(sc);
 		scsi_set_resid(sc, icmnd_cmpl->residual);
 
@@ -938,50 +943,68 @@ static void fnic_fcpio_icmnd_cmpl_handler(struct fnic *fnic,
 
 	case FCPIO_TIMEOUT:          /* request was timed out */
 		atomic64_inc(&fnic_stats->misc_stats.fcpio_timeout);
-		sc->result = (DID_TIME_OUT << 16) | icmnd_cmpl->scsi_status;
+		sc->result = 0;
+		set_host_byte(sc, DID_TIME_OUT);
+		sc->result |= icmnd_cmpl->scsi_status;
 		break;
 
 	case FCPIO_ABORTED:          /* request was aborted */
 		atomic64_inc(&fnic_stats->misc_stats.fcpio_aborted);
-		sc->result = (DID_ERROR << 16) | icmnd_cmpl->scsi_status;
+		sc->result = 0;
+		set_host_byte(sc, DID_ERROR);
+		sc->result |= icmnd_cmpl->scsi_status;
 		break;
 
 	case FCPIO_DATA_CNT_MISMATCH: /* recv/sent more/less data than exp. */
 		atomic64_inc(&fnic_stats->misc_stats.data_count_mismatch);
 		scsi_set_resid(sc, icmnd_cmpl->residual);
-		sc->result = (DID_ERROR << 16) | icmnd_cmpl->scsi_status;
+		sc->result = 0;
+		set_host_byte(sc, DID_ERROR);
+		sc->result |= icmnd_cmpl->scsi_status;
 		break;
 
 	case FCPIO_OUT_OF_RESOURCE:  /* out of resources to complete request */
 		atomic64_inc(&fnic_stats->fw_stats.fw_out_of_resources);
-		sc->result = (DID_REQUEUE << 16) | icmnd_cmpl->scsi_status;
+		sc->result = 0;
+		set_host_byte(sc, DID_REQUEUE);
+		sc->result |= icmnd_cmpl->scsi_status;
 		break;
 
 	case FCPIO_IO_NOT_FOUND:     /* requested I/O was not found */
 		atomic64_inc(&fnic_stats->io_stats.io_not_found);
-		sc->result = (DID_ERROR << 16) | icmnd_cmpl->scsi_status;
+		sc->result = 0;
+		set_host_byte(sc, DID_ERROR);
+		sc->result |= icmnd_cmpl->scsi_status;
 		break;
 
 	case FCPIO_SGL_INVALID:      /* request was aborted due to sgl error */
 		atomic64_inc(&fnic_stats->misc_stats.sgl_invalid);
-		sc->result = (DID_ERROR << 16) | icmnd_cmpl->scsi_status;
+		sc->result = 0;
+		set_host_byte(sc, DID_ERROR);
+		sc->result |= icmnd_cmpl->scsi_status;
 		break;
 
 	case FCPIO_FW_ERR:           /* request was terminated due fw error */
 		atomic64_inc(&fnic_stats->fw_stats.io_fw_errs);
-		sc->result = (DID_ERROR << 16) | icmnd_cmpl->scsi_status;
+		sc->result = 0;
+		set_host_byte(sc, DID_ERROR);
+		sc->result |= icmnd_cmpl->scsi_status;
 		break;
 
 	case FCPIO_MSS_INVALID:      /* request was aborted due to mss error */
 		atomic64_inc(&fnic_stats->misc_stats.mss_invalid);
-		sc->result = (DID_ERROR << 16) | icmnd_cmpl->scsi_status;
+		sc->result = 0;
+		set_host_byte(sc, DID_ERROR);
+		sc->result |= icmnd_cmpl->scsi_status;
 		break;
 
 	case FCPIO_INVALID_HEADER:   /* header contains invalid data */
 	case FCPIO_INVALID_PARAM:    /* some parameter in request invalid */
 	case FCPIO_REQ_NOT_SUPPORTED:/* request type is not supported */
 	default:
-		sc->result = (DID_ERROR << 16) | icmnd_cmpl->scsi_status;
+		sc->result = 0;
+		set_host_byte(sc, DID_ERROR);
+		sc->result |= icmnd_cmpl->scsi_status;
 		break;
 	}
 
@@ -1189,7 +1212,8 @@ static void fnic_fcpio_itmf_cmpl_handler(struct fnic *fnic,
 			FNIC_SCSI_DBG(KERN_DEBUG, fnic->lport->host,
 				      "abts cmpl, completing IO\n");
 			CMD_SP(sc) = NULL;
-			sc->result = (DID_ERROR << 16);
+			sc->result = 0;
+			set_host_byte(sc, DID_ERROR);
 
 			spin_unlock_irqrestore(io_lock, flags);
 
@@ -1401,7 +1425,8 @@ static void fnic_cleanup_io(struct fnic *fnic, int exclude_id)
 		mempool_free(io_req, fnic->io_req_pool);
 
 cleanup_scsi_cmd:
-		sc->result = DID_TRANSPORT_DISRUPTED << 16;
+		sc->result = 0;
+		set_host_byte(sc, DID_TRANSPORT_DISRUPTED);
 		FNIC_SCSI_DBG(KERN_DEBUG, fnic->lport->host,
 			      "%s: sc duration = %lu DID_TRANSPORT_DISRUPTED\n",
 			      __func__, (jiffies - start_time));
@@ -1471,7 +1496,8 @@ void fnic_wq_copy_cleanup_handler(struct vnic_wq_copy *wq,
 	mempool_free(io_req, fnic->io_req_pool);
 
 wq_copy_cleanup_scsi_cmd:
-	sc->result = DID_NO_CONNECT << 16;
+	sc->result = 0;
+	set_host_byte(sc, DID_NO_CONNECT);
 	FNIC_SCSI_DBG(KERN_DEBUG, fnic->lport->host, "wq_copy_cleanup_handler:"
 		      " DID_NO_CONNECT\n");
 
@@ -2017,7 +2043,8 @@ int fnic_abort_cmd(struct scsi_cmnd *sc)
 
 	if (sc->scsi_done) {
 	/* Call SCSI completion function to complete the IO */
-		sc->result = (DID_ABORT << 16);
+		sc->result = 0;
+		set_host_byte(sc, DID_ABORT);
 		sc->scsi_done(sc);
 		atomic64_dec(&fnic_stats->io_stats.active_ios);
 		if (atomic64_read(&fnic->io_cmpl_skip))
@@ -2250,7 +2277,8 @@ static int fnic_clean_pending_aborts(struct fnic *fnic,
 		 */
 		if (sc->scsi_done) {
 			/* Set result to let upper SCSI layer retry */
-			sc->result = DID_RESET << 16;
+			sc->result = 0;
+			set_host_byte(sc, DID_RESET);
 			sc->scsi_done(sc);
 		}
 	}

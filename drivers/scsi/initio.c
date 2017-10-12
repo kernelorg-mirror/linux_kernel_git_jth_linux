@@ -2802,7 +2802,9 @@ static void i91uSCBPost(u8 * host_mem, u8 * cblk_mem)
 		break;
 	}
 
-	cmnd->result = cblk->tastat | (cblk->hastat << 16);
+	cmnd->result = 0;
+	set_host_byte(cmnd, cblk->hastat);
+	cmnd->result |= cblk->tastat;
 	i91u_unmap_scb(host->pci_dev, cmnd);
 	cmnd->scsi_done(cmnd);	/* Notify system DONE           */
 	initio_release_scb(host, cblk);	/* Release SCB for current channel */

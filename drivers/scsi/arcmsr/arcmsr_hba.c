@@ -1054,7 +1054,8 @@ static void arcmsr_report_sense_info(struct CommandControlBlock *ccb)
 
 	struct scsi_cmnd *pcmd = ccb->pcmd;
 	struct SENSE_DATA *sensebuffer = (struct SENSE_DATA *)pcmd->sense_buffer;
-	pcmd->result = DID_OK << 16;
+	pcmd->result = 0;
+	set_host_byte(pcmd, DID_OK);
 	if (sensebuffer) {
 		int sense_data_length =
 			sizeof(struct SENSE_DATA) < SCSI_SENSE_BUFFERSIZE
@@ -1161,7 +1162,7 @@ static void arcmsr_drain_donequeue(struct AdapterControlBlock *acb, struct Comma
 			if (abortcmd) {
 				id = abortcmd->device->id;
 				lun = abortcmd->device->lun;				
-				abortcmd->result |= DID_ABORT << 16;
+				set_host_byte(abortcmd, DID_ABORT);
 				arcmsr_ccb_complete(pCCB);
 				printk(KERN_NOTICE "arcmsr%d: pCCB ='0x%p' isr got aborted command \n",
 				acb->host->host_no, pCCB);
@@ -2571,7 +2572,8 @@ static void arcmsr_handle_virtual_command(struct AdapterControlBlock *acb,
 		struct scatterlist *sg;
 
 		if (cmd->device->lun) {
-			cmd->result = (DID_TIME_OUT << 16);
+			cmd->result = 0;
+			set_host_byte(cmd, DID_TIME_OUT);
 			cmd->scsi_done(cmd);
 			return;
 		}
@@ -2601,8 +2603,10 @@ static void arcmsr_handle_virtual_command(struct AdapterControlBlock *acb,
 	break;
 	case WRITE_BUFFER:
 	case READ_BUFFER: {
-		if (arcmsr_iop_message_xfer(acb, cmd))
-			cmd->result = (DID_ERROR << 16);
+		if (arcmsr_iop_message_xfer(acb, cmd)) {
+			cmd->result = 0;
+			set_host_byte(cmd, DID_ERROR);
+		}
 		cmd->scsi_done(cmd);
 	}
 	break;
@@ -2630,7 +2634,9 @@ static int arcmsr_queue_command_lck(struct scsi_cmnd *cmd,
 	if (!ccb)
 		return SCSI_MLQUEUE_HOST_BUSY;
 	if (arcmsr_build_ccb( acb, ccb, cmd ) == FAILED) {
-		cmd->result = (DID_ERROR << 16) | (RESERVATION_CONFLICT << 1);
+		cmd->result = 0;
+		set_host_byte(cmd, DID_ERROR);
+		cmd->result |= (RESERVATION_CONFLICT << 1);
 		cmd->scsi_done(cmd);
 		return 0;
 	}

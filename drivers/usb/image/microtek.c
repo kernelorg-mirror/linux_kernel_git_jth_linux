@@ -582,7 +582,8 @@ mts_scsi_queuecommand_lck(struct scsi_cmnd *srb, mts_scsi_cmnd_callback callback
 
 		MTS_DEBUG("this device doesn't exist\n");
 
-		srb->result = DID_BAD_TARGET << 16;
+		srb->result = 0;
+		set_host_byte(srb, DID_BAD_TARGET);
 
 		if(likely(callback != NULL))
 			callback(srb);
@@ -609,7 +610,8 @@ mts_scsi_queuecommand_lck(struct scsi_cmnd *srb, mts_scsi_cmnd_callback callback
 
 	if(unlikely(res)){
 		MTS_ERROR("error %d submitting URB\n",(int)res);
-		srb->result = DID_ERROR << 16;
+		srb->result = 0;
+		set_host_byte(srb, DID_ERROR);
 
 		if(likely(callback != NULL))
 			callback(srb);

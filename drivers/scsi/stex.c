@@ -656,7 +656,8 @@ stex_queuecommand_lck(struct scsi_cmnd *cmd, void (*done)(struct scsi_cmnd *))
 		break;
 	case INQUIRY:
 		if (lun >= host->max_lun) {
-			cmd->result = DID_NO_CONNECT << 16;
+			cmd->result = 0;
+			set_host_byte(cmd, DID_NO_CONNECT);
 			done(cmd);
 			return 0;
 		}
