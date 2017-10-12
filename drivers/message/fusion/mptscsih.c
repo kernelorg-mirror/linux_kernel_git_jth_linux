@@ -806,7 +806,7 @@ mptscsih_io_done(MPT_ADAPTER *ioc, MPT_FRAME_HDR *mf, MPT_FRAME_HDR *mr)
 			if((xfer_cnt==0)||(sc->underflow > xfer_cnt))
 				sc->result=DID_SOFT_ERROR << 16;
 			else /* Sufficient data transfer occurred */
-				sc->result = (DID_OK << 16) | scsi_status;
+				set_scsi_result(sc, 0, DID_OK, 0, scsi_status);
 			dreplyprintk(ioc, printk(MYIOC_s_DEBUG_FMT
 			    "RESIDUAL_MISMATCH: result=%x on channel=%d id=%d\n",
 			    ioc->name, sc->result, sc->device->channel, sc->device->id));
@@ -817,7 +817,7 @@ mptscsih_io_done(MPT_ADAPTER *ioc, MPT_FRAME_HDR *mf, MPT_FRAME_HDR *mr)
 			 *  Do upfront check for valid SenseData and give it
 			 *  precedence!
 			 */
-			sc->result = (DID_OK << 16) | scsi_status;
+			set_scsi_result(sc, 0, DID_OK, 0, scsi_status);
 			if (!(scsi_state & MPI_SCSI_STATE_AUTOSENSE_VALID)) {
 
 				/*
@@ -884,7 +884,7 @@ mptscsih_io_done(MPT_ADAPTER *ioc, MPT_FRAME_HDR *mf, MPT_FRAME_HDR *mr)
 			scsi_set_resid(sc, 0);
 		case MPI_IOCSTATUS_SCSI_RECOVERED_ERROR:	/* 0x0040 */
 		case MPI_IOCSTATUS_SUCCESS:			/* 0x0000 */
-			sc->result = (DID_OK << 16) | scsi_status;
+			set_scsi_result(sc, 0, DID_OK, 0, scsi_status);
 			if (scsi_state == 0) {
 				;
 			} else if (scsi_state &

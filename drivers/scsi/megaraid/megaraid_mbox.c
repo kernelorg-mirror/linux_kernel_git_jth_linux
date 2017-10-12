@@ -2347,8 +2347,8 @@ megaraid_mbox_dpc(unsigned long devp)
 				memcpy(scp->sense_buffer, pthru->reqsensearea,
 						14);
 
-				scp->result = DRIVER_SENSE << 24 |
-					DID_OK << 16 | CHECK_CONDITION << 1;
+				set_scsi_result(scp, DRIVER_SENSE, DID_OK, 0,
+						CHECK_CONDITION << 1);
 			}
 			else {
 				if (mbox->cmd == MBOXCMD_EXTPTHRU) {
@@ -2356,9 +2356,9 @@ megaraid_mbox_dpc(unsigned long devp)
 					memcpy(scp->sense_buffer,
 						epthru->reqsensearea, 14);
 
-					scp->result = DRIVER_SENSE << 24 |
-						DID_OK << 16 |
-						CHECK_CONDITION << 1;
+					set_scsi_result(scp, DRIVER_SENSE,
+							DID_OK, 0,
+							CHECK_CONDITION << 1);
 				} else {
 					scp->sense_buffer[0] = 0x70;
 					scp->sense_buffer[2] = ABORTED_COMMAND;
@@ -2369,7 +2369,7 @@ megaraid_mbox_dpc(unsigned long devp)
 
 		case 0x08:
 
-			scp->result = DID_BUS_BUSY << 16 | status;
+			set_scsi_result(scp, 0, DID_BUS_BUSY, 0, status);
 			break;
 
 		default:
@@ -2379,8 +2379,8 @@ megaraid_mbox_dpc(unsigned long devp)
 			 * failed
 			 */
 			if (scp->cmnd[0] == TEST_UNIT_READY) {
-				scp->result = DID_ERROR << 16 |
-					RESERVATION_CONFLICT << 1;
+				set_scsi_result(scp, 0, DID_ERROR, 0,
+						RESERVATION_CONFLICT << 1);
 			}
 			else
 			/*
@@ -2390,11 +2390,12 @@ megaraid_mbox_dpc(unsigned long devp)
 			if (status == 1 && (scp->cmnd[0] == RESERVE ||
 					 scp->cmnd[0] == RELEASE)) {
 
-				scp->result = DID_ERROR << 16 |
-					RESERVATION_CONFLICT << 1;
+				set_scsi_result(scp, 0, DID_ERROR, 0,
+						RESERVATION_CONFLICT << 1);
 			}
 			else {
-				scp->result = DID_BAD_TARGET << 16 | status;
+				set_scsi_result(scp, 0, DID_BAD_TARGET, 0,
+						status);
 			}
 		}
 

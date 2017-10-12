@@ -1625,9 +1625,8 @@ static int _aac_reset_adapter(struct aac_dev *aac, int forced, u8 reset_type)
 	while ((command = command_list)) {
 		command_list = (struct scsi_cmnd *)command->SCp.buffer;
 		command->SCp.buffer = NULL;
-		command->result = DID_OK << 16
-		  | COMMAND_COMPLETE << 8
-		  | SAM_STAT_TASK_SET_FULL;
+		set_scsi_result(command, 0, DID_OK, COMMAND_COMPLETE,
+				SAM_STAT_TASK_SET_FULL);
 		command->SCp.phase = AAC_OWNER_ERROR_HANDLER;
 		command->scsi_done(command);
 	}

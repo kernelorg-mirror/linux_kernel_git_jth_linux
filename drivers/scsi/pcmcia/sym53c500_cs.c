@@ -409,8 +409,8 @@ SYM53C500_intr(int irq, void *dev_id)
 		if (curSC->SCp.phase != message_in) {	/* Unexpected disconnect */
 			curSC->result = DID_NO_CONNECT << 16;
 		} else {	/* Command complete, return status and message */
-			curSC->result = (curSC->SCp.Status & 0xff)
-			    | ((curSC->SCp.Message & 0xff) << 8) | (DID_OK << 16);
+			set_scsi_result(curSC, 0, DID_OK, 0,
+					(curSC->SCp.Status & 0xff) | ((curSC->SCp.Message & 0xff) << 8));
 		}
 		goto idle_out;
 	}

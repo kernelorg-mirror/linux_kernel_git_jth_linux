@@ -1716,7 +1716,7 @@ out:
 	if (req->nsge > 0)
 		scsi_dma_unmap(cmnd);
 
-	cmnd->result = (((host_status) << 16) | scsi_status);
+	set_scsi_result(cmnd, 0, host_status, 0, scsi_status);
 	cmnd->scsi_done(cmnd);
 
 	/* Wake up waiting threads */
@@ -1744,7 +1744,7 @@ csio_scsi_cbfn(struct csio_hw *hw, struct csio_ioreq *req)
 				host_status = csio_scsi_copy_to_sgl(hw, req);
 		}
 
-		cmnd->result = (((host_status) << 16) | scsi_status);
+		set_scsi_result(cmnd, 0, host_status, 0, scsi_status);
 		cmnd->scsi_done(cmnd);
 		csio_scsi_cmnd(req) = NULL;
 		CSIO_INC_STATS(csio_hw_to_scsim(hw), n_tot_success);

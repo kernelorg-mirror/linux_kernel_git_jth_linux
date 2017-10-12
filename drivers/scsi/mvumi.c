@@ -2081,8 +2081,8 @@ static unsigned char mvumi_build_frame(struct mvumi_hba *mhba,
 	return 0;
 
 error:
-	scmd->result = (DID_OK << 16) | (DRIVER_SENSE << 24) |
-		SAM_STAT_CHECK_CONDITION;
+	set_scsi_result(scmd, DRIVER_SENSE, DID_OK, 0,
+			SAM_STAT_CHECK_CONDITION);
 	scsi_build_sense_buffer(0, scmd->sense_buffer, ILLEGAL_REQUEST, 0x24,
 									0);
 	return -1;
@@ -2145,7 +2145,7 @@ static enum blk_eh_timer_return mvumi_timed_out(struct scsi_cmnd *scmd)
 	else
 		atomic_dec(&mhba->fw_outstanding);
 
-	scmd->result = (DRIVER_INVALID << 24) | (DID_ABORT << 16);
+	set_scsi_result(scmd, DRIVER_INVALID, DID_ABORT, 0, 0);
 	scmd->SCp.ptr = NULL;
 	if (scsi_bufflen(scmd)) {
 		pci_unmap_sg(mhba->pdev, scsi_sglist(scmd),

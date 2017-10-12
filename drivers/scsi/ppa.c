@@ -774,8 +774,7 @@ static int ppa_engine(ppa_struct *dev, struct scsi_cmnd *cmd)
 			/* Check for optional message byte */
 			if (ppa_wait(dev) == (unsigned char) 0xf0)
 				ppa_in(dev, &h, 1);
-			cmd->result =
-			    (DID_OK << 16) + (h << 8) + (l & STATUS_MASK);
+			set_scsi_result(cmd, 0, DID_OK, h, l & STATUS_MASK);
 		}
 		return 0;	/* Finished */
 		break;

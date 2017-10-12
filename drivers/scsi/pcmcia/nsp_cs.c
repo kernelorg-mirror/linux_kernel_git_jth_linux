@@ -1035,9 +1035,9 @@ static irqreturn_t nspintr(int irq, void *dev_id)
 
 		if(data->CurrentSC != NULL) {
 			tmpSC = data->CurrentSC;
-			tmpSC->result  = (DID_RESET                   << 16) |
-				         ((tmpSC->SCp.Message & 0xff) <<  8) |
-				         ((tmpSC->SCp.Status  & 0xff) <<  0);
+			set_scsi_result(tmpSC, 0, DID_RESET,
+					tmpSC->SCp.Message & 0xff,
+					tmpSC->SCp.Status  & 0xff);
 			nsp_scsi_done(tmpSC);
 		}
 		return IRQ_HANDLED;
@@ -1135,9 +1135,9 @@ static irqreturn_t nspintr(int irq, void *dev_id)
 		//*sync_neg       = SYNC_NOT_YET;
 
 		if ((tmpSC->SCp.Message == MSG_COMMAND_COMPLETE)) {     /* all command complete and return status */
-			tmpSC->result = (DID_OK		             << 16) |
-					((tmpSC->SCp.Message & 0xff) <<  8) |
-					((tmpSC->SCp.Status  & 0xff) <<  0);
+			set_scsi_result(tmpSC, 0, DID_OK,
+					tmpSC->SCp.Message & 0xff,
+					tmpSC->SCp.Status  & 0xff);
 			nsp_dbg(NSP_DEBUG_INTR, "command complete result=0x%x", tmpSC->result);
 			nsp_scsi_done(tmpSC);
 

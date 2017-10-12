@@ -1333,7 +1333,8 @@ static irqreturn_t twa_interrupt(int irq, void *dev_instance)
 				/* If error, command failed */
 				if (error == 1) {
 					/* Ask for a host reset */
-					cmd->result = (DID_OK << 16) | (CHECK_CONDITION << 1);
+					set_scsi_result(cmd, 0, DID_OK, 0,
+							(CHECK_CONDITION << 1));
 				}
 
 				/* Report residual bytes for single sgl */

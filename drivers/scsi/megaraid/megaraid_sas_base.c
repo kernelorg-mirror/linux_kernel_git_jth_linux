@@ -3294,13 +3294,14 @@ megasas_complete_cmd(struct megasas_instance *instance, struct megasas_cmd *cmd,
 
 		case MFI_STAT_SCSI_IO_FAILED:
 		case MFI_STAT_LD_INIT_IN_PROGRESS:
-			cmd->scmd->result =
-			    (DID_ERROR << 16) | hdr->scsi_status;
+			set_scsi_result(cmd->scmd, 0, DID_ERROR, 0,
+					hdr->scsi_status);
 			break;
 
 		case MFI_STAT_SCSI_DONE_WITH_ERROR:
 
-			cmd->scmd->result = (DID_OK << 16) | hdr->scsi_status;
+			set_scsi_result(cmd->scmd, 0, DID_OK, 0,
+					hdr->scsi_status);
 
 			if (hdr->scsi_status == SAM_STAT_CHECK_CONDITION) {
 				memset(cmd->scmd->sense_buffer, 0,

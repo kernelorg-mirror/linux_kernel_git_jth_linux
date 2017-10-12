@@ -841,7 +841,7 @@ static void iscsi_scsi_cmd_rsp(struct iscsi_conn *conn, struct iscsi_hdr *hdr,
 	iscsi_update_cmdsn(session, (struct iscsi_nopin*)rhdr);
 	conn->exp_statsn = be32_to_cpu(rhdr->statsn) + 1;
 
-	sc->result = (DID_OK << 16) | rhdr->cmd_status;
+	set_scsi_result(sc, 0, DID_OK, 0, rhdr->cmd_status);
 
 	if (task->protected) {
 		sector_t sector;
@@ -856,8 +856,9 @@ static void iscsi_scsi_cmd_rsp(struct iscsi_conn *conn, struct iscsi_hdr *hdr,
 
 		ascq = session->tt->check_protection(task, &sector);
 		if (ascq) {
-			sc->result = DRIVER_SENSE << 24 |
-				     SAM_STAT_CHECK_CONDITION;
+			sc->result = 0;
+			set_scsi_result(sc, DRIVER_SENSE, 0, 0,
+					SAM_STAT_CHECK_CONDITION);
 			scsi_build_sense_buffer(1, sc->sense_buffer,
 						ILLEGAL_REQUEST, 0x10, ascq);
 			scsi_set_sense_information(sc->sense_buffer,
@@ -904,7 +905,8 @@ invalid_datalen:
 				 res_count <= scsi_in(sc)->length))
 			scsi_in(sc)->resid = res_count;
 		else
-			sc->result = (DID_BAD_TARGET << 16) | rhdr->cmd_status;
+			set_scsi_result(sc, 0, DID_BAD_TARGET, 0,
+					rhdr->cmd_status);
 	}
 
 	if (rhdr->flags & (ISCSI_FLAG_CMD_UNDERFLOW |
@@ -917,7 +919,8 @@ invalid_datalen:
 			/* write side for bidi or uni-io set_resid */
 			scsi_set_resid(sc, res_count);
 		else
-			sc->result = (DID_BAD_TARGET << 16) | rhdr->cmd_status;
+			set_scsi_result(sc, 0, DID_BAD_TARGET, 0,
+					rhdr->cmd_status);
 	}
 out:
 	ISCSI_DBG_SESSION(session, "cmd rsp done [sc %p res %d itt 0x%x]\n",
@@ -943,7 +946,7 @@ iscsi_data_in_rsp(struct iscsi_conn *conn, struct iscsi_hdr *hdr,
 		return;
 
 	iscsi_update_cmdsn(conn->session, (struct iscsi_nopin *)hdr);
-	sc->result = (DID_OK << 16) | rhdr->cmd_status;
+	set_scsi_result(sc, 0, DID_OK, 0, rhdr->cmd_status);
 	conn->exp_statsn = be32_to_cpu(rhdr->statsn) + 1;
 	if (rhdr->flags & (ISCSI_FLAG_DATA_UNDERFLOW |
 	                   ISCSI_FLAG_DATA_OVERFLOW)) {
@@ -954,7 +957,8 @@ iscsi_data_in_rsp(struct iscsi_conn *conn, struct iscsi_hdr *hdr,
 		     res_count <= scsi_in(sc)->length))
 			scsi_in(sc)->resid = res_count;
 		else
-			sc->result = (DID_BAD_TARGET << 16) | rhdr->cmd_status;
+			set_scsi_result(sc, 0, DID_BAD_TARGET, 0,
+					rhdr->cmd_status);
 	}
 
 	ISCSI_DBG_SESSION(conn->session, "data in with status done "

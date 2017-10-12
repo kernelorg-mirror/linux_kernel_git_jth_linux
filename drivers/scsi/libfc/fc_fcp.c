@@ -2010,7 +2010,7 @@ static void fc_io_compl(struct fc_fcp_pkt *fsp)
 			 * transport level I/O was ok but scsi
 			 * has non zero status
 			 */
-			sc_cmd->result = (DID_OK << 16) | fsp->cdb_status;
+			set_scsi_result(sc_cmd, 0, DID_OK, 0, fsp->cdb_status);
 		}
 		break;
 	case FC_ERROR:
@@ -2038,7 +2038,8 @@ static void fc_io_compl(struct fc_fcp_pkt *fsp)
 			FC_FCP_DBG(fsp, "Returning DID_ERROR to scsi-ml "
 				   "due to FC_DATA_UNDRUN (scsi)\n");
 			CMD_RESID_LEN(sc_cmd) = fsp->scsi_resid;
-			sc_cmd->result = (DID_ERROR << 16) | fsp->cdb_status;
+			set_scsi_result(sc_cmd, 0, DID_ERROR, 0,
+					fsp->cdb_status);
 		}
 		break;
 	case FC_DATA_OVRRUN:
@@ -2047,7 +2048,7 @@ static void fc_io_compl(struct fc_fcp_pkt *fsp)
 		 */
 		FC_FCP_DBG(fsp, "Returning DID_ERROR to scsi-ml "
 			   "due to FC_DATA_OVRRUN\n");
-		sc_cmd->result = (DID_ERROR << 16) | fsp->cdb_status;
+		set_scsi_result(sc_cmd, 0, DID_ERROR, 0, fsp->cdb_status);
 		break;
 	case FC_CMD_ABORTED:
 		if (host_byte(sc_cmd->result) == DID_TIME_OUT)
@@ -2083,7 +2084,7 @@ static void fc_io_compl(struct fc_fcp_pkt *fsp)
 	case FC_TIMED_OUT:
 		FC_FCP_DBG(fsp, "Returning DID_BUS_BUSY to scsi-ml "
 			   "due to FC_TIMED_OUT\n");
-		sc_cmd->result = (DID_BUS_BUSY << 16) | fsp->io_status;
+		set_scsi_result(sc_cmd, 0, DID_BUS_BUSY, 0, fsp->io_status);
 		break;
 	default:
 		FC_FCP_DBG(fsp, "Returning DID_ERROR to scsi-ml "

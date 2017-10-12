@@ -2350,8 +2350,11 @@ static int srp_queuecommand(struct Scsi_Host *shost, struct scsi_cmnd *scmnd)
 		 * max_pages_per_mr sg-list elements, tell the SCSI mid-layer
 		 * to reduce queue depth temporarily.
 		 */
-		scmnd->result = len == -ENOMEM ?
-			DID_OK << 16 | QUEUE_FULL << 1 : DID_ERROR << 16;
+		if (len == -ENOMEM)
+			set_scsi_result(scmnd, 0, DID_OK, 0,
+					SAM_STAT_TASK_SET_FULL);
+		else
+			set_host_byte(scmnd, DID_ERROR);
 		goto err_iu;
 	}
 

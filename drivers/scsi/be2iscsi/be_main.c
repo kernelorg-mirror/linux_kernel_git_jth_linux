@@ -1131,7 +1131,7 @@ be_complete_io(struct beiscsi_conn *beiscsi_conn,
 
 		return;
 	}
-	task->sc->result = (DID_OK << 16) | status;
+	set_scsi_result(task->sc, 0, DID_OK, 0, status);
 	if (rsp != ISCSI_STATUS_CMD_COMPLETED) {
 		task->sc->result = DID_ERROR << 16;
 		goto unmap;

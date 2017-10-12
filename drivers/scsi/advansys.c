@@ -6039,8 +6039,8 @@ static void adv_isr_callback(ADV_DVC_VAR *adv_dvc_varp, ADV_SCSI_REQ_Q *scsiqp)
 				 * 0x2. Host drivers are supposed to return
 				 * the status byte as it is defined by SCSI.
 				 */
-				scp->result = DRIVER_BYTE(DRIVER_SENSE) |
-				    STATUS_BYTE(scsiqp->scsi_status);
+				set_scsi_result(scp, DRIVER_SENSE, 0, 0,
+						scsiqp->scsi_status);
 			} else {
 				scp->result = STATUS_BYTE(scsiqp->scsi_status);
 			}
@@ -6056,14 +6056,12 @@ static void adv_isr_callback(ADV_DVC_VAR *adv_dvc_varp, ADV_SCSI_REQ_Q *scsiqp)
 
 	case QD_ABORTED_BY_HOST:
 		ASC_DBG(1, "QD_ABORTED_BY_HOST\n");
-		scp->result =
-		    HOST_BYTE(DID_ABORT) | STATUS_BYTE(scsiqp->scsi_status);
+		set_scsi_result(scp, 0, DID_ABORT, 0, scsiqp->scsi_status);
 		break;
 
 	default:
 		ASC_DBG(1, "done_status 0x%x\n", scsiqp->done_status);
-		scp->result =
-		    HOST_BYTE(DID_ERROR) | STATUS_BYTE(scsiqp->scsi_status);
+		set_scsi_result(scp, 0, DID_ERROR, 0, scsiqp->scsi_status);
 		break;
 	}
 
@@ -6807,8 +6805,8 @@ static void asc_isr_callback(ASC_DVC_VAR *asc_dvc_varp, ASC_QDONE_INFO *qdonep)
 				 * 0x2. Host drivers are supposed to return
 				 * the status byte as it is defined by SCSI.
 				 */
-				scp->result = DRIVER_BYTE(DRIVER_SENSE) |
-				    STATUS_BYTE(qdonep->d3.scsi_stat);
+				set_scsi_result(scp, 0, DRIVER_SENSE, 0,
+					qdonep->d3.scsi_stat);
 			} else {
 				scp->result = STATUS_BYTE(qdonep->d3.scsi_stat);
 			}
@@ -6824,18 +6822,14 @@ static void asc_isr_callback(ASC_DVC_VAR *asc_dvc_varp, ASC_QDONE_INFO *qdonep)
 
 	case QD_ABORTED_BY_HOST:
 		ASC_DBG(1, "QD_ABORTED_BY_HOST\n");
-		scp->result =
-		    HOST_BYTE(DID_ABORT) | MSG_BYTE(qdonep->d3.
-						    scsi_msg) |
-		    STATUS_BYTE(qdonep->d3.scsi_stat);
+		set_scsi_result(scp, 0,	DID_ABORT, qdonep->d3.scsi_msg,
+			qdonep->d3.scsi_stat);
 		break;
 
 	default:
 		ASC_DBG(1, "done_stat 0x%x\n", qdonep->d3.done_stat);
-		scp->result =
-		    HOST_BYTE(DID_ERROR) | MSG_BYTE(qdonep->d3.
-						    scsi_msg) |
-		    STATUS_BYTE(qdonep->d3.scsi_stat);
+		set_scsi_result(scp, 0, DID_ERROR, qdonep->d3.scsi_msg,
+				qdonep->d3.scsi_stat);
 		break;
 	}
 

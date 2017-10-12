@@ -1010,8 +1010,6 @@ typedef u32 tagmap_t;
 **	Other definitions
 */
 
-#define ScsiResult(host_code, scsi_code) (((host_code) << 16) + ((scsi_code) & 0x7f))
-
 #define initverbose (driver_setup.verbose)
 #define bootverbose (np->verbose)
 
@@ -4611,7 +4609,7 @@ static int ncr_reset_bus (struct ncb *np, struct scsi_cmnd *cmd, int sync_reset)
  * in order to keep it alive.
  */
 	if (!found && sync_reset && !retrieve_from_waiting_list(0, np, cmd)) {
-		cmd->result = ScsiResult(DID_RESET, 0);
+		set_scsi_result(cmd, 0, DID_RESET, 0, 0);
 		ncr_queue_done_cmd(np, cmd);
 	}
 
@@ -4922,7 +4920,7 @@ void ncr_complete (struct ncb *np, struct ccb *cp)
 		 *	CONDITION MET status is returned on 
 		 *	`Pre-Fetch' or `Search data' success.
 		 */
-		cmd->result = ScsiResult(DID_OK, cp->scsi_status);
+		set_scsi_result(cmd, 0, DID_OK, 0, cp->scsi_status);
 
 		/*
 		**	@RESID@
@@ -4957,7 +4955,7 @@ void ncr_complete (struct ncb *np, struct ccb *cp)
 		/*
 		**   Check condition code
 		*/
-		cmd->result = ScsiResult(DID_OK, S_CHECK_COND);
+		set_scsi_result(cmd, 0, DID_OK, 0, S_CHECK_COND);
 
 		/*
 		**	Copy back sense data to caller's buffer.
@@ -4978,7 +4976,7 @@ void ncr_complete (struct ncb *np, struct ccb *cp)
 		/*
 		**   Reservation Conflict condition code
 		*/
-		cmd->result = ScsiResult(DID_OK, S_CONFLICT);
+		set_scsi_result(cmd, 0, DID_OK, 0, S_CONFLICT);
 	
 	} else if ((cp->host_status == HS_COMPLETE)
 		&& (cp->scsi_status == S_BUSY ||
@@ -4987,7 +4985,7 @@ void ncr_complete (struct ncb *np, struct ccb *cp)
 		/*
 		**   Target is busy.
 		*/
-		cmd->result = ScsiResult(DID_OK, cp->scsi_status);
+		set_scsi_result(cmd, 0, DID_OK, 0, cp->scsi_status);
 
 	} else if ((cp->host_status == HS_SEL_TIMEOUT)
 		|| (cp->host_status == HS_TIMEOUT)) {
@@ -4995,21 +4993,21 @@ void ncr_complete (struct ncb *np, struct ccb *cp)
 		/*
 		**   No response
 		*/
-		cmd->result = ScsiResult(DID_TIME_OUT, cp->scsi_status);
+		set_scsi_result(cmd, 0, DID_TIME_OUT, 0, cp->scsi_status);
 
 	} else if (cp->host_status == HS_RESET) {
 
 		/*
 		**   SCSI bus reset
 		*/
-		cmd->result = ScsiResult(DID_RESET, cp->scsi_status);
+		set_scsi_result(cmd, 0, DID_RESET, 0, cp->scsi_status);
 
 	} else if (cp->host_status == HS_ABORTED) {
 
 		/*
 		**   Transfer aborted
 		*/
-		cmd->result = ScsiResult(DID_ABORT, cp->scsi_status);
+		set_scsi_result(cmd, 0, DID_ABORT, 0, cp->scsi_status);
 
 	} else {
 
@@ -5019,7 +5017,7 @@ void ncr_complete (struct ncb *np, struct ccb *cp)
 		PRINT_ADDR(cmd, "COMMAND FAILED (%x %x) @%p.\n",
 			cp->host_status, cp->scsi_status, cp);
 
-		cmd->result = ScsiResult(DID_ERROR, cp->scsi_status);
+		set_scsi_result(cmd, 0, DID_ERROR, 0, cp->scsi_status);
 	}
 
 	/*
@@ -8043,7 +8041,7 @@ printk("ncr53c8xx_queue_command\n");
      spin_lock_irqsave(&np->smp_lock, flags);
 
      if ((sts = ncr_queue_command(np, cmd)) != DID_OK) {
-	  cmd->result = ScsiResult(sts, 0);
+	  set_scsi_result(cmd, 0, sts, 0, 0);
 #ifdef DEBUG_NCR53C8XX
 printk("ncr53c8xx : command not queued - result=%d\n", sts);
 #endif
@@ -8234,7 +8232,7 @@ static void process_waiting_list(struct ncb *np, int sts)
 #ifdef DEBUG_WAITING_LIST
 	printk("%s: cmd %lx done forced sts=%d\n", ncr_name(np), (u_long) wcmd, sts);
 #endif
-			wcmd->result = ScsiResult(sts, 0);
+			set_scsi_result(wcmd, 0, sts, 0, 0);
 			ncr_queue_done_cmd(np, wcmd);
 		}
 	}

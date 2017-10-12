@@ -355,6 +355,14 @@ static inline void set_driver_byte(struct scsi_cmnd *cmd,
 	cmd->result = (cmd->result & 0x00ffffff) | (status << 24);
 }
 
+static inline void set_scsi_result(struct scsi_cmnd *cmd,
+				   enum scsi_driver_byte db,
+				   enum scsi_host_byte hb,
+				   enum scsi_msg_byte mb, char status)
+{
+	cmd->result = db << 24 | hb << 16 | mb << 8 | status;
+}
+
 static inline unsigned scsi_transfer_length(struct scsi_cmnd *scmd)
 {
 	unsigned int xfer_len = scsi_out(scmd)->length;

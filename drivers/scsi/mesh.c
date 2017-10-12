@@ -594,7 +594,7 @@ static void mesh_done(struct mesh_state *ms, int start_next)
 	ms->current_req = NULL;
 	tp->current_req = NULL;
 	if (cmd) {
-		cmd->result = (ms->stat << 16) + cmd->SCp.Status;
+		set_scsi_result(cmd, 0, ms->stat, 0, cmd->SCp.Status);
 		if (ms->stat == DID_OK)
 			cmd->result += (cmd->SCp.Message << 8);
 		if (DEBUG_TARGET(cmd)) {

@@ -476,7 +476,7 @@ snic_process_io_failed_state(struct snic *snic,
 		      snic_io_status_to_str(cmpl_stat), CMD_FLAGS(sc));
 
 	/* Set sc->result */
-	sc->result = (res << 16) | icmnd_cmpl->scsi_status;
+	set_scsi_result(sc, 0, res, 0, icmnd_cmpl->scsi_status);
 } /* end of snic_process_io_failed_state */
 
 /*
@@ -509,7 +509,7 @@ snic_process_icmnd_cmpl_status(struct snic *snic,
 	CMD_STATE(sc) = SNIC_IOREQ_COMPLETE;
 
 	if (likely(cmpl_stat == SNIC_STAT_IO_SUCCESS)) {
-		sc->result = (DID_OK << 16) | scsi_stat;
+		set_scsi_result(sc, 0, DID_OK, 0, scsi_stat);
 
 		xfer_len = scsi_bufflen(sc);
 

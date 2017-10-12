@@ -1186,9 +1186,8 @@ wd33c93_intr(struct Scsi_Host *instance)
 				cmd->SCp.Status = lun;
 			if (cmd->cmnd[0] == REQUEST_SENSE
 			    && cmd->SCp.Status != GOOD)
-				cmd->result =
-				    (cmd->
-				     result & 0x00ffff) | (DID_ERROR << 16);
+				set_scsi_result(cmd, 0, DID_ERROR, 0,
+						(cmd->result & 0x00ffff));
 			else
 				cmd->result =
 				    cmd->SCp.Status | (cmd->SCp.Message << 8);
@@ -1272,10 +1271,11 @@ wd33c93_intr(struct Scsi_Host *instance)
 		hostdata->busy[cmd->device->id] &= ~(1 << (cmd->device->lun & 0xff));
 		hostdata->state = S_UNCONNECTED;
 		if (cmd->cmnd[0] == REQUEST_SENSE && cmd->SCp.Status != GOOD)
-			cmd->result =
-			    (cmd->result & 0x00ffff) | (DID_ERROR << 16);
+			set_scsi_result(cmd, 0, DID_ERROR, 0,
+					(cmd->result & 0x00ffff));
 		else
-			cmd->result = cmd->SCp.Status | (cmd->SCp.Message << 8);
+			set_scsi_result(cmd,0, 0, cmd->SCp.Message,
+					cmd->SCp.Status);
 		cmd->scsi_done(cmd);
 
 /* We are no longer connected to a target - check to see if
@@ -1306,9 +1306,8 @@ wd33c93_intr(struct Scsi_Host *instance)
 			DB(DB_INTR, printk(":%d", cmd->SCp.Status))
 			    if (cmd->cmnd[0] == REQUEST_SENSE
 				&& cmd->SCp.Status != GOOD)
-				cmd->result =
-				    (cmd->
-				     result & 0x00ffff) | (DID_ERROR << 16);
+				set_scsi_result(cmd, 0, DID_ERROR, 0,
+						(cmd->result & 0x00ffff));
 			else
 				cmd->result =
 				    cmd->SCp.Status | (cmd->SCp.Message << 8);

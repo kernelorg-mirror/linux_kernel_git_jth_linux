@@ -357,7 +357,7 @@ void ata_scsi_set_sense(struct ata_device *dev, struct scsi_cmnd *cmd,
 	if (!cmd)
 		return;
 
-	cmd->result = (DRIVER_SENSE << 24) | SAM_STAT_CHECK_CONDITION;
+	set_scsi_result(cmd, DRIVER_SENSE, 0, 0, SAM_STAT_CHECK_CONDITION);
 
 	scsi_build_sense_buffer(d_sense, cmd->sense_buffer, sk, asc, ascq);
 }
@@ -873,7 +873,7 @@ static struct ata_queued_cmd *ata_scsi_qc_new(struct ata_device *dev,
 		qc->sg = scsi_sglist(cmd);
 		qc->n_elem = scsi_sg_count(cmd);
 	} else {
-		cmd->result = (DID_OK << 16) | (QUEUE_FULL << 1);
+		set_scsi_result(cmd, 0, DID_OK, 0, (QUEUE_FULL << 1));
 		cmd->scsi_done(cmd);
 	}
 
@@ -1093,7 +1093,7 @@ static void ata_gen_passthru_sense(struct ata_queued_cmd *qc)
 
 	memset(sb, 0, SCSI_SENSE_BUFFERSIZE);
 
-	cmd->result = (DRIVER_SENSE << 24) | SAM_STAT_CHECK_CONDITION;
+	set_scsi_result(cmd, DRIVER_SENSE, 0, 0, SAM_STAT_CHECK_CONDITION);
 
 	/*
 	 * Use ata_to_sense_error() to map status register bits
@@ -1192,7 +1192,7 @@ static void ata_gen_ata_sense(struct ata_queued_cmd *qc)
 
 	memset(sb, 0, SCSI_SENSE_BUFFERSIZE);
 
-	cmd->result = (DRIVER_SENSE << 24) | SAM_STAT_CHECK_CONDITION;
+	set_scsi_result(cmd, DRIVER_SENSE, 0, 0, SAM_STAT_CHECK_CONDITION);
 
 	if (ata_dev_disabled(dev)) {
 		/* Device disabled after error recovery */

@@ -1784,12 +1784,12 @@ map_cmd_status(struct fusion_context *fusion,
 
 	case MFI_STAT_SCSI_IO_FAILED:
 	case MFI_STAT_LD_INIT_IN_PROGRESS:
-		scmd->result = (DID_ERROR << 16) | ext_status;
+		set_scsi_result(scmd, 0, DID_ERROR, 0, ext_status);
 		break;
 
 	case MFI_STAT_SCSI_DONE_WITH_ERROR:
 
-		scmd->result = (DID_OK << 16) | ext_status;
+		set_scsi_result(scmd, 0, DID_OK, 0, ext_status);
 		if (ext_status == SAM_STAT_CHECK_CONDITION) {
 			memset(scmd->sense_buffer, 0,
 			       SCSI_SENSE_BUFFERSIZE);

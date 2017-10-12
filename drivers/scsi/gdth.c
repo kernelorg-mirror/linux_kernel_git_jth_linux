@@ -2127,7 +2127,7 @@ static void gdth_next(gdth_ha_str *ha)
                 memset((char*)nscp->sense_buffer,0,16);
                 nscp->sense_buffer[0] = 0x70;
                 nscp->sense_buffer[2] = NOT_READY;
-                nscp->result = (DID_OK << 16) | (CHECK_CONDITION << 1);
+                set_scsi_result(nscp, 0, DID_OK, 0, (CHECK_CONDITION << 1));
                 if (!nscp_cmndinfo->wait_for_completion)
                     nscp_cmndinfo->wait_for_completion++;
                 else
@@ -2172,7 +2172,8 @@ static void gdth_next(gdth_ha_str *ha)
                     memset((char*)nscp->sense_buffer,0,16);
                     nscp->sense_buffer[0] = 0x70;
                     nscp->sense_buffer[2] = UNIT_ATTENTION;
-                    nscp->result = (DID_OK << 16) | (CHECK_CONDITION << 1);
+                    set_scsi_result(nscp, 0, DID_OK, 0,
+                                    (CHECK_CONDITION << 1));
                     if (!nscp_cmndinfo->wait_for_completion)
                         nscp_cmndinfo->wait_for_completion++;
                     else
@@ -2224,7 +2225,8 @@ static void gdth_next(gdth_ha_str *ha)
                     memset((char*)nscp->sense_buffer,0,16);
                     nscp->sense_buffer[0] = 0x70;
                     nscp->sense_buffer[2] = UNIT_ATTENTION;
-                    nscp->result = (DID_OK << 16) | (CHECK_CONDITION << 1);
+                    set_scsi_result(nscp, 0, DID_OK, 0,
+                                    (CHECK_CONDITION << 1));
                     if (!nscp_cmndinfo->wait_for_completion)
                         nscp_cmndinfo->wait_for_completion++;
                     else
@@ -3381,7 +3383,7 @@ static int gdth_sync_event(gdth_ha_str *ha, int service, u8 index,
                 memset((char*)scp->sense_buffer,0,16);
                 scp->sense_buffer[0] = 0x70;
                 scp->sense_buffer[2] = NOT_READY;
-                scp->result = (DID_OK << 16) | (CHECK_CONDITION << 1);
+                set_scsi_result(scp, 0, DID_OK, 0, (CHECK_CONDITION << 1));
             } else if (service == CACHESERVICE) {
                 if (ha->status == S_CACHE_UNKNOWN &&
                     (ha->hdr[t].cluster_type & 
@@ -3391,11 +3393,12 @@ static int gdth_sync_event(gdth_ha_str *ha, int service, u8 index,
                 }
                 memset((char*)scp->sense_buffer,0,16);
                 if (ha->status == (u16)S_CACHE_RESERV) {
-                    scp->result = (DID_OK << 16) | (RESERVATION_CONFLICT << 1);
+                    set_scsi_result(scp, 0, DID_OK, 0,
+                                    (RESERVATION_CONFLICT << 1));
                 } else {
                     scp->sense_buffer[0] = 0x70;
                     scp->sense_buffer[2] = NOT_READY;
-                    scp->result = (DID_OK << 16) | (CHECK_CONDITION << 1);
+                    set_scsi_result(scp, 0, DID_OK, 0, (CHECK_CONDITION << 1));
                 }
                 if (!cmndinfo->internal_command) {
                     ha->dvr.size = sizeof(ha->dvr.eu.sync);
@@ -3414,7 +3417,7 @@ static int gdth_sync_event(gdth_ha_str *ha, int service, u8 index,
                 if (ha->status != S_RAW_SCSI || ha->info >= 0x100) {
                     scp->result = DID_BAD_TARGET << 16;
                 } else {
-                    scp->result = (DID_OK << 16) | ha->info;
+                    set_scsi_result(scp, 0, DID_OK, 0, ha->info);
                 }
             }
         }

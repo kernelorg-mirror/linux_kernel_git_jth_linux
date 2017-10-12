@@ -111,7 +111,7 @@ static void sas_end_task(struct scsi_cmnd *sc, struct sas_task *task)
 		}
 	}
 
-	sc->result = (hs << 16) | stat;
+	set_scsi_result(sc, 0, hs, 0, stat);
 	ASSIGN_SAS_TASK(sc, NULL);
 	sas_free_task(task);
 }

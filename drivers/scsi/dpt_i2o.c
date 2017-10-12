@@ -2261,7 +2261,7 @@ static s32 adpt_scsi_to_i2o(adpt_hba* pHba, struct scsi_cmnd* cmd, struct adpt_d
 		default:
 			printk(KERN_WARNING"%s: scsi opcode 0x%x not supported.\n",
 			     pHba->name, cmd->cmnd[0]);
-			cmd->result = (DID_OK <<16) | (INITIATOR_ERROR << 8);
+			set_scsi_result(cmd, 0, DID_OK, INITIATOR_ERROR, 0);
 			cmd->scsi_done(cmd);
 			return 	0;
 		}
@@ -2689,7 +2689,7 @@ static void adpt_fail_posted_scbs(adpt_hba* pHba)
 			if(cmd->serial_number == 0){
 				continue;
 			}
-			cmd->result = (DID_OK << 16) | (QUEUE_FULL <<1);
+			set_scsi_result(cmd, 0, DID_OK, 0, (QUEUE_FULL << 1));
 			cmd->scsi_done(cmd);
 		}
 		spin_unlock_irqrestore(&d->list_lock, flags);

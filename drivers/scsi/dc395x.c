@@ -3382,14 +3382,12 @@ static void srb_done(struct AdapterCtlBlk *acb, struct DeviceCtlBlk *dcb,
 
 		if (srb->total_xfer_length
 		    && srb->total_xfer_length >= cmd->underflow)
-			cmd->result =
-			    MK_RES_LNX(DRIVER_SENSE, DID_OK,
-				       srb->end_message, CHECK_CONDITION);
+			set_scsi_result(cmd, DRIVER_SENSE, DID_OK,
+					srb->end_message, CHECK_CONDITION);
 		/*SET_RES_DID(cmd->result,DID_OK) */
 		else
-			cmd->result =
-			    MK_RES_LNX(DRIVER_SENSE, DID_OK,
-				       srb->end_message, CHECK_CONDITION);
+			set_scsi_result(cmd, DRIVER_SENSE, DID_OK,
+					srb->end_message, CHECK_CONDITION);
 
 		goto ckc_e;
 	}
@@ -3421,10 +3419,8 @@ static void srb_done(struct AdapterCtlBlk *acb, struct DeviceCtlBlk *dcb,
 			cmd->result = DID_NO_CONNECT << 16;
 		} else {
 			srb->adapter_status = 0;
-			SET_RES_DID(cmd->result, DID_ERROR);
-			SET_RES_MSG(cmd->result, srb->end_message);
-			SET_RES_TARGET(cmd->result, status);
-
+			set_scsi_result(cmd, 0, DID_ERROR, srb->end_message,
+					status);
 		}
 	} else {
 		/*
@@ -3433,11 +3429,10 @@ static void srb_done(struct AdapterCtlBlk *acb, struct DeviceCtlBlk *dcb,
 		status = srb->adapter_status;
 		if (status & H_OVER_UNDER_RUN) {
 			srb->target_status = 0;
-			SET_RES_DID(cmd->result, DID_OK);
-			SET_RES_MSG(cmd->result, srb->end_message);
+			set_scsi_result(cmd, 0, DID_OK, srb->end_message, 0);
 		} else if (srb->status & PARITY_ERROR) {
-			SET_RES_DID(cmd->result, DID_PARITY);
-			SET_RES_MSG(cmd->result, srb->end_message);
+			set_scsi_result(cmd, 0, DID_PARITY,
+					srb->end_message, 0);
 		} else {	/* No error */
 
 			srb->adapter_status = 0;

@@ -4557,8 +4557,8 @@ _scsih_eedp_error_handling(struct scsi_cmnd *scmd, u16 ioc_status)
 	}
 	scsi_build_sense_buffer(0, scmd->sense_buffer, ILLEGAL_REQUEST, 0x10,
 	    ascq);
-	scmd->result = DRIVER_SENSE << 24 | (DID_ABORT << 16) |
-	    SAM_STAT_CHECK_CONDITION;
+	set_scsi_result(scmd, DRIVER_SENSE, DID_ABORT, 0,
+			SAM_STAT_CHECK_CONDITION);
 }
 
 /**
@@ -5323,11 +5323,11 @@ _scsih_io_done(struct MPT3SAS_ADAPTER *ioc, u16 smid, u8 msix_index, u32 reply)
 		if ((xfer_cnt == 0) || (scmd->underflow > xfer_cnt))
 			scmd->result = DID_SOFT_ERROR << 16;
 		else
-			scmd->result = (DID_OK << 16) | scsi_status;
+			set_scsi_result(scmd, 0, DID_OK, 0, scsi_status);
 		break;
 
 	case MPI2_IOCSTATUS_SCSI_DATA_UNDERRUN:
-		scmd->result = (DID_OK << 16) | scsi_status;
+		set_scsi_result(scmd, 0, DID_OK, 0, scsi_status);
 
 		if ((scsi_state & MPI2_SCSI_STATE_AUTOSENSE_VALID))
 			break;
@@ -5345,8 +5345,8 @@ _scsih_io_done(struct MPT3SAS_ADAPTER *ioc, u16 smid, u8 msix_index, u32 reply)
 		else if (!xfer_cnt && scmd->cmnd[0] == REPORT_LUNS) {
 			mpi_reply->SCSIState = MPI2_SCSI_STATE_AUTOSENSE_VALID;
 			mpi_reply->SCSIStatus = SAM_STAT_CHECK_CONDITION;
-			scmd->result = (DRIVER_SENSE << 24) |
-			    SAM_STAT_CHECK_CONDITION;
+			set_scsi_result(scmd, DRIVER_SENSE, 0, 0,
+					SAM_STAT_CHECK_CONDITION);
 			scmd->sense_buffer[0] = 0x70;
 			scmd->sense_buffer[2] = ILLEGAL_REQUEST;
 			scmd->sense_buffer[12] = 0x20;
@@ -5358,7 +5358,7 @@ _scsih_io_done(struct MPT3SAS_ADAPTER *ioc, u16 smid, u8 msix_index, u32 reply)
 		scsi_set_resid(scmd, 0);
 	case MPI2_IOCSTATUS_SCSI_RECOVERED_ERROR:
 	case MPI2_IOCSTATUS_SUCCESS:
-		scmd->result = (DID_OK << 16) | scsi_status;
+		set_scsi_result(scmd, 0, DID_OK, 0, scsi_status);
 		if (response_code ==
 		    MPI2_SCSITASKMGMT_RSP_INVALID_FRAME ||
 		    (scsi_state & (MPI2_SCSI_STATE_AUTOSENSE_FAILED |

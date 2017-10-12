@@ -322,7 +322,8 @@ static irqreturn_t ps3rom_interrupt(int irq, void *data)
 		/* SCSI spec says request sense should never get error */
 		dev_err(&dev->sbd.core, "%s:%u: end error without autosense\n",
 			__func__, __LINE__);
-		cmd->result = DID_ERROR << 16 | SAM_STAT_CHECK_CONDITION;
+		set_scsi_result(cmd, 0, DID_ERROR, 0,
+				SAM_STAT_CHECK_CONDITION);
 		goto done;
 	}
 

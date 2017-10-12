@@ -1548,7 +1548,8 @@ void bnx2fc_process_tm_compl(struct bnx2fc_cmd *io_req,
 			sc_cmd->result = DID_OK << 16;
 		} else {
 			/* Transport status is good, SCSI status not good */
-			sc_cmd->result = (DID_OK << 16) | io_req->cdb_status;
+			set_scsi_result(sc_cmd, 0, DID_OK, 0,
+					io_req->cdb_status);
 		}
 		if (io_req->fcp_resid)
 			scsi_set_resid(sc_cmd, io_req->fcp_resid);
@@ -1946,7 +1947,8 @@ void bnx2fc_process_scsi_cmd_compl(struct bnx2fc_cmd *io_req,
 			BNX2FC_IO_DBG(io_req, "scsi_cmpl: cdb_status = %d"
 				 " fcp_resid = 0x%x\n",
 				io_req->cdb_status, io_req->fcp_resid);
-			sc_cmd->result = (DID_OK << 16) | io_req->cdb_status;
+			set_scsi_result(sc_cmd, 0, DID_OK, 0,
+					io_req->cdb_status);
 
 			if (io_req->cdb_status == SAM_STAT_TASK_SET_FULL ||
 			    io_req->cdb_status == SAM_STAT_BUSY) {

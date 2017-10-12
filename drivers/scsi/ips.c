@@ -3370,7 +3370,7 @@ ips_map_status(ips_ha_t * ha, ips_scb_t * scb, ips_stat_t * sp)
 		}		/* end switch */
 	}			/* end switch */
 
-	scb->scsi_cmd->result = device_error | (errcode << 16);
+	set_scsi_result(scb->scsi_cmd, 0, errcode, 0, device_error);
 
 	return (1);
 }
@@ -3706,7 +3706,8 @@ ips_send_cmd(ips_ha_t * ha, ips_scb_t * scb)
 			sp[13] = 0x00;	/* ASCQ                     */
 
 			device_error = 2;	/* Indicate Check Condition */
-			scb->scsi_cmd->result = device_error | (DID_OK << 16);
+			set_scsi_result(scb->scsi_cmd, 0, DID_OK, 0,
+					device_error);
 			break;
 		}		/* end switch */
 	}

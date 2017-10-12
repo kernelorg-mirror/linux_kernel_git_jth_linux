@@ -1522,9 +1522,10 @@ void esas2r_complete_request_cb(struct esas2r_adapter *a,
 			     rq->func_rsp.scsi_rsp.scsi_stat,
 			     rq->cmd);
 
-		rq->cmd->result =
-			((esas2r_req_status_to_error(rq->req_stat) << 16)
-			 | (rq->func_rsp.scsi_rsp.scsi_stat & STATUS_MASK));
+		set_scsi_result(rq->cmd, 0,
+				esas2r_req_status_to_error(rq->req_stat) << 16,
+				0,
+				(rq->func_rsp.scsi_rsp.scsi_stat & STATUS_MASK));
 
 		if (rq->req_stat == RS_UNDERRUN)
 			scsi_set_resid(rq->cmd,

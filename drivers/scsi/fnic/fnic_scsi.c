@@ -922,7 +922,7 @@ static void fnic_fcpio_icmnd_cmpl_handler(struct fnic *fnic,
 
 	switch (hdr_status) {
 	case FCPIO_SUCCESS:
-		sc->result = (DID_OK << 16) | icmnd_cmpl->scsi_status;
+		set_scsi_result(sc, 0, DID_OK, 0, icmnd_cmpl->scsi_status);
 		xfer_len = scsi_bufflen(sc);
 		scsi_set_resid(sc, icmnd_cmpl->residual);
 
@@ -938,50 +938,52 @@ static void fnic_fcpio_icmnd_cmpl_handler(struct fnic *fnic,
 
 	case FCPIO_TIMEOUT:          /* request was timed out */
 		atomic64_inc(&fnic_stats->misc_stats.fcpio_timeout);
-		sc->result = (DID_TIME_OUT << 16) | icmnd_cmpl->scsi_status;
+		set_scsi_result(sc, 0, DID_TIME_OUT, 0,
+				icmnd_cmpl->scsi_status);
 		break;
 
 	case FCPIO_ABORTED:          /* request was aborted */
 		atomic64_inc(&fnic_stats->misc_stats.fcpio_aborted);
-		sc->result = (DID_ERROR << 16) | icmnd_cmpl->scsi_status;
+		set_scsi_result(sc, 0, DID_ERROR, 0, icmnd_cmpl->scsi_status);
 		break;
 
 	case FCPIO_DATA_CNT_MISMATCH: /* recv/sent more/less data than exp. */
 		atomic64_inc(&fnic_stats->misc_stats.data_count_mismatch);
 		scsi_set_resid(sc, icmnd_cmpl->residual);
-		sc->result = (DID_ERROR << 16) | icmnd_cmpl->scsi_status;
+		set_scsi_result(sc, 0, DID_ERROR, 0, icmnd_cmpl->scsi_status);
 		break;
 
 	case FCPIO_OUT_OF_RESOURCE:  /* out of resources to complete request */
 		atomic64_inc(&fnic_stats->fw_stats.fw_out_of_resources);
-		sc->result = (DID_REQUEUE << 16) | icmnd_cmpl->scsi_status;
+		set_scsi_result(sc, 0, DID_REQUEUE, 0,
+				icmnd_cmpl->scsi_status);
 		break;
 
 	case FCPIO_IO_NOT_FOUND:     /* requested I/O was not found */
 		atomic64_inc(&fnic_stats->io_stats.io_not_found);
-		sc->result = (DID_ERROR << 16) | icmnd_cmpl->scsi_status;
+		set_scsi_result(sc, 0, DID_ERROR, 0, icmnd_cmpl->scsi_status);
 		break;
 
 	case FCPIO_SGL_INVALID:      /* request was aborted due to sgl error */
 		atomic64_inc(&fnic_stats->misc_stats.sgl_invalid);
-		sc->result = (DID_ERROR << 16) | icmnd_cmpl->scsi_status;
+		set_scsi_result(sc, 0, DID_ERROR, 0, icmnd_cmpl->scsi_status);
 		break;
 
 	case FCPIO_FW_ERR:           /* request was terminated due fw error */
 		atomic64_inc(&fnic_stats->fw_stats.io_fw_errs);
-		sc->result = (DID_ERROR << 16) | icmnd_cmpl->scsi_status;
+		set_scsi_result(sc, 0, DID_ERROR, 0, icmnd_cmpl->scsi_status);
 		break;
 
 	case FCPIO_MSS_INVALID:      /* request was aborted due to mss error */
 		atomic64_inc(&fnic_stats->misc_stats.mss_invalid);
-		sc->result = (DID_ERROR << 16) | icmnd_cmpl->scsi_status;
+		set_scsi_result(sc, 0, DID_ERROR, 0, icmnd_cmpl->scsi_status);
 		break;
 
 	case FCPIO_INVALID_HEADER:   /* header contains invalid data */
 	case FCPIO_INVALID_PARAM:    /* some parameter in request invalid */
 	case FCPIO_REQ_NOT_SUPPORTED:/* request type is not supported */
 	default:
-		sc->result = (DID_ERROR << 16) | icmnd_cmpl->scsi_status;
+		set_scsi_result(sc, 0, DID_ERROR, 0, icmnd_cmpl->scsi_status);
 		break;
 	}
 

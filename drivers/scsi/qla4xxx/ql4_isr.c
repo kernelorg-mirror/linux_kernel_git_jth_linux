@@ -181,7 +181,7 @@ static void qla4xxx_status_entry(struct scsi_qla_host *ha,
 			}
 		}
 
-		cmd->result = DID_OK << 16 | scsi_status;
+		set_scsi_result(cmd, 0, DID_OK, 0, scsi_status);
 
 		if (scsi_status != SCSI_CHECK_CONDITION)
 			break;
@@ -299,11 +299,11 @@ static void qla4xxx_status_entry(struct scsi_qla_host *ha,
 					  residual,
 					  scsi_bufflen(cmd)));
 
-			cmd->result = DID_ERROR << 16 | scsi_status;
+			set_scsi_result(cmd, 0, DID_ERROR, 0, scsi_status);
 			goto check_scsi_status;
 		}
 
-		cmd->result = DID_OK << 16 | scsi_status;
+		set_scsi_result(cmd, 0, DID_OK, 0, scsi_status);
 
 check_scsi_status:
 		if (scsi_status == SAM_STAT_CHECK_CONDITION)
@@ -332,7 +332,7 @@ check_scsi_status:
 		/*
 		 * SCSI Mid-Layer handles device queue full
 		 */
-		cmd->result = DID_OK << 16 | sts_entry->scsiStatus;
+		set_scsi_result(cmd, 0, DID_OK, 0, sts_entry->scsiStatus);
 		DEBUG2(printk("scsi%ld:%d:%llu: %s: QUEUE FULL detected "
 			      "compl=%02x, scsi=%02x, state=%02x, iFlags=%02x,"
 			      " iResp=%02x\n", ha->host_no, cmd->device->id,

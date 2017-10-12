@@ -85,7 +85,8 @@ static void process_cmd_err(struct afu_cmd *cmd, struct scsi_cmnd *scp)
 			       SISL_SENSE_DATA_LEN);
 			scp->result = ioasa->rc.scsi_rc;
 		} else
-			scp->result = ioasa->rc.scsi_rc | (DID_ERROR << 16);
+			set_scsi_result(scp, 0, DID_ERROR, 0,
+					ioasa->rc.scsi_rc);
 	}
 
 	/*

@@ -1138,16 +1138,19 @@ void qedf_scsi_completion(struct qedf_ctx *qedf, struct fcoe_cqe *cqe,
 		    cqe->cqe_info.rsp_info.fw_residual);
 
 		if (io_req->cdb_status == 0)
-			sc_cmd->result = (DID_ERROR << 16) | io_req->cdb_status;
+			set_scsi_result(sc_cmd, 0, DID_ERROR, 0,
+					io_req->cdb_status);
 		else
-			sc_cmd->result = (DID_OK << 16) | io_req->cdb_status;
+			set_scsi_result(sc_cmd, 0, DID_OK, 0,
+					io_req->cdb_status);
 
 		/* Abort the command since we did not get all the data */
 		init_completion(&io_req->abts_done);
 		rval = qedf_initiate_abts(io_req, true);
 		if (rval) {
 			QEDF_ERR(&(qedf->dbg_ctx), "Failed to queue ABTS.\n");
-			sc_cmd->result = (DID_ERROR << 16) | io_req->cdb_status;
+			set_scsi_result(sc_cmd, 0, DID_ERROR, 0,
+					io_req->cdb_status);
 		}
 
 		/*
@@ -1175,7 +1178,8 @@ void qedf_scsi_completion(struct qedf_ctx *qedf, struct fcoe_cqe *cqe,
 			    sc_cmd->cmnd[4], sc_cmd->cmnd[5],
 			    io_req->cdb_status, io_req->fcp_resid,
 			    refcount);
-			sc_cmd->result = (DID_OK << 16) | io_req->cdb_status;
+			set_scsi_result(sc_cmd, 0, DID_OK, 0,
+					io_req->cdb_status);
 
 			if (io_req->cdb_status == SAM_STAT_TASK_SET_FULL ||
 			    io_req->cdb_status == SAM_STAT_BUSY) {
