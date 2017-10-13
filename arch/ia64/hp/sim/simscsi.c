@@ -313,7 +313,7 @@ simscsi_queuecommand_lck (struct scsi_cmnd *sc, void (*done)(struct scsi_cmnd *)
 		}
 	}
 	if (sc->result == DID_BAD_TARGET) {
-		sc->result |= DRIVER_SENSE << 24;
+		set_driver_byte(sc, DRIVER_SENSE);
 		sc->sense_buffer[0] = 0x70;
 		sc->sense_buffer[2] = 0x00;
 	}

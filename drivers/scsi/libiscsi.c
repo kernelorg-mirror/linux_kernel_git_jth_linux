@@ -859,8 +859,9 @@ static void iscsi_scsi_cmd_rsp(struct iscsi_conn *conn, struct iscsi_hdr *hdr,
 
 		ascq = session->tt->check_protection(task, &sector);
 		if (ascq) {
-			sc->result = DRIVER_SENSE << 24 |
-				     SAM_STAT_CHECK_CONDITION;
+			sc->result = 0;
+			set_driver_byte(sc, DRIVER_SENSE);
+			sc->result |= SAM_STAT_CHECK_CONDITION;
 			scsi_build_sense_buffer(1, sc->sense_buffer,
 						ILLEGAL_REQUEST, 0x10, ascq);
 			scsi_set_sense_information(sc->sense_buffer,
