@@ -3523,7 +3523,7 @@ static void hba_resp_task_complete(struct aac_dev *dev,
 	switch (err->status) {
 	case SAM_STAT_GOOD:
 		set_host_byte(scsicmd, DID_OK);
-		scsicmd->result |= COMMAND_COMPLETE << 8;
+		set_msg_byte(scsicmd, COMMAND_COMPLETE);
 		break;
 	case SAM_STAT_CHECK_CONDITION:
 	{
@@ -3535,22 +3535,22 @@ static void hba_resp_task_complete(struct aac_dev *dev,
 			memcpy(scsicmd->sense_buffer,
 				err->sense_response_buf, len);
 		set_host_byte(scsicmd, DID_OK);
-		scsicmd->result |= COMMAND_COMPLETE << 8;
+		set_msg_byte(scsicmd, COMMAND_COMPLETE);
 		break;
 	}
 	case SAM_STAT_BUSY:
 		set_host_byte(scsicmd, DID_BUS_BUSY);
-		scsicmd->result |= COMMAND_COMPLETE << 8;
+		set_msg_byte(scsicmd, COMMAND_COMPLETE);
 		break;
 	case SAM_STAT_TASK_ABORTED:
 		set_host_byte(scsicmd, DID_ABORT);
-		scsicmd->result |= ABORT << 8;
+		set_msg_byte(scsicmd, ABORT);
 		break;
 	case SAM_STAT_RESERVATION_CONFLICT:
 	case SAM_STAT_TASK_SET_FULL:
 	default:
 		set_host_byte(scsicmd, DID_ERROR);
-		scsicmd->result |= COMMAND_COMPLETE << 8;
+		set_msg_byte(scsicmd, COMMAND_COMPLETE);
 		break;
 	}
 }

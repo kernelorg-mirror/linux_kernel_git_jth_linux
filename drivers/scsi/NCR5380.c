@@ -1800,7 +1800,7 @@ static void NCR5380_information_transfer(struct Scsi_Host *instance)
 
 					cmd->result &= ~0xffff;
 					cmd->result |= cmd->SCp.Status;
-					cmd->result |= cmd->SCp.Message << 8;
+					set_msg_byte(cmd, cmd->SCp.Message);
 
 					if (cmd->cmnd[0] == REQUEST_SENSE)
 						complete_cmd(instance, cmd);
