@@ -3012,8 +3012,8 @@ out:
 	if (err_type == BGS_GUARD_ERR_MASK) {
 		scsi_build_sense_buffer(1, cmd->sense_buffer, ILLEGAL_REQUEST,
 					0x10, 0x1);
-		cmd->result = DRIVER_SENSE << 24
-			| ScsiResult(DID_ABORT, SAM_STAT_CHECK_CONDITION);
+		set_scsi_result(cmd, DRIVER_SENSE, DID_ABORT, 0,
+				SAM_STAT_CHECK_CONDITION);
 		phba->bg_guard_err_cnt++;
 		lpfc_printf_log(phba, KERN_WARNING, LOG_FCP | LOG_BG,
 				"9069 BLKGRD: LBA %lx grd_tag error %x != %x\n",
@@ -3023,8 +3023,8 @@ out:
 	} else if (err_type == BGS_REFTAG_ERR_MASK) {
 		scsi_build_sense_buffer(1, cmd->sense_buffer, ILLEGAL_REQUEST,
 					0x10, 0x3);
-		cmd->result = DRIVER_SENSE << 24
-			| ScsiResult(DID_ABORT, SAM_STAT_CHECK_CONDITION);
+		set_scsi_result(cmd, DRIVER_SENSE, DID_ABORT, 0,
+				SAM_STAT_CHECK_CONDITION);
 
 		phba->bg_reftag_err_cnt++;
 		lpfc_printf_log(phba, KERN_WARNING, LOG_FCP | LOG_BG,
@@ -3035,8 +3035,8 @@ out:
 	} else if (err_type == BGS_APPTAG_ERR_MASK) {
 		scsi_build_sense_buffer(1, cmd->sense_buffer, ILLEGAL_REQUEST,
 					0x10, 0x2);
-		cmd->result = DRIVER_SENSE << 24
-			| ScsiResult(DID_ABORT, SAM_STAT_CHECK_CONDITION);
+		set_scsi_result(cmd, DRIVER_SENSE, DID_ABORT, 0,
+				SAM_STAT_CHECK_CONDITION);
 
 		phba->bg_apptag_err_cnt++;
 		lpfc_printf_log(phba, KERN_WARNING, LOG_FCP | LOG_BG,
@@ -3119,8 +3119,8 @@ lpfc_parse_bg_err(struct lpfc_hba *phba, struct lpfc_scsi_buf *lpfc_cmd,
 
 		scsi_build_sense_buffer(1, cmd->sense_buffer, ILLEGAL_REQUEST,
 				0x10, 0x1);
-		cmd->result = DRIVER_SENSE << 24
-			| ScsiResult(DID_ABORT, SAM_STAT_CHECK_CONDITION);
+		set_scsi_result(cmd, DRIVER_SENSE, DID_ABORT, 0,
+				SAM_STAT_CHECK_CONDITION);
 		phba->bg_guard_err_cnt++;
 		lpfc_printf_log(phba, KERN_WARNING, LOG_FCP | LOG_BG,
 				"9055 BLKGRD: Guard Tag error in cmd"
@@ -3135,8 +3135,8 @@ lpfc_parse_bg_err(struct lpfc_hba *phba, struct lpfc_scsi_buf *lpfc_cmd,
 
 		scsi_build_sense_buffer(1, cmd->sense_buffer, ILLEGAL_REQUEST,
 				0x10, 0x3);
-		cmd->result = DRIVER_SENSE << 24
-			| ScsiResult(DID_ABORT, SAM_STAT_CHECK_CONDITION);
+		set_scsi_result(cmd, DRIVER_SENSE, DID_ABORT, 0,
+				SAM_STAT_CHECK_CONDITION);
 
 		phba->bg_reftag_err_cnt++;
 		lpfc_printf_log(phba, KERN_WARNING, LOG_FCP | LOG_BG,
@@ -3152,8 +3152,8 @@ lpfc_parse_bg_err(struct lpfc_hba *phba, struct lpfc_scsi_buf *lpfc_cmd,
 
 		scsi_build_sense_buffer(1, cmd->sense_buffer, ILLEGAL_REQUEST,
 				0x10, 0x2);
-		cmd->result = DRIVER_SENSE << 24
-			| ScsiResult(DID_ABORT, SAM_STAT_CHECK_CONDITION);
+		set_scsi_result(cmd, DRIVER_SENSE, DID_ABORT, 0,
+				SAM_STAT_CHECK_CONDITION);
 
 		phba->bg_apptag_err_cnt++;
 		lpfc_printf_log(phba, KERN_WARNING, LOG_FCP | LOG_BG,
