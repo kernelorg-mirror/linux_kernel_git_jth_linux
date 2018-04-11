@@ -1601,7 +1601,7 @@ megaraid_mbox_build_cmd(adapter_t *adapter, struct scsi_cmnd *scp, int *busy)
 				scp->sense_buffer[0] = 0x70;
 				scp->sense_buffer[2] = ILLEGAL_REQUEST;
 				scp->sense_buffer[12] = MEGA_INVALID_FIELD_IN_CDB;
-				set_status_byte(scp, CHECK_CONDITION << 1);
+				set_status_byte(scp, SAM_STAT_CHECK_CONDITION);
 				return NULL;
 			}
 
@@ -2363,7 +2363,7 @@ megaraid_mbox_dpc(unsigned long devp)
 						14);
 
 				set_scsi_result(scp, DRIVER_SENSE, DID_OK, 0,
-						CHECK_CONDITION << 1);
+						SAM_STAT_CHECK_CONDITION);
 			}
 			else {
 				if (mbox->cmd == MBOXCMD_EXTPTHRU) {
@@ -2373,11 +2373,12 @@ megaraid_mbox_dpc(unsigned long devp)
 
 					set_scsi_result(scp, DRIVER_SENSE,
 							DID_OK, 0,
-							CHECK_CONDITION << 1);
+							SAM_STAT_CHECK_CONDITION);
 				} else {
 					scp->sense_buffer[0] = 0x70;
 					scp->sense_buffer[2] = ABORTED_COMMAND;
-					set_status_byte(scp, CHECK_CONDITION << 1);
+					set_status_byte(scp,
+							SAM_STAT_CHECK_CONDITION);
 				}
 			}
 			break;
@@ -2395,7 +2396,7 @@ megaraid_mbox_dpc(unsigned long devp)
 			 */
 			if (scp->cmnd[0] == TEST_UNIT_READY) {
 				set_scsi_result(scp, 0, DID_ERROR, 0,
-						RESERVATION_CONFLICT << 1);
+						SAM_STAT_RESERVATION_CONFLICT);
 			}
 			else
 			/*
@@ -2406,7 +2407,7 @@ megaraid_mbox_dpc(unsigned long devp)
 					 scp->cmnd[0] == RELEASE)) {
 
 				set_scsi_result(scp, 0, DID_ERROR, 0,
-						RESERVATION_CONFLICT << 1);
+						SAM_STAT_RESERVATION_CONFLICT);
 			}
 			else {
 				set_scsi_result(scp, 0, DID_BAD_TARGET, 0,

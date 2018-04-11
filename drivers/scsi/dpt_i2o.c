@@ -2701,7 +2701,8 @@ static void adpt_fail_posted_scbs(adpt_hba* pHba)
 			if(cmd->serial_number == 0){
 				continue;
 			}
-			set_scsi_result(cmd, 0, DID_OK, 0, (QUEUE_FULL << 1));
+			set_scsi_result(cmd, 0, DID_OK, 0,
+					SAM_STAT_TASK_SET_FULL);
 			cmd->scsi_done(cmd);
 		}
 		spin_unlock_irqrestore(&d->list_lock, flags);

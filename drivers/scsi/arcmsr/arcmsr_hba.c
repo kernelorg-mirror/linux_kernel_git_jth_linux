@@ -1202,7 +1202,7 @@ static void arcmsr_report_sense_info(struct CommandControlBlock *ccb)
 
 	struct scsi_cmnd *pcmd = ccb->pcmd;
 	struct SENSE_DATA *sensebuffer = (struct SENSE_DATA *)pcmd->sense_buffer;
-	set_scsi_result(pcmd, 0, DID_OK, 0, (CHECK_CONDITION << 1));
+	set_scsi_result(pcmd, 0, DID_OK, 0, SAM_STAT_CHECK_CONDITION);
 	if (sensebuffer) {
 		int sense_data_length =
 			sizeof(struct SENSE_DATA) < SCSI_SENSE_BUFFERSIZE
@@ -3030,7 +3030,7 @@ static int arcmsr_queue_command_lck(struct scsi_cmnd *cmd,
 		return SCSI_MLQUEUE_HOST_BUSY;
 	if (arcmsr_build_ccb( acb, ccb, cmd ) == FAILED) {
 		set_scsi_result(cmd, 0, DID_ERROR, 0,
-				(RESERVATION_CONFLICT << 1));
+				SAM_STAT_RESERVATION_CONFLICT);
 		cmd->scsi_done(cmd);
 		return 0;
 	}

@@ -1595,7 +1595,7 @@ mega_cmd_done(adapter_t *adapter, u8 completed[], int nstatus, int status)
 						14);
 
 				set_scsi_result(cmd, DRIVER_SENSE, DID_OK, 0,
-						CHECK_CONDITION << 1);
+						SAM_STAT_CHECK_CONDITION);
 			}
 			else {
 				if (mbox->m_out.cmd == MEGA_MBOXCMD_EXTPTHRU) {
@@ -1604,12 +1604,12 @@ mega_cmd_done(adapter_t *adapter, u8 completed[], int nstatus, int status)
 						epthru->reqsensearea, 14);
 
 					set_scsi_result(cmd, DRIVER_SENSE, DID_OK, 0,
-							CHECK_CONDITION << 1);
+							SAM_STAT_CHECK_CONDITION);
 				} else {
 					cmd->sense_buffer[0] = 0x70;
 					cmd->sense_buffer[2] = ABORTED_COMMAND;
 					set_status_byte(cmd,
-							(CHECK_CONDITION << 1));
+							SAM_STAT_CHECK_CONDITION);
 				}
 			}
 			break;
@@ -1629,7 +1629,7 @@ mega_cmd_done(adapter_t *adapter, u8 completed[], int nstatus, int status)
 			if( cmd->cmnd[0] == TEST_UNIT_READY ) {
 				set_host_byte(cmd, DID_ERROR);
 				set_status_byte(cmd,
-						(RESERVATION_CONFLICT << 1));
+						SAM_STAT_RESERVATION_CONFLICT);
 			}
 			else
 			/*
@@ -1642,7 +1642,7 @@ mega_cmd_done(adapter_t *adapter, u8 completed[], int nstatus, int status)
 
 				set_host_byte(cmd, DID_ERROR);
 				set_status_byte(cmd,
-						(RESERVATION_CONFLICT << 1));
+						SAM_STAT_RESERVATION_CONFLICT);
 			}
 			else
 #endif

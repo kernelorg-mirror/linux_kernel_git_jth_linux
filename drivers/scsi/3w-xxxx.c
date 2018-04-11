@@ -431,7 +431,7 @@ static int tw_decode_sense(TW_Device_Extension *tw_dev, int request_id, int fill
 
 					set_scsi_result(tw_dev->srb[request_id],
 							0, DID_OK, 0,
-							(CHECK_CONDITION << 1));
+							SAM_STAT_CHECK_CONDITION);
 					return TW_ISR_DONT_RESULT; /* Special case for isr to not over-write result */
 				}
 			}
@@ -2163,7 +2163,9 @@ static irqreturn_t tw_interrupt(int irq, void *dev_instance)
 				/* If error, command failed */
 				if (error == 1) {
 					/* Ask for a host reset */
-					set_scsi_result(tw_dev->srb[request_id], 0, DID_OK, 0, CHECK_CONDITION << 1);
+					set_scsi_result(tw_dev->srb[request_id],
+							0, DID_OK, 0,
+							SAM_STAT_CHECK_CONDITION);
 				}
 
 				/* Now complete the io */

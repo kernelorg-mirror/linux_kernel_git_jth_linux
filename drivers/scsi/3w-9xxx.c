@@ -1336,7 +1336,7 @@ static irqreturn_t twa_interrupt(int irq, void *dev_instance)
 				if (error == 1) {
 					/* Ask for a host reset */
 					set_scsi_result(cmd, 0, DID_OK, 0,
-							(CHECK_CONDITION << 1));
+							SAM_STAT_CHECK_CONDITION);
 				}
 
 				/* Report residual bytes for single sgl */

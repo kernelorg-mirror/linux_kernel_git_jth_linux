@@ -873,7 +873,7 @@ static struct ata_queued_cmd *ata_scsi_qc_new(struct ata_device *dev,
 		qc->sg = scsi_sglist(cmd);
 		qc->n_elem = scsi_sg_count(cmd);
 	} else {
-		set_scsi_result(cmd, 0, DID_OK, 0, (QUEUE_FULL << 1));
+		set_scsi_result(cmd, 0, DID_OK, 0, SAM_STAT_TASK_SET_FULL);
 		cmd->scsi_done(cmd);
 	}
 

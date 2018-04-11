@@ -2127,7 +2127,7 @@ static void gdth_next(gdth_ha_str *ha)
                 memset((char*)nscp->sense_buffer,0,16);
                 nscp->sense_buffer[0] = 0x70;
                 nscp->sense_buffer[2] = NOT_READY;
-                set_scsi_result(nscp, 0, DID_OK, 0, (CHECK_CONDITION << 1));
+                set_scsi_result(nscp, 0, DID_OK, 0, SAM_STAT_CHECK_CONDITION);
                 if (!nscp_cmndinfo->wait_for_completion)
                     nscp_cmndinfo->wait_for_completion++;
                 else
@@ -2174,7 +2174,7 @@ static void gdth_next(gdth_ha_str *ha)
                     nscp->sense_buffer[0] = 0x70;
                     nscp->sense_buffer[2] = UNIT_ATTENTION;
                     set_scsi_result(nscp, 0, DID_OK, 0,
-                                    (CHECK_CONDITION << 1));
+                                    SAM_STAT_CHECK_CONDITION);
                     if (!nscp_cmndinfo->wait_for_completion)
                         nscp_cmndinfo->wait_for_completion++;
                     else
@@ -2228,7 +2228,7 @@ static void gdth_next(gdth_ha_str *ha)
                     nscp->sense_buffer[0] = 0x70;
                     nscp->sense_buffer[2] = UNIT_ATTENTION;
                     set_scsi_result(nscp, 0, DID_OK, 0,
-                                    (CHECK_CONDITION << 1));
+                                    SAM_STAT_CHECK_CONDITION);
                     if (!nscp_cmndinfo->wait_for_completion)
                         nscp_cmndinfo->wait_for_completion++;
                     else
@@ -3389,7 +3389,7 @@ static int gdth_sync_event(gdth_ha_str *ha, int service, u8 index,
                 memset((char*)scp->sense_buffer,0,16);
                 scp->sense_buffer[0] = 0x70;
                 scp->sense_buffer[2] = NOT_READY;
-                set_scsi_result(scp, 0, DID_OK, 0, (CHECK_CONDITION << 1));
+                set_scsi_result(scp, 0, DID_OK, 0, SAM_STAT_CHECK_CONDITION);
             } else if (service == CACHESERVICE) {
                 if (ha->status == S_CACHE_UNKNOWN &&
                     (ha->hdr[t].cluster_type & 
@@ -3400,11 +3400,11 @@ static int gdth_sync_event(gdth_ha_str *ha, int service, u8 index,
                 memset((char*)scp->sense_buffer,0,16);
                 if (ha->status == (u16)S_CACHE_RESERV) {
                     set_scsi_result(scp, 0, DID_OK, 0,
-                                    (RESERVATION_CONFLICT << 1));
+                                    SAM_STAT_RESERVATION_CONFLICT);
                 } else {
                     scp->sense_buffer[0] = 0x70;
                     scp->sense_buffer[2] = NOT_READY;
-                    set_scsi_result(scp, 0, DID_OK, 0, (CHECK_CONDITION << 1));
+                    set_scsi_result(scp, 0, DID_OK, 0, SAM_STAT_CHECK_CONDITION);
                 }
                 if (!cmndinfo->internal_command) {
                     ha->dvr.size = sizeof(ha->dvr.eu.sync);
