@@ -2320,7 +2320,7 @@ static int handle_ioaccel_mode2_error(struct ctlr_info *h,
 		case IOACCEL2_STATUS_SR_TASK_COMP_GOOD:
 			break;
 		case IOACCEL2_STATUS_SR_TASK_COMP_CHK_COND:
-			cmd->result |= SAM_STAT_CHECK_CONDITION;
+			set_status_byte(cmd, SAM_STAT_CHECK_CONDITION);
 			if (c2->error_data.data_present !=
 					IOACCEL2_SENSE_DATA_PRESENT) {
 				memset(cmd->sense_buffer, 0,
@@ -2639,7 +2639,7 @@ static void complete_scsi_command(struct CommandList *cp)
 	switch (ei->CommandStatus) {
 
 	case CMD_TARGET_STATUS:
-		cmd->result |= ei->ScsiStatus;
+		set_status_byte(cmd, ei->ScsiStatus);
 		/* copy the sense data */
 		if (SCSI_SENSE_BUFFERSIZE < sizeof(ei->SenseInfo))
 			sense_data_size = SCSI_SENSE_BUFFERSIZE;

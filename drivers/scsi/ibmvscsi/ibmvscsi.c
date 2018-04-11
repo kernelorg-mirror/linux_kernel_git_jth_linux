@@ -1000,7 +1000,7 @@ static void handle_cmd_rsp(struct srp_event_struct *evt_struct)
 	}
 	
 	if (cmnd) {
-		cmnd->result |= rsp->status;
+		set_status_byte(cmnd, rsp->status);
 		if (((cmnd->result >> 1) & 0x1f) == CHECK_CONDITION)
 			memcpy(cmnd->sense_buffer,
 			       rsp->data,

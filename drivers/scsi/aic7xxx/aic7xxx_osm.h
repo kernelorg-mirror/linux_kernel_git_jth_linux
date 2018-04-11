@@ -556,7 +556,7 @@ static inline
 void ahc_cmd_set_scsi_status(struct scsi_cmnd *cmd, uint32_t status)
 {
 	cmd->result &= ~0xFFFF;
-	cmd->result |= status;
+	set_status_byte(cmd, status);
 }
 
 static inline

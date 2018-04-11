@@ -887,8 +887,10 @@ static int twl_fill_sense(TW_Device_Extension *tw_dev, int i, int request_id, in
 	}
 
 	if (copy_sense) {
+		u8 status = (full_command_packet->command.newcommand.status << 1);
+
 		memcpy(tw_dev->srb[request_id]->sense_buffer, header->sense_data, TW_SENSE_DATA_LENGTH);
-		tw_dev->srb[request_id]->result = (full_command_packet->command.newcommand.status << 1);
+		set_status_byte(tw_dev->srb[request_id], status);
 		goto out;
 	}
 out:

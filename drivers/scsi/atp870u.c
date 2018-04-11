@@ -463,13 +463,14 @@ static irqreturn_t atp870u_intr_handle(int irq, void *dev_id)
 			   dev->last_cmd[c] = 0xff;
 			}
 			if (i == 0x16) {
-				workreq->result = atp_readb_io(dev, c, 0x0f);
+				set_status_byte(workreq,
+						atp_readb_io(dev, c, 0x0f));
 				if (((dev->r1f[c][target_id] & 0x10) != 0) && is885(dev)) {
 					printk(KERN_WARNING "AEC67162 CRC ERROR !\n");
-					workreq->result = 0x02;
+					set_status_byte(workreq, SAM_STAT_CHECK_CONDITION);
 				}
 			} else
-				workreq->result = 0x02;
+				set_status_byte(workreq, SAM_STAT_CHECK_CONDITION);
 
 			if (is885(dev)) {
 				j = atp_readb_base(dev, 0x29) | 0x01;

@@ -2064,7 +2064,7 @@ static void fc_io_compl(struct fc_fcp_pkt *fsp)
 				   "due to FC_CMD_ABORTED\n");
 			set_host_byte(sc_cmd, DID_ERROR);
 		}
-		sc_cmd->result |= fsp->io_status;
+		set_status_byte(sc_cmd, fsp->io_status);
 		break;
 	case FC_CMD_RESET:
 		FC_FCP_DBG(fsp, "Returning DID_RESET to scsi-ml "

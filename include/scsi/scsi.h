@@ -213,7 +213,11 @@ enum scsi_driver_byte {
  *      host_byte   = set by low-level driver to indicate status.
  *      driver_byte = set by mid-level.
  */
-#define status_byte(result) (((result) >> 1) & 0x7f)
+static inline enum scsi_status_byte status_byte(int result)
+{
+	return (result >> 1) & 0x7f;
+}
+
 static inline enum scsi_msg_byte msg_byte(int result)
 {
 	return (result >> 8) & 0xff;

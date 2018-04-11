@@ -1008,8 +1008,9 @@ static int twa_fill_sense(TW_Device_Extension *tw_dev, int request_id, int copy_
 	}
 
 	if (copy_sense) {
+		u8 status = (full_command_packet->command.newcommand.status << 1);
 		memcpy(tw_dev->srb[request_id]->sense_buffer, full_command_packet->header.sense_data, TW_SENSE_DATA_LENGTH);
-		tw_dev->srb[request_id]->result = (full_command_packet->command.newcommand.status << 1);
+		set_status_byte(tw_dev->srb[request_id], status);
 		retval = TW_ISR_DONT_RESULT;
 		goto out;
 	}

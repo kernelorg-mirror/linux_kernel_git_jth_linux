@@ -2496,7 +2496,7 @@ static s32 adpt_i2o_to_scsi(void __iomem *reply, struct scsi_cmnd* cmd)
 			((struct adpt_device*)(cmd->device->hostdata))->tid, cmd->cmnd[0]);
 	}
 
-	cmd->result |= (dev_status);
+	set_status_byte(cmd, dev_status);
 
 	if(cmd->scsi_done != NULL){
 		cmd->scsi_done(cmd);

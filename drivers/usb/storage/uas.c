@@ -170,7 +170,7 @@ static void uas_sense(struct urb *urb, struct scsi_cmnd *cmnd)
 		memcpy(cmnd->sense_buffer, sense_iu->sense, len);
 	}
 
-	cmnd->result = sense_iu->status;
+	set_status_byte(cmnd, sense_iu->status);
 }
 
 static void uas_log_cmd_state(struct scsi_cmnd *cmnd, const char *prefix,
@@ -636,7 +636,7 @@ static int uas_queuecommand_lck(struct scsi_cmnd *cmnd,
 			(cmnd->cmnd[0] == ATA_12 || cmnd->cmnd[0] == ATA_16)) {
 		memcpy(cmnd->sense_buffer, usb_stor_sense_invalidCDB,
 		       sizeof(usb_stor_sense_invalidCDB));
-		cmnd->result = SAM_STAT_CHECK_CONDITION;
+		set_status_byte(cmnd, SAM_STAT_CHECK_CONDITION);
 		cmnd->scsi_done(cmnd);
 		return 0;
 	}

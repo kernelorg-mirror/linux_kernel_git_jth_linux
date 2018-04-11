@@ -2541,7 +2541,7 @@ static void pmcraid_frame_auto_sense(struct pmcraid_cmd *cmd)
 	u32 failing_lba = 0;
 
 	memset(sense_buf, 0, SCSI_SENSE_BUFFERSIZE);
-	cmd->scsi_cmd->result = SAM_STAT_CHECK_CONDITION;
+	set_status_byte(cmd->scsi_cmd, SAM_STAT_CHECK_CONDITION);
 
 	if (RES_IS_VSET(res->cfg_entry) &&
 	    ioasc == PMCRAID_IOASC_ME_READ_ERROR_NO_REALLOC &&
@@ -2662,7 +2662,7 @@ static int pmcraid_error_handler(struct pmcraid_cmd *cmd)
 		break;
 
 	case PMCRAID_IOASC_HW_DEVICE_BUS_STATUS_ERROR:
-		scsi_cmd->result |= PMCRAID_IOASC_SENSE_STATUS(ioasc);
+		set_status_byte(scsi_cmd, PMCRAID_IOASC_SENSE_STATUS(ioasc));
 		res->sync_reqd = 1;
 
 		/* if check_condition is not active return with error otherwise

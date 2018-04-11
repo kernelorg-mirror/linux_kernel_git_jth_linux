@@ -575,7 +575,7 @@ static void last_sector_hacks(struct us_data *us, struct scsi_cmnd *srb)
 		 */
 		if (++us->last_sector_retries < 3)
 			return;
-		srb->result = SAM_STAT_CHECK_CONDITION;
+		set_status_byte(srb, SAM_STAT_CHECK_CONDITION);
 		memcpy(srb->sense_buffer, record_not_found,
 				sizeof(record_not_found));
 	}
@@ -626,12 +626,12 @@ void usb_stor_invoke_transport(struct scsi_cmnd *srb, struct us_data *us)
 
 	/* if the transport provided its own sense data, don't auto-sense */
 	if (result == USB_STOR_TRANSPORT_NO_SENSE) {
-		srb->result = SAM_STAT_CHECK_CONDITION;
+		set_status_byte(srb, SAM_STAT_CHECK_CONDITION);
 		last_sector_hacks(us, srb);
 		return;
 	}
 
-	srb->result = SAM_STAT_GOOD;
+	set_status_byte(srb, SAM_STAT_GOOD);
 
 	/*
 	 * Determine if we need to auto-sense
@@ -801,7 +801,7 @@ Retry_Sense:
 #endif
 
 		/* set the result so the higher layers expect this data */
-		srb->result = SAM_STAT_CHECK_CONDITION;
+		set_status_byte(srb, SAM_STAT_CHECK_CONDITION);
 
 		scdd = scsi_sense_desc_find(srb->sense_buffer,
 					    SCSI_SENSE_BUFFERSIZE, 4);
@@ -820,7 +820,7 @@ Retry_Sense:
 			 * won't realize we did an unsolicited auto-sense.
 			 */
 			if (result == USB_STOR_TRANSPORT_GOOD) {
-				srb->result = SAM_STAT_GOOD;
+				set_status_byte(srb, SAM_STAT_GOOD);
 				srb->sense_buffer[0] = 0x0;
 			}
 
@@ -861,7 +861,7 @@ Retry_Sense:
 	 */
 	if (unlikely((us->fflags & US_FL_INITIAL_READ10) &&
 			srb->cmnd[0] == READ_10)) {
-		if (srb->result == SAM_STAT_GOOD) {
+		if (status_byte(srb->result) == SAM_STAT_GOOD) {
 			set_bit(US_FLIDX_READ10_WORKED, &us->dflags);
 		} else if (test_bit(US_FLIDX_READ10_WORKED, &us->dflags)) {
 			clear_bit(US_FLIDX_READ10_WORKED, &us->dflags);
@@ -882,8 +882,9 @@ Retry_Sense:
 	}
 
 	/* Did we transfer less than the minimum amount required? */
-	if ((srb->result == SAM_STAT_GOOD || srb->sense_buffer[2] == 0) &&
-			scsi_bufflen(srb) - scsi_get_resid(srb) < srb->underflow) {
+	if ((status_byte(srb->result) == SAM_STAT_GOOD ||
+	     srb->sense_buffer[2] == 0) &&
+	    scsi_bufflen(srb) - scsi_get_resid(srb) < srb->underflow) {
 		srb->result = 0;
 		set_host_byte(srb, DID_ERROR);
 	}

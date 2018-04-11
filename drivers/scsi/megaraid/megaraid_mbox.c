@@ -1601,7 +1601,7 @@ megaraid_mbox_build_cmd(adapter_t *adapter, struct scsi_cmnd *scp, int *busy)
 				scp->sense_buffer[0] = 0x70;
 				scp->sense_buffer[2] = ILLEGAL_REQUEST;
 				scp->sense_buffer[12] = MEGA_INVALID_FIELD_IN_CDB;
-				scp->result = CHECK_CONDITION << 1;
+				set_status_byte(scp, CHECK_CONDITION << 1);
 				return NULL;
 			}
 
@@ -2377,7 +2377,7 @@ megaraid_mbox_dpc(unsigned long devp)
 				} else {
 					scp->sense_buffer[0] = 0x70;
 					scp->sense_buffer[2] = ABORTED_COMMAND;
-					scp->result = CHECK_CONDITION << 1;
+					set_status_byte(scp, CHECK_CONDITION << 1);
 				}
 			}
 			break;

@@ -1608,7 +1608,8 @@ mega_cmd_done(adapter_t *adapter, u8 completed[], int nstatus, int status)
 				} else {
 					cmd->sense_buffer[0] = 0x70;
 					cmd->sense_buffer[2] = ABORTED_COMMAND;
-					cmd->result |= (CHECK_CONDITION << 1);
+					set_status_byte(cmd,
+							(CHECK_CONDITION << 1));
 				}
 			}
 			break;
@@ -1616,7 +1617,7 @@ mega_cmd_done(adapter_t *adapter, u8 completed[], int nstatus, int status)
 		case 0x08:	/* ERR_DEST_DRIVE_FAILED, i.e.
 				   SCSI_STATUS_BUSY */
 			set_host_byte(cmd, DID_BUS_BUSY);
-			cmd->result |= status;
+			set_status_byte(cmd, status);
 			break;
 
 		default:
@@ -1627,7 +1628,8 @@ mega_cmd_done(adapter_t *adapter, u8 completed[], int nstatus, int status)
 			 */
 			if( cmd->cmnd[0] == TEST_UNIT_READY ) {
 				set_host_byte(cmd, DID_ERROR);
-				cmd->result |= (RESERVATION_CONFLICT << 1);
+				set_status_byte(cmd,
+						(RESERVATION_CONFLICT << 1));
 			}
 			else
 			/*
@@ -1639,13 +1641,14 @@ mega_cmd_done(adapter_t *adapter, u8 completed[], int nstatus, int status)
 					 cmd->cmnd[0] == RELEASE) ) {
 
 				set_host_byte(cmd, DID_ERROR);
-				cmd->result |= (RESERVATION_CONFLICT << 1);
+				set_status_byte(cmd,
+						(RESERVATION_CONFLICT << 1));
 			}
 			else
 #endif
 				{
 				set_host_byte(cmd, DID_BAD_TARGET);
-				cmd->result |= status;
+				set_status_byte(cmd, status);
 				}
 		}
 

@@ -709,7 +709,7 @@ mptscsih_io_done(MPT_ADAPTER *ioc, MPT_FRAME_HDR *mf, MPT_FRAME_HDR *mr)
 			 * But not: DID_BUS_BUSY lest one risk
 			 * killing interrupt handler:-(
 			 */
-			sc->result = SAM_STAT_BUSY;
+			set_status_byte(sc, SAM_STAT_BUSY);
 			break;
 
 		case MPI_IOCSTATUS_SCSI_INVALID_BUS:		/* 0x0041 */
@@ -867,7 +867,7 @@ mptscsih_io_done(MPT_ADAPTER *ioc, MPT_FRAME_HDR *mf, MPT_FRAME_HDR *mr)
 
 				if (xfer_cnt < sc->underflow) {
 					if (scsi_status == SAM_STAT_BUSY)
-						sc->result = SAM_STAT_BUSY;
+						set_status_byte(sc, SAM_STAT_BUSY);
 					else {
 						sc->result = 0;
 						set_host_byte(sc,

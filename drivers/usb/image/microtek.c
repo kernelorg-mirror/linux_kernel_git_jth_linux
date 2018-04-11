@@ -406,10 +406,11 @@ static void mts_transfer_cleanup( struct urb *transfer )
 
 static void mts_transfer_done( struct urb *transfer )
 {
+	enum status_byte scsi_stauts;
 	MTS_INT_INIT();
 
-	context->srb->result &= MTS_SCSI_ERR_MASK;
-	context->srb->result |= (unsigned)(*context->scsi_status)<<1;
+	scsi_status = (enum status_byte)(*context->scsi_status) << 1);
+	set_status_byte(context->srb, scsi_status);
 
 	mts_transfer_cleanup(transfer);
 }

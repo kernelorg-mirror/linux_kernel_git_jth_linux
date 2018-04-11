@@ -185,7 +185,7 @@ void rtsx_invoke_transport(struct scsi_cmnd *srb, struct rtsx_chip *chip)
 		goto handle_errors;
 	}
 
-	srb->result = SAM_STAT_GOOD;
+	set_status_byte(srb, SAM_STAT_GOOD);
 
 	/*
 	 * If we have a failure, we're going to do a REQUEST_SENSE
@@ -194,7 +194,7 @@ void rtsx_invoke_transport(struct scsi_cmnd *srb, struct rtsx_chip *chip)
 	 */
 	if (result == TRANSPORT_FAILED) {
 		/* set the result so the higher layers expect this data */
-		srb->result = SAM_STAT_CHECK_CONDITION;
+		set_status_byte(srb, SAM_STAT_CHECK_CONDITION);
 		memcpy(srb->sense_buffer,
 		       (unsigned char *)&chip->sense_buffer[SCSI_LUN(srb)],
 		       sizeof(struct sense_data_t));

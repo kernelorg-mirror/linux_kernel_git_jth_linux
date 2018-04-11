@@ -1010,7 +1010,7 @@ static void storvsc_command_completion(struct storvsc_cmd_request *cmd_request,
 	vm_srb = &cmd_request->vstor_packet.vm_srb;
 	data_transfer_length = vm_srb->data_transfer_length;
 
-	scmnd->result = vm_srb->scsi_status;
+	set_status_byte(scmnd, vm_srb->scsi_status);
 
 	if (scmnd->result) {
 		if (scsi_normalize_sense(scmnd->sense_buffer,

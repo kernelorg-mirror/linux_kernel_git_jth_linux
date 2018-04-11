@@ -3668,7 +3668,7 @@ static void aac_srb_callback(void *context, struct fib * fibptr)
 			== SAM_STAT_CHECK_CONDITION) {
 		int len;
 
-		scsicmd->result |= SAM_STAT_CHECK_CONDITION;
+		set_status_byte(scsicmd, SAM_STAT_CHECK_CONDITION);
 		len = min_t(u32, le32_to_cpu(srbreply->sense_data_size),
 			    SCSI_SENSE_BUFFERSIZE);
 #ifdef AAC_DETAILED_STATUS_INFO
@@ -3682,7 +3682,7 @@ static void aac_srb_callback(void *context, struct fib * fibptr)
 	/*
 	 * OR in the scsi status (already shifted up a bit)
 	 */
-	scsicmd->result |= le32_to_cpu(srbreply->scsi_status);
+	set_status_byte(scsicmd, le32_to_cpu(srbreply->scsi_status));
 
 	aac_fib_complete(fibptr);
 	scsicmd->scsi_done(scsicmd);
@@ -3692,7 +3692,7 @@ static void hba_resp_task_complete(struct aac_dev *dev,
 					struct scsi_cmnd *scsicmd,
 					struct aac_hba_resp *err) {
 
-	scsicmd->result = err->status;
+	set_status_byte(scsicmd, err->status);
 	/* set residual count */
 	scsi_set_resid(scsicmd, le32_to_cpu(err->residual_count));
 

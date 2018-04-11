@@ -2089,9 +2089,6 @@ do { \
 #define ASC_BUSY        0
 #define ASC_ERROR       (-1)
 
-/* struct scsi_cmnd function return codes */
-#define STATUS_BYTE(byte)   (byte)
-
 #define ASC_STATS(shost, counter) ASC_STATS_ADD(shost, counter, 1)
 #ifndef ADVANSYS_STATS
 #define ASC_STATS_ADD(shost, counter, count)
@@ -6039,7 +6036,7 @@ static void adv_isr_callback(ADV_DVC_VAR *adv_dvc_varp, ADV_SCSI_REQ_Q *scsiqp)
 				set_scsi_result(scp, DRIVER_SENSE, 0, 0,
 						scsiqp->scsi_status);
 			} else {
-				scp->result = STATUS_BYTE(scsiqp->scsi_status);
+				set_status_byte(scp, scsiqp->scsi_status);
 			}
 			break;
 
@@ -6805,7 +6802,7 @@ static void asc_isr_callback(ASC_DVC_VAR *asc_dvc_varp, ASC_QDONE_INFO *qdonep)
 				set_scsi_result(scp, 0, DRIVER_SENSE, 0,
 					qdonep->d3.scsi_stat);
 			} else {
-				scp->result = STATUS_BYTE(qdonep->d3.scsi_stat);
+				set_status_byte(scp, qdonep->d3.scsi_stat);
 			}
 			break;
 

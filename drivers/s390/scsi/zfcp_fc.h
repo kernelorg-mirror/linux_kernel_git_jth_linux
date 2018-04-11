@@ -255,7 +255,7 @@ void zfcp_fc_eval_fcp_rsp(struct fcp_resp_with_ext *fcp_rsp,
 	u8 rsp_flags;
 
 	set_msg_byte(scsi, COMMAND_COMPLETE);
-	scsi->result |= fcp_rsp->resp.fr_status;
+	set_status_byte(scsi, fcp_rsp->resp.fr_status);
 
 	rsp_flags = fcp_rsp->resp.fr_flags;
 

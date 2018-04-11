@@ -2553,7 +2553,7 @@ static void pqi_process_raid_io_error(struct pqi_io_request *io_request)
 			sense_data_length);
 	}
 
-	scmd->result = scsi_status;
+	set_status_byte(scmd, scsi_status);
 	set_host_byte(scmd, host_byte);
 }
 
@@ -2643,7 +2643,7 @@ static void pqi_process_aio_io_error(struct pqi_io_request *io_request)
 		scsi_build_sense_buffer(0, scmd->sense_buffer, HARDWARE_ERROR,
 			0x3e, 0x1);
 
-	scmd->result = scsi_status;
+	set_status_byte(scmd, scsi_status);
 	set_host_byte(scmd, host_byte);
 }
 
@@ -4665,7 +4665,7 @@ static bool pqi_raid_bypass_retry_needed(struct pqi_io_request *io_request)
 		return false;
 
 	scmd = io_request->scmd;
-	if ((scmd->result & 0xff) == SAM_STAT_GOOD)
+	if (status_byte(scmd->result) == SAM_STAT_GOOD)
 		return false;
 	if (host_byte(scmd->result) == DID_NO_CONNECT)
 		return false;

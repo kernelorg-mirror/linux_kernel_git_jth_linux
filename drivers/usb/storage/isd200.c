@@ -629,12 +629,12 @@ static void isd200_invoke_transport( struct us_data *us,
 
 	case USB_STOR_TRANSPORT_GOOD:
 		/* Indicate a good result */
-		srb->result = SAM_STAT_GOOD;
+		set_status_byte(srb, SAM_STAT_GOOD);
 		break;
 
 	case USB_STOR_TRANSPORT_NO_SENSE:
 		usb_stor_dbg(us, "-- transport indicates protocol failure\n");
-		srb->result = SAM_STAT_CHECK_CONDITION;
+		set_status_byte(srb, SAM_STAT_CHECK_CONDITION);
 		return;
 
 	case USB_STOR_TRANSPORT_FAILED:
@@ -675,11 +675,11 @@ static void isd200_invoke_transport( struct us_data *us,
 		}
 		if (result == ISD200_GOOD) {
 			isd200_build_sense(us, srb);
-			srb->result = SAM_STAT_CHECK_CONDITION;
+			set_status_byte(srb, SAM_STAT_CHECK_CONDITION);
 
 			/* If things are really okay, then let's show that */
 			if ((srb->sense_buffer[2] & 0xf) == 0x0)
-				srb->result = SAM_STAT_GOOD;
+				set_status_byte(srb, SAM_STAT_GOOD);
 		} else {
 			srb->result = 0;
 			set_host_byte(srb, DID_ERROR);
@@ -692,7 +692,7 @@ static void isd200_invoke_transport( struct us_data *us,
 	 * condition, show that in the result code
 	 */
 	if (transferStatus == USB_STOR_TRANSPORT_FAILED)
-		srb->result = SAM_STAT_CHECK_CONDITION;
+		set_status_byte(srb, SAM_STAT_CHECK_CONDITION);
 	return;
 
 	/*
@@ -1241,7 +1241,7 @@ static int isd200_scsi_to_ata(struct scsi_cmnd *srb, struct us_data *us,
 		/* copy InquiryData */
 		usb_stor_set_xfer_buf((unsigned char *) &info->InquiryData,
 				sizeof(info->InquiryData), srb);
-		srb->result = SAM_STAT_GOOD;
+		set_status_byte(srb, SAM_STAT_GOOD);
 		sendToTransport = 0;
 		break;
 
@@ -1261,7 +1261,7 @@ static int isd200_scsi_to_ata(struct scsi_cmnd *srb, struct us_data *us,
 			isd200_srb_set_bufflen(srb, 0);
 		} else {
 			usb_stor_dbg(us, "   Media Status not supported, just report okay\n");
-			srb->result = SAM_STAT_GOOD;
+			set_status_byte(srb, SAM_STAT_GOOD);
 			sendToTransport = 0;
 		}
 		break;
@@ -1279,7 +1279,7 @@ static int isd200_scsi_to_ata(struct scsi_cmnd *srb, struct us_data *us,
 			isd200_srb_set_bufflen(srb, 0);
 		} else {
 			usb_stor_dbg(us, "   Media Status not supported, just report okay\n");
-			srb->result = SAM_STAT_GOOD;
+			set_status_byte(srb, SAM_STAT_GOOD);
 			sendToTransport = 0;
 		}
 		break;
@@ -1302,7 +1302,7 @@ static int isd200_scsi_to_ata(struct scsi_cmnd *srb, struct us_data *us,
 
 		usb_stor_set_xfer_buf((unsigned char *) &readCapacityData,
 				sizeof(readCapacityData), srb);
-		srb->result = SAM_STAT_GOOD;
+		set_status_byte(srb, SAM_STAT_GOOD);
 		sendToTransport = 0;
 	}
 	break;
@@ -1387,7 +1387,7 @@ static int isd200_scsi_to_ata(struct scsi_cmnd *srb, struct us_data *us,
 			isd200_srb_set_bufflen(srb, 0);
 		} else {
 			usb_stor_dbg(us, "   Not removeable media, just report okay\n");
-			srb->result = SAM_STAT_GOOD;
+			set_status_byte(srb, SAM_STAT_GOOD);
 			sendToTransport = 0;
 		}
 		break;
@@ -1413,7 +1413,7 @@ static int isd200_scsi_to_ata(struct scsi_cmnd *srb, struct us_data *us,
 			isd200_srb_set_bufflen(srb, 0);
 		} else {
 			usb_stor_dbg(us, "   Nothing to do, just report okay\n");
-			srb->result = SAM_STAT_GOOD;
+			set_status_byte(srb, SAM_STAT_GOOD);
 			sendToTransport = 0;
 		}
 		break;

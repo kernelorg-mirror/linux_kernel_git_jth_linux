@@ -582,7 +582,7 @@ static int tcm_loop_queue_data_in(struct se_cmd *se_cmd)
 	pr_debug("%s() called for scsi_cmnd: %p cdb: 0x%02x\n",
 		 __func__, sc, sc->cmnd[0]);
 
-	sc->result = SAM_STAT_GOOD;
+	set_status_byte(sc, SAM_STAT_GOOD);
 	set_host_byte(sc, DID_OK);
 	if ((se_cmd->se_cmd_flags & SCF_OVERFLOW_BIT) ||
 	    (se_cmd->se_cmd_flags & SCF_UNDERFLOW_BIT))
@@ -606,10 +606,10 @@ static int tcm_loop_queue_status(struct se_cmd *se_cmd)
 
 		memcpy(sc->sense_buffer, se_cmd->sense_buffer,
 				SCSI_SENSE_BUFFERSIZE);
-		sc->result = SAM_STAT_CHECK_CONDITION;
+		set_status_byte(sc, SAM_STAT_CHECK_CONDITION);
 		set_driver_byte(sc, DRIVER_SENSE);
 	} else
-		sc->result = se_cmd->scsi_status;
+		set_status_byte(sc, se_cmd->scsi_status);
 
 	set_host_byte(sc, DID_OK);
 	if ((se_cmd->se_cmd_flags & SCF_OVERFLOW_BIT) ||

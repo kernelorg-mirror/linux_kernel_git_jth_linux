@@ -769,7 +769,7 @@ static void hptiop_finish_scsi_req(struct hptiop_hba *hba, u32 tag,
 	case IOP_RESULT_CHECK_CONDITION:
 		scsi_set_resid(scp,
 			scsi_bufflen(scp) - le32_to_cpu(req->dataxfer_length));
-		scp->result = SAM_STAT_CHECK_CONDITION;
+		set_status_byte(scp, SAM_STAT_CHECK_CONDITION);
 		memcpy(scp->sense_buffer, &req->sg_list, SCSI_SENSE_BUFFERSIZE);
 		goto skip_resid;
 		break;

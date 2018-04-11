@@ -4650,7 +4650,7 @@ scsih_qcmd(struct Scsi_Host *shost, struct scsi_cmnd *scmd)
 	 */
 	do {
 		if (test_bit(0, &sas_device_priv_data->ata_command_pending)) {
-			scmd->result = SAM_STAT_BUSY;
+			set_status_byte(scmd, SAM_STAT_BUSY);
 			scmd->scsi_done(scmd);
 			return 0;
 		}
@@ -5298,7 +5298,8 @@ _scsih_io_done(struct MPT3SAS_ADAPTER *ioc, u16 smid, u8 msix_index, u32 reply)
 	switch (ioc_status) {
 	case MPI2_IOCSTATUS_BUSY:
 	case MPI2_IOCSTATUS_INSUFFICIENT_RESOURCES:
-		scmd->result = SAM_STAT_BUSY;
+		scmd->result = 0;
+		set_status_byte(scmd, SAM_STAT_BUSY);
 		break;
 
 	case MPI2_IOCSTATUS_SCSI_DEVICE_NOT_THERE:
@@ -5360,9 +5361,10 @@ _scsih_io_done(struct MPT3SAS_ADAPTER *ioc, u16 smid, u8 msix_index, u32 reply)
 			break;
 
 		if (xfer_cnt < scmd->underflow) {
-			if (scsi_status == SAM_STAT_BUSY)
-				scmd->result = SAM_STAT_BUSY;
-			else {
+			if (scsi_status == SAM_STAT_BUSY) {
+				scmd->result = 0;
+				set_status_byte(scmd, SAM_STAT_BUSY);
+			} else {
 				scmd->result = 0;
 				set_host_byte(scmd, DID_SOFT_ERROR);
 			}

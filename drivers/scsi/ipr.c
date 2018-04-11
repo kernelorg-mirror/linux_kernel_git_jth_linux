@@ -6255,7 +6255,7 @@ static void ipr_gen_sense(struct ipr_cmnd *ipr_cmd)
 	if (ioasc >= IPR_FIRST_DRIVER_IOASC)
 		return;
 
-	ipr_cmd->scsi_cmd->result = SAM_STAT_CHECK_CONDITION;
+	set_status_byte(ipr_cmd->scsi_cmd, SAM_STAT_CHECK_CONDITION);
 
 	if (ipr_is_vset_device(res) &&
 	    ioasc == IPR_IOASC_MED_DO_NOT_REALLOC &&
@@ -6410,7 +6410,7 @@ static void ipr_erp_start(struct ipr_ioa_cfg *ioa_cfg,
 		 * exception: do not set DID_PASSTHROUGH on CHECK CONDITION
 		 * so SCSI mid-layer and upper layers handle it accordingly.
 		 */
-		if (scsi_cmd->result != SAM_STAT_CHECK_CONDITION)
+		if (status_byte(scsi_cmd->result) != SAM_STAT_CHECK_CONDITION)
 			set_host_byte(scsi_cmd, DID_PASSTHROUGH);
 		break;
 	case IPR_IOASC_BUS_WAS_RESET:
@@ -6426,7 +6426,7 @@ static void ipr_erp_start(struct ipr_ioa_cfg *ioa_cfg,
 			res->needs_sync_complete = 1;
 		break;
 	case IPR_IOASC_HW_DEV_BUS_STATUS:
-		scsi_cmd->result |= IPR_IOASC_SENSE_STATUS(ioasc);
+		set_status_byte(scsi_cmd, IPR_IOASC_SENSE_STATUS(ioasc));
 		if (IPR_IOASC_SENSE_STATUS(ioasc) == SAM_STAT_CHECK_CONDITION) {
 			if (!ipr_get_autosense(ipr_cmd)) {
 				if (!ipr_is_naca_model(res)) {

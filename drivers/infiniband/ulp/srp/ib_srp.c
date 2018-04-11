@@ -2095,7 +2095,7 @@ static void srp_process_rsp(struct srp_rdma_ch *ch, struct srp_rsp *rsp)
 
 			return;
 		}
-		scmnd->result = rsp->status;
+		set_status_byte(scmnd, rsp->status);
 
 		if (rsp->flags & SRP_RSP_FLAG_SNSVALID) {
 			memcpy(scmnd->sense_buffer, rsp->data +

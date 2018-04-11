@@ -1316,7 +1316,7 @@ static void mvumi_complete_cmd(struct mvumi_hba *mhba, struct mvumi_cmd *cmd,
 	struct scsi_cmnd *scmd = cmd->scmd;
 
 	cmd->scmd->SCp.ptr = NULL;
-	scmd->result = ob_frame->req_status;
+	set_status_byte(scmd, ob_frame->req_status);
 
 	switch (ob_frame->req_status) {
 	case SAM_STAT_GOOD:

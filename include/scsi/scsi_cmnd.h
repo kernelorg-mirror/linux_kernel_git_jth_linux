@@ -355,6 +355,12 @@ static inline void set_driver_byte(struct scsi_cmnd *cmd,
 	cmd->result = (cmd->result & 0x00ffffff) | (status << 24);
 }
 
+static inline void set_status_byte(struct scsi_cmnd *cmd,
+				   char status)
+{
+	cmd->result = (cmd->result & 0xffffff00) | status;
+}
+
 static inline void set_scsi_result(struct scsi_cmnd *cmd,
 				   enum scsi_driver_byte db,
 				   enum scsi_host_byte hb,
