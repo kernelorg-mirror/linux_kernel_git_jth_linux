@@ -563,7 +563,7 @@ static void pvscsi_complete_request(struct pvscsi_adapter *adapter,
 	     btstat == BTSTAT_LINKED_COMMAND_COMPLETED_WITH_FLAG)) {
 		set_scsi_result(cmd, 0, DID_OK, 0, sdstat);
 		if (sdstat == SAM_STAT_CHECK_CONDITION && cmd->sense_buffer)
-			cmd->result |= (DRIVER_SENSE << 24);
+			set_driver_byte(cmd, DRIVER_SENSE);
 	} else
 		switch (btstat) {
 		case BTSTAT_SUCCESS:
@@ -588,7 +588,7 @@ static void pvscsi_complete_request(struct pvscsi_adapter *adapter,
 		case BTSTAT_LUNMISMATCH:
 		case BTSTAT_TAGREJECT:
 		case BTSTAT_BADMSG:
-			cmd->result = (DRIVER_INVALID << 24);
+			set_driver_byte(cmd, DRIVER_INVALID);
 			/* fall through */
 
 		case BTSTAT_HAHARDWARE:

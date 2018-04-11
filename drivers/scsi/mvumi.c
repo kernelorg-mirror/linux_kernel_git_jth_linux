@@ -1330,11 +1330,12 @@ static void mvumi_complete_cmd(struct mvumi_hba *mhba, struct mvumi_cmd *cmd,
 		if (ob_frame->rsp_flag & CL_RSP_FLAG_SENSEDATA) {
 			memcpy(cmd->scmd->sense_buffer, ob_frame->payload,
 				sizeof(struct mvumi_sense_data));
-			scmd->result |=  (DRIVER_SENSE << 24);
+			set_driver_byte(scmd, DRIVER_SENSE);
 		}
 		break;
 	default:
-		scmd->result |= (DRIVER_INVALID << 24) | (DID_ABORT << 16);
+		set_driver_byte(scmd, DRIVER_INVALID);
+		scmd->result |= (DID_ABORT << 16);
 		break;
 	}
 

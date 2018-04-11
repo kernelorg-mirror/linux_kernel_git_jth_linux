@@ -4475,7 +4475,7 @@ void ata_scsi_simulate(struct ata_device *dev, struct scsi_cmnd *cmd)
 
 	case REQUEST_SENSE:
 		ata_scsi_set_sense(dev, cmd, 0, 0, 0);
-		cmd->result = (DRIVER_SENSE << 24);
+		set_driver_byte(cmd, DRIVER_SENSE);
 		break;
 
 	/* if we reach this, then writeback caching is disabled,

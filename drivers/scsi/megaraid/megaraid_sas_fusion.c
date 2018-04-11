@@ -1795,7 +1795,7 @@ map_cmd_status(struct fusion_context *fusion,
 			       SCSI_SENSE_BUFFERSIZE);
 			memcpy(scmd->sense_buffer, sense,
 			       SCSI_SENSE_BUFFERSIZE);
-			scmd->result |= DRIVER_SENSE << 24;
+			set_driver_byte(scmd, DRIVER_SENSE);
 		}
 
 		/*

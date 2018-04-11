@@ -2068,7 +2068,7 @@ void scsi_eh_flush_done_q(struct list_head *done_q)
 			 * set, do not set DRIVER_TIMEOUT.
 			 */
 			if (!scmd->result)
-				scmd->result |= (DRIVER_TIMEOUT << 24);
+				set_driver_byte(scmd, DRIVER_TIMEOUT);
 			SCSI_LOG_ERROR_RECOVERY(3,
 				scmd_printk(KERN_INFO, scmd,
 					     "%s: flush finish cmd\n",

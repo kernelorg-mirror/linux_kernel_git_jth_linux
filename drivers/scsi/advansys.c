@@ -2093,7 +2093,6 @@ do { \
 #define STATUS_BYTE(byte)   (byte)
 #define MSG_BYTE(byte)      ((byte) << 8)
 #define HOST_BYTE(byte)     ((byte) << 16)
-#define DRIVER_BYTE(byte)   ((byte) << 24)
 
 #define ASC_STATS(shost, counter) ASC_STATS_ADD(shost, counter, 1)
 #ifndef ADVANSYS_STATS

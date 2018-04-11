@@ -224,7 +224,7 @@ void scsi_finish_command(struct scsi_cmnd *cmd)
 	 * must have taken place.  Make a note of this.
 	 */
 	if (SCSI_SENSE_VALID(cmd))
-		cmd->result |= (DRIVER_SENSE << 24);
+		set_driver_byte(cmd, DRIVER_SENSE);
 
 	SCSI_LOG_MLCOMPLETE(4, sdev_printk(KERN_INFO, sdev,
 				"Notifying upper driver of completion "
