@@ -142,7 +142,8 @@ static void uas_zap_pending(struct uas_dev_info *devinfo, int result)
 		uas_log_cmd_state(cmnd, __func__, 0);
 		/* Sense urbs were killed, clear COMMAND_INFLIGHT manually */
 		cmdinfo->state &= ~COMMAND_INFLIGHT;
-		cmnd->result = result << 16;
+		cmnd->result = 0;
+		set_host_byte(cmnd, result);
 		err = uas_try_complete(cmnd, __func__);
 		WARN_ON(err != 0);
 	}
@@ -251,17 +252,21 @@ static bool uas_evaluate_response_iu(struct response_iu *riu, struct scsi_cmnd *
 
 	switch (response_code) {
 	case RC_INCORRECT_LUN:
-		cmnd->result = DID_BAD_TARGET << 16;
+		cmnd->result = 0;
+		set_host_byte(cmnd, DID_BAD_TARGET);
 		break;
 	case RC_TMF_SUCCEEDED:
-		cmnd->result = DID_OK << 16;
+		cmnd->result = 0;
+		set_host_byte(cmnd, DID_OK);
 		break;
 	case RC_TMF_NOT_SUPPORTED:
-		cmnd->result = DID_TARGET_FAILURE << 16;
+		cmnd->result = 0;
+		set_host_byte(cmnd, DID_TARGET_FAILURE);
 		break;
 	default:
 		uas_log_cmd_state(cmnd, "response iu", response_code);
-		cmnd->result = DID_ERROR << 16;
+		cmnd->result = 0;
+		set_host_byte(cmnd, DID_ERROR);
 		break;
 	}
 
@@ -639,7 +644,8 @@ static int uas_queuecommand_lck(struct scsi_cmnd *cmnd,
 	spin_lock_irqsave(&devinfo->lock, flags);
 
 	if (devinfo->resetting) {
-		cmnd->result = DID_ERROR << 16;
+		cmnd->result = 0;
+		set_host_byte(cmnd, DID_ERROR);
 		cmnd->scsi_done(cmnd);
 		spin_unlock_irqrestore(&devinfo->lock, flags);
 		return 0;

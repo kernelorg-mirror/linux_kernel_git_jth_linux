@@ -1639,7 +1639,8 @@ static void scsi_kill_request(struct request *req, struct request_queue *q)
 	starget = scsi_target(sdev);
 	shost = sdev->host;
 	scsi_init_cmd_errh(cmd);
-	cmd->result = DID_NO_CONNECT << 16;
+	cmd->result = 0;
+	set_host_byte(cmd, DID_NO_CONNECT);
 	atomic_inc(&cmd->device->iorequest_cnt);
 
 	/*
@@ -1713,7 +1714,8 @@ static int scsi_dispatch_cmd(struct scsi_cmnd *cmd)
 		/* in SDEV_DEL we error all commands. DID_NO_CONNECT
 		 * returns an immediate error upwards, and signals
 		 * that the device is no longer present */
-		cmd->result = DID_NO_CONNECT << 16;
+		cmd->result = 0;
+		set_host_byte(cmd, DID_NO_CONNECT);
 		goto done;
 	}
 
@@ -1747,12 +1749,14 @@ static int scsi_dispatch_cmd(struct scsi_cmnd *cmd)
 			       "queuecommand : command too long. "
 			       "cdb_size=%d host->max_cmd_len=%d\n",
 			       cmd->cmd_len, cmd->device->host->max_cmd_len));
-		cmd->result = (DID_ABORT << 16);
+		cmd->result = 0;
+		set_host_byte(cmd, DID_ABORT);
 		goto done;
 	}
 
 	if (unlikely(host->shost_state == SHOST_DEL)) {
-		cmd->result = (DID_NO_CONNECT << 16);
+		cmd->result = 0;
+		set_host_byte(cmd, DID_NO_CONNECT);
 		goto done;
 
 	}

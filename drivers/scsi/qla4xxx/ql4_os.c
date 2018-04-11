@@ -4078,15 +4078,20 @@ static int qla4xxx_queuecommand(struct Scsi_Host *host, struct scsi_cmnd *cmd)
 	int rval;
 
 	if (test_bit(AF_EEH_BUSY, &ha->flags)) {
-		if (test_bit(AF_PCI_CHANNEL_IO_PERM_FAILURE, &ha->flags))
-			cmd->result = DID_NO_CONNECT << 16;
-		else
-			cmd->result = DID_REQUEUE << 16;
+		if (test_bit(AF_PCI_CHANNEL_IO_PERM_FAILURE, &ha->flags)) {
+			cmd->result = 0;
+			set_host_byte(cmd, DID_NO_CONNECT);
+		}
+		else {
+			cmd->result = 0;
+			set_host_byte(cmd, DID_REQUEUE);
+		}
 		goto qc_fail_command;
 	}
 
 	if (!sess) {
-		cmd->result = DID_IMM_RETRY << 16;
+		cmd->result = 0;
+		set_host_byte(cmd, DID_IMM_RETRY);
 		goto qc_fail_command;
 	}
 

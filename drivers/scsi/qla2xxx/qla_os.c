@@ -847,7 +847,8 @@ qla2xxx_queuecommand(struct Scsi_Host *host, struct scsi_cmnd *cmd)
 	uint16_t hwq;
 
 	if (unlikely(test_bit(UNLOADING, &base_vha->dpc_flags))) {
-		cmd->result = DID_NO_CONNECT << 16;
+		cmd->result = 0;
+		set_host_byte(cmd, DID_NO_CONNECT);
 		goto qc24_fail_command;
 	}
 
@@ -869,11 +870,13 @@ qla2xxx_queuecommand(struct Scsi_Host *host, struct scsi_cmnd *cmd)
 			ql_dbg(ql_dbg_aer, vha, 0x9010,
 			    "PCI Channel IO permanent failure, exiting "
 			    "cmd=%p.\n", cmd);
-			cmd->result = DID_NO_CONNECT << 16;
+			cmd->result = 0;
+			set_host_byte(cmd, DID_NO_CONNECT);
 		} else {
 			ql_dbg(ql_dbg_aer, vha, 0x9011,
 			    "EEH_Busy, Requeuing the cmd=%p.\n", cmd);
-			cmd->result = DID_REQUEUE << 16;
+			cmd->result = 0;
+			set_host_byte(cmd, DID_REQUEUE);
 		}
 		goto qc24_fail_command;
 	}
@@ -892,12 +895,14 @@ qla2xxx_queuecommand(struct Scsi_Host *host, struct scsi_cmnd *cmd)
 			ql_dbg(ql_dbg_io, vha, 0x3004,
 			    "DIF Cap not reg, fail DIF capable cmd's:%p.\n",
 			    cmd);
-			cmd->result = DID_NO_CONNECT << 16;
+			cmd->result = 0;
+			set_host_byte(cmd, DID_NO_CONNECT);
 			goto qc24_fail_command;
 	}
 
 	if (!fcport) {
-		cmd->result = DID_NO_CONNECT << 16;
+		cmd->result = 0;
+		set_host_byte(cmd, DID_NO_CONNECT);
 		goto qc24_fail_command;
 	}
 
@@ -908,7 +913,8 @@ qla2xxx_queuecommand(struct Scsi_Host *host, struct scsi_cmnd *cmd)
 			    "Returning DNC, fcport_state=%d loop_state=%d.\n",
 			    atomic_read(&fcport->state),
 			    atomic_read(&base_vha->loop_state));
-			cmd->result = DID_NO_CONNECT << 16;
+			cmd->result = 0;
+			set_host_byte(cmd, DID_NO_CONNECT);
 			goto qc24_fail_command;
 		}
 		goto qc24_target_busy;
@@ -983,7 +989,8 @@ qla2xxx_mqueuecommand(struct Scsi_Host *host, struct scsi_cmnd *cmd,
 	}
 
 	if (!fcport) {
-		cmd->result = DID_NO_CONNECT << 16;
+		cmd->result = 0;
+		set_host_byte(cmd, DID_NO_CONNECT);
 		goto qc24_fail_command;
 	}
 
@@ -994,7 +1001,8 @@ qla2xxx_mqueuecommand(struct Scsi_Host *host, struct scsi_cmnd *cmd,
 			    "Returning DNC, fcport_state=%d loop_state=%d.\n",
 			    atomic_read(&fcport->state),
 			    atomic_read(&base_vha->loop_state));
-			cmd->result = DID_NO_CONNECT << 16;
+			cmd->result = 0;
+			set_host_byte(cmd, DID_NO_CONNECT);
 			goto qc24_fail_command;
 		}
 		goto qc24_target_busy;

@@ -1206,8 +1206,10 @@ static irqreturn_t twl_interrupt(int irq, void *dev_instance)
 		} else {
 			cmd = tw_dev->srb[request_id];
 
-			if (!error)
-				cmd->result = (DID_OK << 16);
+			if (!error) {
+				cmd->result = 0;
+				set_host_byte(cmd, DID_OK);
+			}
 			
 			/* Report residual bytes for single sgl */
 			if ((scsi_sg_count(cmd) <= 1) && (full_command_packet->command.newcommand.status == 0)) {
@@ -1368,7 +1370,8 @@ static int twl_reset_device_extension(TW_Device_Extension *tw_dev, int ioctl_res
 			struct scsi_cmnd *cmd = tw_dev->srb[i];
 
 			if (cmd) {
-				cmd->result = (DID_RESET << 16);
+				cmd->result = 0;
+				set_host_byte(cmd, DID_RESET);
 				scsi_dma_unmap(cmd);
 				cmd->scsi_done(cmd);
 			}
@@ -1478,7 +1481,8 @@ static int twl_scsi_queue_lck(struct scsi_cmnd *SCpnt, void (*done)(struct scsi_
 	if (retval) {
 		tw_dev->state[request_id] = TW_S_COMPLETED;
 		twl_free_request_id(tw_dev, request_id);
-		SCpnt->result = (DID_ERROR << 16);
+		SCpnt->result = 0;
+		set_host_byte(SCpnt, DID_ERROR);
 		done(SCpnt);
 		retval = 0;
 	}

@@ -819,10 +819,12 @@ int esas2r_queuecommand(struct Scsi_Host *host, struct scsi_cmnd *cmd)
 	unsigned bufflen;
 
 	/* Assume success, if it fails we will fix the result later. */
-	cmd->result = DID_OK << 16;
+	cmd->result = 0;
+	set_host_byte(cmd, DID_OK);
 
 	if (unlikely(test_bit(AF_DEGRADED_MODE, &a->flags))) {
-		cmd->result = DID_NO_CONNECT << 16;
+		cmd->result = 0;
+		set_host_byte(cmd, DID_NO_CONNECT);
 		cmd->scsi_done(cmd);
 		return 0;
 	}
@@ -983,7 +985,8 @@ int esas2r_eh_abort(struct scsi_cmnd *cmd)
 	esas2r_log(ESAS2R_LOG_INFO, "eh_abort (%p)", cmd);
 
 	if (test_bit(AF_DEGRADED_MODE, &a->flags)) {
-		cmd->result = DID_ABORT << 16;
+		cmd->result = 0;
+		set_host_byte(cmd, DID_ABORT);
 
 		scsi_set_resid(cmd, 0);
 
@@ -1049,7 +1052,8 @@ check_active_queue:
 	 * freed it, or we didn't find it at all.  Either way, success!
 	 */
 
-	cmd->result = DID_ABORT << 16;
+	cmd->result = 0;
+	set_host_byte(cmd, DID_ABORT);
 
 	scsi_set_resid(cmd, 0);
 

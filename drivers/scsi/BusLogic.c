@@ -2778,7 +2778,7 @@ static void blogic_process_ccbs(struct blogic_adapter *adapter)
 				struct scsi_cmnd *nxt_cmd =
 					command->reset_chain;
 				command->reset_chain = NULL;
-				command->result = DID_RESET << 16;
+				set_host_byte(command->result, DID_RESET);
 				command->scsi_done(command);
 				command = nxt_cmd;
 			}
@@ -2795,7 +2795,8 @@ static void blogic_process_ccbs(struct blogic_adapter *adapter)
 					command = ccb->command;
 					blogic_dealloc_ccb(ccb, 1);
 					adapter->active_cmds[tgt_id]--;
-					command->result = DID_RESET << 16;
+					command->result = 0;
+					set_host_byte(command, DID_RESET);
 					command->scsi_done(command);
 				}
 			adapter->bdr_pend[tgt_id] = NULL;
@@ -2816,13 +2817,15 @@ static void blogic_process_ccbs(struct blogic_adapter *adapter)
 				    .cmds_complete++;
 				adapter->tgt_flags[ccb->tgt_id]
 				    .cmd_good = true;
-				command->result = DID_OK << 16;
+				command->result = 0;
+				set_host_byte(command, DID_OK);
 				break;
 			case BLOGIC_CMD_ABORT_BY_HOST:
 				blogic_warn("CCB #%ld to Target %d Aborted\n",
 					adapter, ccb->serial, ccb->tgt_id);
 				blogic_inc_count(&adapter->tgt_stats[ccb->tgt_id].aborts_done);
-				command->result = DID_ABORT << 16;
+				command->result = 0;
+				set_host_byte(command, DID_ABORT);
 				break;
 			case BLOGIC_CMD_COMPLETE_ERROR:
 				command->result = blogic_resultcode(adapter,
@@ -3045,7 +3048,8 @@ static int blogic_qcmd_lck(struct scsi_cmnd *command,
 	   occurred.
 	 */
 	if (cdb[0] == REQUEST_SENSE && command->sense_buffer[0] != 0) {
-		command->result = DID_OK << 16;
+		command->result = 0;
+		set_host_byte(command, DID_OK);
 		comp_cb(command);
 		return 0;
 	}
@@ -3063,7 +3067,8 @@ static int blogic_qcmd_lck(struct scsi_cmnd *command,
 		spin_lock_irq(adapter->scsi_host->host_lock);
 		ccb = blogic_alloc_ccb(adapter);
 		if (ccb == NULL) {
-			command->result = DID_ERROR << 16;
+			command->result = 0;
+			set_host_byte(command, DID_ERROR);
 			comp_cb(command);
 			return 0;
 		}
@@ -3214,7 +3219,8 @@ static int blogic_qcmd_lck(struct scsi_cmnd *command,
 						ccb)) {
 				blogic_warn("Still unable to write Outgoing Mailbox - " "Host Adapter Dead?\n", adapter);
 				blogic_dealloc_ccb(ccb, 1);
-				command->result = DID_ERROR << 16;
+				command->result = 0;
+				set_host_byte(command, DID_ERROR);
 				command->scsi_done(command);
 			}
 		}

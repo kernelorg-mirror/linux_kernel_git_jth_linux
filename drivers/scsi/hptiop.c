@@ -743,22 +743,28 @@ static void hptiop_finish_scsi_req(struct hptiop_hba *hba, u32 tag,
 	case IOP_RESULT_SUCCESS:
 		scsi_set_resid(scp,
 			scsi_bufflen(scp) - le32_to_cpu(req->dataxfer_length));
-		scp->result = (DID_OK<<16);
+		scp->result = 0;
+		set_host_byte(scp, DID_OK);
 		break;
 	case IOP_RESULT_BAD_TARGET:
-		scp->result = (DID_BAD_TARGET<<16);
+		scp->result = 0;
+		set_host_byte(scp, DID_BAD_TARGET);
 		break;
 	case IOP_RESULT_BUSY:
-		scp->result = (DID_BUS_BUSY<<16);
+		scp->result = 0;
+		set_host_byte(scp, DID_BUS_BUSY);
 		break;
 	case IOP_RESULT_RESET:
-		scp->result = (DID_RESET<<16);
+		scp->result = 0;
+		set_host_byte(scp, DID_RESET);
 		break;
 	case IOP_RESULT_FAIL:
-		scp->result = (DID_ERROR<<16);
+		scp->result = 0;
+		set_host_byte(scp, DID_ERROR);
 		break;
 	case IOP_RESULT_INVALID_REQUEST:
-		scp->result = (DID_ABORT<<16);
+		scp->result = 0;
+		set_host_byte(scp, DID_ABORT);
 		break;
 	case IOP_RESULT_CHECK_CONDITION:
 		scsi_set_resid(scp,
@@ -1038,7 +1044,8 @@ static int hptiop_queuecommand_lck(struct scsi_cmnd *scp,
 	if (scp->device->channel ||
 			(scp->device->id > hba->max_devices) ||
 			((scp->device->id == (hba->max_devices-1)) && scp->device->lun)) {
-		scp->result = DID_BAD_TARGET << 16;
+		scp->result = 0;
+		set_host_byte(scp, DID_BAD_TARGET);
 		free_req(hba, _req);
 		goto cmd_done;
 	}

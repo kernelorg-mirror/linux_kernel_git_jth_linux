@@ -382,32 +382,37 @@ SYM53C500_intr(int irq, void *dev_id)
 
 	if (int_reg & 0x80) {	/* SCSI reset intr */
 		DEB(printk("SYM53C500: reset intr received\n"));
-		curSC->result = DID_RESET << 16;
+		curSC->result = 0;
+		set_host_byte(curSC, DID_RESET);
 		goto idle_out;
 	}
 
 	if (pio_status & 0x80) {
 		printk("SYM53C500: Warning: PIO error!\n");
-		curSC->result = DID_ERROR << 16;
+		curSC->result = 0;
+		set_host_byte(curSC, DID_ERROR);
 		goto idle_out;
 	}
 
 	if (status & 0x20) {		/* Parity error */
 		printk("SYM53C500: Warning: parity error!\n");
-		curSC->result = DID_PARITY << 16;
+		curSC->result = 0;
+		set_host_byte(curSC, DID_PARITY);
 		goto idle_out;
 	}
 
 	if (status & 0x40) {		/* Gross error */
 		printk("SYM53C500: Warning: gross error!\n");
-		curSC->result = DID_ERROR << 16;
+		curSC->result = 0;
+		set_host_byte(curSC, DID_ERROR);
 		goto idle_out;
 	}
 
 	if (int_reg & 0x20) {		/* Disconnect */
 		DEB(printk("SYM53C500: disconnect intr received\n"));
 		if (curSC->SCp.phase != message_in) {	/* Unexpected disconnect */
-			curSC->result = DID_NO_CONNECT << 16;
+			curSC->result = 0;
+			set_host_byte(curSC, DID_NO_CONNECT);
 		} else {	/* Command complete, return status and message */
 			set_scsi_result(curSC, 0, DID_OK, 0,
 					(curSC->SCp.Status & 0xff) | ((curSC->SCp.Message & 0xff) << 8));

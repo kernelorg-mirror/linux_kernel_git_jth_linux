@@ -325,7 +325,8 @@ static int usb_stor_control_thread(void * __us)
 
 		/* has the command timed out *already* ? */
 		if (test_bit(US_FLIDX_TIMED_OUT, &us->dflags)) {
-			srb->result = DID_ABORT << 16;
+			srb->result = 0;
+			set_host_byte(srb, DID_ABORT);
 			goto SkipForAbort;
 		}
 
@@ -337,7 +338,8 @@ static int usb_stor_control_thread(void * __us)
 		 */
 		if (srb->sc_data_direction == DMA_BIDIRECTIONAL) {
 			usb_stor_dbg(us, "UNKNOWN data direction\n");
-			srb->result = DID_ERROR << 16;
+			srb->result = 0;
+			set_host_byte(srb, DID_ERROR);
 		}
 
 		/*
@@ -349,14 +351,16 @@ static int usb_stor_control_thread(void * __us)
 			usb_stor_dbg(us, "Bad target number (%d:%llu)\n",
 				     srb->device->id,
 				     srb->device->lun);
-			srb->result = DID_BAD_TARGET << 16;
+			srb->result = 0;
+			set_host_byte(srb, DID_BAD_TARGET);
 		}
 
 		else if (srb->device->lun > us->max_lun) {
 			usb_stor_dbg(us, "Bad LUN (%d:%llu)\n",
 				     srb->device->id,
 				     srb->device->lun);
-			srb->result = DID_BAD_TARGET << 16;
+			srb->result = 0;
+			set_host_byte(srb, DID_BAD_TARGET);
 		}
 
 		/*

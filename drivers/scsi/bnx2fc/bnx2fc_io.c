@@ -198,7 +198,8 @@ static void bnx2fc_scsi_done(struct bnx2fc_cmd *io_req, int err_code)
 		return;
 	}
 
-	sc_cmd->result = err_code << 16;
+	sc_cmd->result = 0;
+	set_host_byte(sc_cmd, err_code);
 
 	BNX2FC_IO_DBG(io_req, "sc=%p, result=0x%x, retries=%d, allowed=%d\n",
 		sc_cmd, host_byte(sc_cmd->result), sc_cmd->retries,
@@ -1545,7 +1546,8 @@ void bnx2fc_process_tm_compl(struct bnx2fc_cmd *io_req,
 	case FC_GOOD:
 		if (io_req->cdb_status == 0) {
 			/* Good IO completion */
-			sc_cmd->result = DID_OK << 16;
+			sc_cmd->result = 0;
+			set_host_byte(sc_cmd, DID_OK);
 		} else {
 			/* Transport status is good, SCSI status not good */
 			set_scsi_result(sc_cmd, 0, DID_OK, 0,
@@ -1941,7 +1943,8 @@ void bnx2fc_process_scsi_cmd_compl(struct bnx2fc_cmd *io_req,
 	case FC_GOOD:
 		if (io_req->cdb_status == 0) {
 			/* Good IO completion */
-			sc_cmd->result = DID_OK << 16;
+			sc_cmd->result = 0;
+			set_host_byte(sc_cmd, DID_OK);
 		} else {
 			/* Transport status is good, SCSI status not good */
 			BNX2FC_IO_DBG(io_req, "scsi_cmpl: cdb_status = %d"

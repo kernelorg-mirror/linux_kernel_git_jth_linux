@@ -634,13 +634,15 @@ mptscsih_io_done(MPT_ADAPTER *ioc, MPT_FRAME_HDR *mf, MPT_FRAME_HDR *mr)
 
 		if (!vdevice || !vdevice->vtarget ||
 		    vdevice->vtarget->deleted) {
-			sc->result = DID_NO_CONNECT << 16;
+			sc->result = 0;
+			set_host_byte(sc, DID_NO_CONNECT);
 			goto out;
 		}
 	}
 
 	sc->host_scribble = NULL;
-	sc->result = DID_OK << 16;		/* Set default reply as OK */
+	sc->result = 0;
+	set_host_byte(sc, DID_OK);		/* Set default reply as OK */
 	pScsiReq = (SCSIIORequest_t *) mf;
 	pScsiReply = (SCSIIOReply_t *) mr;
 
@@ -712,16 +714,21 @@ mptscsih_io_done(MPT_ADAPTER *ioc, MPT_FRAME_HDR *mf, MPT_FRAME_HDR *mr)
 
 		case MPI_IOCSTATUS_SCSI_INVALID_BUS:		/* 0x0041 */
 		case MPI_IOCSTATUS_SCSI_INVALID_TARGETID:	/* 0x0042 */
-			sc->result = DID_BAD_TARGET << 16;
+			sc->result = 0;
+			set_host_byte(sc, DID_BAD_TARGET);
 			break;
 
 		case MPI_IOCSTATUS_SCSI_DEVICE_NOT_THERE:	/* 0x0043 */
 			/* Spoof to SCSI Selection Timeout! */
-			if (ioc->bus_type != FC)
-				sc->result = DID_NO_CONNECT << 16;
+			if (ioc->bus_type != FC) {
+				sc->result = 0;
+				set_host_byte(sc, DID_NO_CONNECT);
+			}
 			/* else fibre, just stall until rescan event */
-			else
-				sc->result = DID_REQUEUE << 16;
+			else {
+				sc->result = 0;
+				set_host_byte(sc, DID_REQUEUE);
+			}
 
 			if (hd->sel_timeout[pScsiReq->TargetID] < 0xFFFF)
 				hd->sel_timeout[pScsiReq->TargetID]++;
@@ -765,9 +772,9 @@ mptscsih_io_done(MPT_ADAPTER *ioc, MPT_FRAME_HDR *mf, MPT_FRAME_HDR *mr)
 							vdevice->vtarget->
 								inDMD = 1;
 
-					    sc->result =
-						    (DID_TRANSPORT_DISRUPTED
-						    << 16);
+					    sc->result = 0;
+					    set_host_byte(sc,
+							  DID_TRANSPORT_DISRUPTED);
 					    break;
 				}
 			} else if (ioc->bus_type == FC) {
@@ -779,7 +786,8 @@ mptscsih_io_done(MPT_ADAPTER *ioc, MPT_FRAME_HDR *mf, MPT_FRAME_HDR *mr)
 				 * DID_RESET to permit retry of the command,
 				 * just not an infinite number of them
 				 */
-				sc->result = DID_ERROR << 16;
+				sc->result = 0;
+				set_host_byte(sc, DID_ERROR);
 				break;
 			}
 
@@ -791,20 +799,27 @@ mptscsih_io_done(MPT_ADAPTER *ioc, MPT_FRAME_HDR *mf, MPT_FRAME_HDR *mr)
 			/* Linux handles an unsolicited DID_RESET better
 			 * than an unsolicited DID_ABORT.
 			 */
-			sc->result = DID_RESET << 16;
+			sc->result = 0;
+			set_host_byte(sc, DID_RESET);
 			break;
 
 		case MPI_IOCSTATUS_SCSI_EXT_TERMINATED:		/* 0x004C */
-			if (ioc->bus_type == FC)
-				sc->result = DID_ERROR << 16;
-			else
-				sc->result = DID_RESET << 16;
+			if (ioc->bus_type == FC) {
+				sc->result = 0;
+				set_host_byte(sc, DID_ERROR);
+			}
+			else {
+				sc->result = 0;
+				set_host_byte(sc, DID_RESET);
+			}
 			break;
 
 		case MPI_IOCSTATUS_SCSI_RESIDUAL_MISMATCH:	/* 0x0049 */
 			scsi_set_resid(sc, scsi_bufflen(sc) - xfer_cnt);
-			if((xfer_cnt==0)||(sc->underflow > xfer_cnt))
-				sc->result=DID_SOFT_ERROR << 16;
+			if((xfer_cnt==0)||(sc->underflow > xfer_cnt)) {
+				sc->result = 0;
+				set_host_byte(sc, DID_SOFT_ERROR);
+			}
 			else /* Sufficient data transfer occurred */
 				set_scsi_result(sc, 0, DID_OK, 0, scsi_status);
 			dreplyprintk(ioc, printk(MYIOC_s_DEBUG_FMT
@@ -837,8 +852,9 @@ mptscsih_io_done(MPT_ADAPTER *ioc, MPT_FRAME_HDR *mf, MPT_FRAME_HDR *mr)
 					    pScsiReq->CDB[0] == VERIFY_16) {
 						if (scsi_bufflen(sc) !=
 							xfer_cnt) {
-							sc->result =
-							DID_SOFT_ERROR << 16;
+							sc->result = 0;
+							set_host_byte(sc,
+								      DID_SOFT_ERROR);
 						    printk(KERN_WARNING "Errata"
 						    "on LSI53C1030 occurred."
 						    "sc->req_bufflen=0x%02x,"
@@ -852,17 +868,22 @@ mptscsih_io_done(MPT_ADAPTER *ioc, MPT_FRAME_HDR *mf, MPT_FRAME_HDR *mr)
 				if (xfer_cnt < sc->underflow) {
 					if (scsi_status == SAM_STAT_BUSY)
 						sc->result = SAM_STAT_BUSY;
-					else
-						sc->result = DID_SOFT_ERROR << 16;
+					else {
+						sc->result = 0;
+						set_host_byte(sc,
+							      DID_SOFT_ERROR);
+					}
 				}
 				if (scsi_state & (MPI_SCSI_STATE_AUTOSENSE_FAILED | MPI_SCSI_STATE_NO_SCSI_STATUS)) {
 					/* What to do?
 				 	*/
-					sc->result = DID_SOFT_ERROR << 16;
+					sc->result = 0;
+					set_host_byte(sc, DID_SOFT_ERROR);
 				}
 				else if (scsi_state & MPI_SCSI_STATE_TERMINATED) {
 					/*  Not real sure here either...  */
-					sc->result = DID_RESET << 16;
+					sc->result = 0;
+					set_host_byte(sc, DID_RESET);
 				}
 			}
 
@@ -955,11 +976,13 @@ mptscsih_io_done(MPT_ADAPTER *ioc, MPT_FRAME_HDR *mf, MPT_FRAME_HDR *mr)
 				/*
 				 * What to do?
 				 */
-				sc->result = DID_SOFT_ERROR << 16;
+				sc->result = 0;
+				set_host_byte(sc, DID_SOFT_ERROR);
 			}
 			else if (scsi_state & MPI_SCSI_STATE_TERMINATED) {
 				/*  Not real sure here either...  */
-				sc->result = DID_RESET << 16;
+				sc->result = 0;
+				set_host_byte(sc, DID_RESET);
 			}
 			else if (scsi_state & MPI_SCSI_STATE_QUEUE_TAG_REJECTED) {
 				/* Device Inq. data indicates that it supports
@@ -979,7 +1002,8 @@ mptscsih_io_done(MPT_ADAPTER *ioc, MPT_FRAME_HDR *mf, MPT_FRAME_HDR *mr)
 			break;
 
 		case MPI_IOCSTATUS_SCSI_PROTOCOL_ERROR:		/* 0x0047 */
-			sc->result = DID_SOFT_ERROR << 16;
+			sc->result = 0;
+			set_host_byte(sc, DID_SOFT_ERROR);
 			break;
 
 		case MPI_IOCSTATUS_INVALID_FUNCTION:		/* 0x0001 */
@@ -994,7 +1018,8 @@ mptscsih_io_done(MPT_ADAPTER *ioc, MPT_FRAME_HDR *mf, MPT_FRAME_HDR *mr)
 			/*
 			 * What to do?
 			 */
-			sc->result = DID_SOFT_ERROR << 16;
+			sc->result = 0;
+			set_host_byte(sc, DID_SOFT_ERROR);
 			break;
 
 		}	/* switch(status) */
@@ -1049,7 +1074,8 @@ mptscsih_flush_running_cmds(MPT_SCSI_HOST *hd)
 		if ((unsigned char *)mf != sc->host_scribble)
 			continue;
 		scsi_dma_unmap(sc);
-		sc->result = DID_RESET << 16;
+		sc->result = 0;
+		set_host_byte(sc, DID_RESET);
 		sc->host_scribble = NULL;
 		dtmprintk(ioc, sdev_printk(KERN_INFO, sc->device, MYIOC_s_FMT
 		    "completing cmds: fw_channel %d, fw_id %d, sc=%p, mf = %p, "
@@ -1112,7 +1138,8 @@ mptscsih_search_running_cmds(MPT_SCSI_HOST *hd, VirtDevice *vdevice)
 			mpt_free_msg_frame(ioc, (MPT_FRAME_HDR *)mf);
 			scsi_dma_unmap(sc);
 			sc->host_scribble = NULL;
-			sc->result = DID_NO_CONNECT << 16;
+			sc->result = 0;
+			set_host_byte(sc, DID_NO_CONNECT);
 			dtmprintk(ioc, sdev_printk(KERN_INFO, sc->device,
 			   MYIOC_s_FMT "completing cmds: fw_channel %d, "
 			   "fw_id %d, sc=%p, mf = %p, idx=%x\n", ioc->name,
@@ -1690,7 +1717,8 @@ mptscsih_abort(struct scsi_cmnd * SCpnt)
 	/* If we can't locate our host adapter structure, return FAILED status.
 	 */
 	if ((hd = shost_priv(SCpnt->device->host)) == NULL) {
-		SCpnt->result = DID_RESET << 16;
+		SCpnt->result = 0;
+		set_host_byte(SCpnt, DID_RESET);
 		SCpnt->scsi_done(SCpnt);
 		printk(KERN_ERR MYNAM ": task abort: "
 		    "can't locate host! (sc=%p)\n", SCpnt);
@@ -1707,7 +1735,8 @@ mptscsih_abort(struct scsi_cmnd * SCpnt)
 		dtmprintk(ioc, printk(MYIOC_s_DEBUG_FMT
 		    "task abort: device has been deleted (sc=%p)\n",
 		    ioc->name, SCpnt));
-		SCpnt->result = DID_NO_CONNECT << 16;
+		SCpnt->result = 0;
+		set_host_byte(SCpnt, DID_NO_CONNECT);
 		SCpnt->scsi_done(SCpnt);
 		retval = SUCCESS;
 		goto out;
@@ -1719,7 +1748,8 @@ mptscsih_abort(struct scsi_cmnd * SCpnt)
 		dtmprintk(ioc, printk(MYIOC_s_DEBUG_FMT
 		    "task abort: hidden raid component (sc=%p)\n",
 		    ioc->name, SCpnt));
-		SCpnt->result = DID_RESET << 16;
+		SCpnt->result = 0;
+		set_host_byte(SCpnt, DID_RESET);
 		retval = FAILED;
 		goto out;
 	}
@@ -1730,7 +1760,8 @@ mptscsih_abort(struct scsi_cmnd * SCpnt)
 		dtmprintk(ioc, printk(MYIOC_s_DEBUG_FMT
 		    "task abort: raid volume (sc=%p)\n",
 		    ioc->name, SCpnt));
-		SCpnt->result = DID_RESET << 16;
+		SCpnt->result = 0;
+		set_host_byte(SCpnt, DID_RESET);
 		retval = FAILED;
 		goto out;
 	}
@@ -1741,7 +1772,8 @@ mptscsih_abort(struct scsi_cmnd * SCpnt)
 		/* Cmd not found in ScsiLookup.
 		 * Do OS callback.
 		 */
-		SCpnt->result = DID_RESET << 16;
+		SCpnt->result = 0;
+		set_host_byte(SCpnt, DID_RESET);
 		dtmprintk(ioc, printk(MYIOC_s_DEBUG_FMT "task abort: "
 		   "Command not in the active list! (sc=%p)\n", ioc->name,
 		   SCpnt));

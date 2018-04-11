@@ -2092,7 +2092,6 @@ do { \
 /* struct scsi_cmnd function return codes */
 #define STATUS_BYTE(byte)   (byte)
 #define MSG_BYTE(byte)      ((byte) << 8)
-#define HOST_BYTE(byte)     ((byte) << 16)
 
 #define ASC_STATS(shost, counter) ASC_STATS_ADD(shost, counter, 1)
 #ifndef ADVANSYS_STATS
@@ -6048,7 +6047,7 @@ static void adv_isr_callback(ADV_DVC_VAR *adv_dvc_varp, ADV_SCSI_REQ_Q *scsiqp)
 		default:
 			/* Some other QHSTA error occurred. */
 			ASC_DBG(1, "host_status 0x%x\n", scsiqp->host_status);
-			scp->result = HOST_BYTE(DID_BAD_TARGET);
+			set_host_byte(scp, DID_BAD_TARGET);
 			break;
 		}
 		break;
@@ -6814,7 +6813,7 @@ static void asc_isr_callback(ASC_DVC_VAR *asc_dvc_varp, ASC_QDONE_INFO *qdonep)
 		default:
 			/* QHSTA error occurred */
 			ASC_DBG(1, "host_stat 0x%x\n", qdonep->d3.host_stat);
-			scp->result = HOST_BYTE(DID_BAD_TARGET);
+			set_host_byte(scp, DID_BAD_TARGET);
 			break;
 		}
 		break;
@@ -7567,7 +7566,7 @@ static int asc_build_req(struct asc_board *boardp, struct scsi_cmnd *scp,
 				"sg_tablesize %d\n", use_sg,
 				scp->device->host->sg_tablesize);
 			scsi_dma_unmap(scp);
-			scp->result = HOST_BYTE(DID_ERROR);
+			set_host_byte(scp, DID_ERROR);
 			return ASC_ERROR;
 		}
 
@@ -7575,7 +7574,7 @@ static int asc_build_req(struct asc_board *boardp, struct scsi_cmnd *scp,
 			use_sg * sizeof(struct asc_sg_list), GFP_ATOMIC);
 		if (!asc_sg_head) {
 			scsi_dma_unmap(scp);
-			scp->result = HOST_BYTE(DID_SOFT_ERROR);
+			set_host_byte(scp, DID_SOFT_ERROR);
 			return ASC_ERROR;
 		}
 
@@ -7818,7 +7817,7 @@ adv_build_req(struct asc_board *boardp, struct scsi_cmnd *scp,
 				   "ADV_MAX_SG_LIST %d\n", use_sg,
 				   scp->device->host->sg_tablesize);
 			scsi_dma_unmap(scp);
-			scp->result = HOST_BYTE(DID_ERROR);
+			set_host_byte(scp, DID_ERROR);
 			reqp->cmndp = NULL;
 			scp->host_scribble = NULL;
 
@@ -7830,7 +7829,7 @@ adv_build_req(struct asc_board *boardp, struct scsi_cmnd *scp,
 		ret = adv_get_sglist(boardp, reqp, scsiqp, scp, use_sg);
 		if (ret != ADV_SUCCESS) {
 			scsi_dma_unmap(scp);
-			scp->result = HOST_BYTE(DID_ERROR);
+			set_host_byte(scp, DID_ERROR);
 			reqp->cmndp = NULL;
 			scp->host_scribble = NULL;
 
@@ -8527,13 +8526,13 @@ static int asc_execute_scsi_cmnd(struct scsi_cmnd *scp)
 		scmd_printk(KERN_ERR, scp, "ExeScsiQueue() ASC_ERROR, "
 			"err_code 0x%x\n", err_code);
 		ASC_STATS(scp->device->host, exe_error);
-		scp->result = HOST_BYTE(DID_ERROR);
+		set_host_byte(scp, DID_ERROR);
 		break;
 	default:
 		scmd_printk(KERN_ERR, scp, "ExeScsiQueue() unknown, "
 			"err_code 0x%x\n", err_code);
 		ASC_STATS(scp->device->host, exe_unknown);
-		scp->result = HOST_BYTE(DID_ERROR);
+		set_host_byte(scp, DID_ERROR);
 		break;
 	}
 

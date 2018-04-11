@@ -876,7 +876,7 @@ static void __ipr_scsi_eh_done(struct ipr_cmnd *ipr_cmd)
 {
 	struct scsi_cmnd *scsi_cmd = ipr_cmd->scsi_cmd;
 
-	scsi_cmd->result |= (DID_ERROR << 16);
+	set_host_byte(scsi_cmd, DID_ERROR);
 
 	scsi_dma_unmap(ipr_cmd->scsi_cmd);
 	scsi_cmd->scsi_done(scsi_cmd);
@@ -6004,7 +6004,7 @@ static void __ipr_erp_done(struct ipr_cmnd *ipr_cmd)
 	u32 ioasc = be32_to_cpu(ipr_cmd->s.ioasa.hdr.ioasc);
 
 	if (IPR_IOASC_SENSE_KEY(ioasc) > 0) {
-		scsi_cmd->result |= (DID_ERROR << 16);
+		set_host_byte(scsi_cmd, DID_ERROR);
 		scmd_printk(KERN_ERR, scsi_cmd,
 			    "Request Sense failed with IOASC: 0x%08X\n", ioasc);
 	} else {
@@ -6386,23 +6386,23 @@ static void ipr_erp_start(struct ipr_ioa_cfg *ioa_cfg,
 	switch (masked_ioasc) {
 	case IPR_IOASC_ABORTED_CMD_TERM_BY_HOST:
 		if (ipr_is_naca_model(res))
-			scsi_cmd->result |= (DID_ABORT << 16);
+			set_host_byte(scsi_cmd, DID_ABORT);
 		else
-			scsi_cmd->result |= (DID_IMM_RETRY << 16);
+			set_host_byte(scsi_cmd, DID_IMM_RETRY);
 		break;
 	case IPR_IOASC_IR_RESOURCE_HANDLE:
 	case IPR_IOASC_IR_NO_CMDS_TO_2ND_IOA:
-		scsi_cmd->result |= (DID_NO_CONNECT << 16);
+		set_host_byte(scsi_cmd, DID_NO_CONNECT);
 		break;
 	case IPR_IOASC_HW_SEL_TIMEOUT:
-		scsi_cmd->result |= (DID_NO_CONNECT << 16);
+		set_host_byte(scsi_cmd, DID_NO_CONNECT);
 		if (!ipr_is_naca_model(res))
 			res->needs_sync_complete = 1;
 		break;
 	case IPR_IOASC_SYNC_REQUIRED:
 		if (!res->in_erp)
 			res->needs_sync_complete = 1;
-		scsi_cmd->result |= (DID_IMM_RETRY << 16);
+		set_host_byte(scsi_cmd, DID_IMM_RETRY);
 		break;
 	case IPR_IOASC_MED_DO_NOT_REALLOC: /* prevent retries */
 	case IPR_IOASA_IR_DUAL_IOA_DISABLED:
@@ -6411,7 +6411,7 @@ static void ipr_erp_start(struct ipr_ioa_cfg *ioa_cfg,
 		 * so SCSI mid-layer and upper layers handle it accordingly.
 		 */
 		if (scsi_cmd->result != SAM_STAT_CHECK_CONDITION)
-			scsi_cmd->result |= (DID_PASSTHROUGH << 16);
+			set_host_byte(scsi_cmd, DID_PASSTHROUGH);
 		break;
 	case IPR_IOASC_BUS_WAS_RESET:
 	case IPR_IOASC_BUS_WAS_RESET_BY_OTHER:
@@ -6421,7 +6421,7 @@ static void ipr_erp_start(struct ipr_ioa_cfg *ioa_cfg,
 		 */
 		if (!res->resetting_device)
 			scsi_report_bus_reset(ioa_cfg->host, scsi_cmd->device->channel);
-		scsi_cmd->result |= (DID_ERROR << 16);
+		set_host_byte(scsi_cmd, DID_ERROR);
 		if (!ipr_is_naca_model(res))
 			res->needs_sync_complete = 1;
 		break;
@@ -6443,13 +6443,13 @@ static void ipr_erp_start(struct ipr_ioa_cfg *ioa_cfg,
 	case IPR_IOASC_IR_NON_OPTIMIZED:
 		if (res->raw_mode) {
 			res->raw_mode = 0;
-			scsi_cmd->result |= (DID_IMM_RETRY << 16);
+			set_host_byte(scsi_cmd, DID_IMM_RETRY);
 		} else
-			scsi_cmd->result |= (DID_ERROR << 16);
+			set_host_byte(scsi_cmd, DID_ERROR);
 		break;
 	default:
 		if (IPR_IOASC_SENSE_KEY(ioasc) > RECOVERED_ERROR)
-			scsi_cmd->result |= (DID_ERROR << 16);
+			set_host_byte(scsi_cmd, DID_ERROR);
 		if (!ipr_is_vset_device(res) && !ipr_is_naca_model(res))
 			res->needs_sync_complete = 1;
 		break;
@@ -6525,7 +6525,8 @@ static int ipr_queuecommand(struct Scsi_Host *shost,
 
 	ioa_cfg = (struct ipr_ioa_cfg *)shost->hostdata;
 
-	scsi_cmd->result = (DID_OK << 16);
+	scsi_cmd->result = 0;
+	set_host_byte(scsi_cmd, DID_OK);
 	res = scsi_cmd->device->hostdata;
 
 	if (ipr_is_gata(res) && res->sata_port) {
@@ -6638,7 +6639,8 @@ static int ipr_queuecommand(struct Scsi_Host *shost,
 err_nodev:
 	spin_lock_irqsave(hrrq->lock, hrrq_flags);
 	memset(scsi_cmd->sense_buffer, 0, SCSI_SENSE_BUFFERSIZE);
-	scsi_cmd->result = (DID_NO_CONNECT << 16);
+	scsi_cmd->result = 0;
+	set_host_byte(scsi_cmd, DID_NO_CONNECT);
 	scsi_cmd->scsi_done(scsi_cmd);
 	spin_unlock_irqrestore(hrrq->lock, hrrq_flags);
 	return 0;

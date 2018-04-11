@@ -1234,10 +1234,14 @@ bfad_im_queuecommand_lck(struct scsi_cmnd *cmnd, void (*done) (struct scsi_cmnd 
 	}
 
 	if (bfad->bfad_flags & BFAD_EEH_BUSY) {
-		if (bfad->bfad_flags & BFAD_EEH_PCI_CHANNEL_IO_PERM_FAILURE)
-			cmnd->result = DID_NO_CONNECT << 16;
-		else
-			cmnd->result = DID_REQUEUE << 16;
+		if (bfad->bfad_flags & BFAD_EEH_PCI_CHANNEL_IO_PERM_FAILURE) {
+			cmnd->result = 0;
+			set_host_byte(cmnd, DID_NO_CONNECT);
+		}
+		else {
+			cmnd->result = 0;
+			set_host_byte(cmnd, DID_REQUEUE);
+		}
 		done(cmnd);
 		return 0;
 	}

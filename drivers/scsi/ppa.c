@@ -164,7 +164,8 @@ static inline void ppa_fail(ppa_struct *dev, int error_code)
 {
 	/* If we fail a device then we trash status / message bytes */
 	if (dev->cur_cmd) {
-		dev->cur_cmd->result = error_code << 16;
+		dev->cur_cmd->result = 0;
+		set_host_byte(dev->cur_cmd, error_code);
 		dev->failed = 1;
 	}
 }
@@ -764,7 +765,8 @@ static int ppa_engine(ppa_struct *dev, struct scsi_cmnd *cmd)
 		/* fall through */
 
 	case 6:		/* Phase 6 - Read status/message */
-		cmd->result = DID_OK << 16;
+		cmd->result = 0;
+		set_host_byte(cmd, DID_OK);
 		/* Check for data overrun */
 		if (ppa_wait(dev) != (unsigned char) 0xf0) {
 			ppa_fail(dev, DID_ERROR);
@@ -798,7 +800,8 @@ static int ppa_queuecommand_lck(struct scsi_cmnd *cmd,
 	dev->jstart = jiffies;
 	dev->cur_cmd = cmd;
 	cmd->scsi_done = done;
-	cmd->result = DID_ERROR << 16;	/* default return code */
+	cmd->result = 0;
+	set_host_byte(cmd, DID_ERROR);	/* default return code */
 	cmd->SCp.phase = 0;	/* bus free */
 
 	schedule_delayed_work(&dev->ppa_tq, 0);

@@ -3793,12 +3793,12 @@ qla1280_error_entry(struct scsi_qla_host *ha, struct response *pkt,
 		if (pkt->entry_status & (BIT_3 + BIT_2)) {
 			/* Bad payload or header, set error status. */
 			/* CMD_RESULT(sp->cmd) = CS_BAD_PAYLOAD; */
-			CMD_RESULT(sp->cmd) = DID_ERROR << 16;
+			set_host_byte(sp->cmd, DID_ERROR);
 		} else if (pkt->entry_status & BIT_1) {	/* FULL flag */
-			CMD_RESULT(sp->cmd) = DID_BUS_BUSY << 16;
+			set_host_byte(sp->cmd, DID_BUS_BUSY);
 		} else {
 			/* Set error status. */
-			CMD_RESULT(sp->cmd) = DID_ERROR << 16;
+			set_host_byte(sp->cmd, DID_ERROR);
 		}
 
 		CMD_HANDLE(sp->cmd) = COMPLETED_HANDLE;
@@ -3854,7 +3854,7 @@ qla1280_abort_isp(struct scsi_qla_host *ha)
 		sp = ha->outstanding_cmds[cnt];
 		if (sp) {
 			cmd = sp->cmd;
-			CMD_RESULT(cmd) = DID_RESET << 16;
+			set_host_byte(cmd, DID_RESET);
 			CMD_HANDLE(cmd) = COMPLETED_HANDLE;
 			ha->outstanding_cmds[cnt] = NULL;
 			list_add_tail(&sp->list, &ha->done_q);

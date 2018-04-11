@@ -543,7 +543,7 @@ static inline
 void ahc_cmd_set_transaction_status(struct scsi_cmnd *cmd, uint32_t status)
 {
 	cmd->result &= ~(CAM_STATUS_MASK << 16);
-	cmd->result |= status << 16;
+	set_host_byte(cmd, status);
 }
 
 static inline

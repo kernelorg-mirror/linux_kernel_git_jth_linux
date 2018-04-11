@@ -203,7 +203,8 @@ static int nsp_queuecommand_lck(struct scsi_cmnd *SCpnt,
 
 	if (data->CurrentSC != NULL) {
 		nsp_msg(KERN_DEBUG, "CurrentSC!=NULL this can't be happen");
-		SCpnt->result   = DID_BAD_TARGET << 16;
+		SCpnt->result = 0;
+		set_host_byte(SCpnt, DID_BAD_TARGET);
 		nsp_scsi_done(SCpnt);
 		return 0;
 	}
@@ -213,7 +214,7 @@ static int nsp_queuecommand_lck(struct scsi_cmnd *SCpnt,
 	        This makes kernel crash when suspending... */
 	if (data->ScsiInfo->stop != 0) {
 		nsp_msg(KERN_INFO, "suspending device. reject command.");
-		SCpnt->result  = DID_BAD_TARGET << 16;
+		set_host_byte(SCpnt, DID_BAD_TARGET);
 		nsp_scsi_done(SCpnt);
 		return SCSI_MLQUEUE_HOST_BUSY;
 	}
@@ -250,7 +251,8 @@ static int nsp_queuecommand_lck(struct scsi_cmnd *SCpnt,
 
 	if (nsphw_start_selection(SCpnt) == FALSE) {
 		nsp_dbg(NSP_DEBUG_QUEUECOMMAND, "selection fail");
-		SCpnt->result   = DID_BUS_BUSY << 16;
+		SCpnt->result = 0;
+		set_host_byte(SCpnt, DID_BUS_BUSY);
 		nsp_scsi_done(SCpnt);
 		return 0;
 	}
@@ -1084,7 +1086,8 @@ static irqreturn_t nspintr(int irq, void *dev_id)
 				data->SelectionTimeOut = 0;
 				nsp_index_write(base, SCSIBUSCTRL, 0);
 
-				tmpSC->result   = DID_TIME_OUT << 16;
+				tmpSC->result = 0;
+				set_host_byte(tmpSC, DID_TIME_OUT);
 				nsp_scsi_done(tmpSC);
 
 				return IRQ_HANDLED;
@@ -1110,7 +1113,8 @@ static irqreturn_t nspintr(int irq, void *dev_id)
 		// *sync_neg = SYNC_NOT_YET;
 		if ((phase & BUSMON_PHASE_MASK) != BUSPHASE_MESSAGE_IN) {
 
-			tmpSC->result	= DID_ABORT << 16;
+			tmpSC->result = 0;
+			set_host_byte(tmpSC, DID_ABORT);
 			nsp_scsi_done(tmpSC);
 			return IRQ_HANDLED;
 		}
@@ -1153,7 +1157,8 @@ static irqreturn_t nspintr(int irq, void *dev_id)
 		nsp_msg(KERN_DEBUG, "unexpected bus free. irq_status=0x%x, phase=0x%x, irq_phase=0x%x", irq_status, phase, irq_phase);
 
 		*sync_neg       = SYNC_NG;
-		tmpSC->result   = DID_ERROR << 16;
+		tmpSC->result = 0;
+		set_host_byte(tmpSC, DID_ERROR);
 		nsp_scsi_done(tmpSC);
 		return IRQ_HANDLED;
 	}

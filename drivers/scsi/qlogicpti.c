@@ -1171,8 +1171,10 @@ static struct scsi_cmnd *qlogicpti_intr_handler(struct qlogicpti *qpti)
 		if (sts->hdr.entry_type == ENTRY_STATUS)
 			Cmnd->result =
 			    qlogicpti_return_status(sts, qpti->qpti_id);
-		else
-			Cmnd->result = DID_ERROR << 16;
+		else {
+			Cmnd->result = 0;
+			set_host_byte(Cmnd, DID_ERROR);
+		}
 
 		if (scsi_bufflen(Cmnd))
 			dma_unmap_sg(&qpti->op->dev,

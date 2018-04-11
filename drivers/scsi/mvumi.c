@@ -1320,13 +1320,13 @@ static void mvumi_complete_cmd(struct mvumi_hba *mhba, struct mvumi_cmd *cmd,
 
 	switch (ob_frame->req_status) {
 	case SAM_STAT_GOOD:
-		scmd->result |= DID_OK << 16;
+		set_host_byte(scmd, DID_OK);
 		break;
 	case SAM_STAT_BUSY:
-		scmd->result |= DID_BUS_BUSY << 16;
+		set_host_byte(scmd, DID_BUS_BUSY);
 		break;
 	case SAM_STAT_CHECK_CONDITION:
-		scmd->result |= (DID_OK << 16);
+		set_host_byte(scmd, DID_OK);
 		if (ob_frame->rsp_flag & CL_RSP_FLAG_SENSEDATA) {
 			memcpy(cmd->scmd->sense_buffer, ob_frame->payload,
 				sizeof(struct mvumi_sense_data));
@@ -1335,7 +1335,7 @@ static void mvumi_complete_cmd(struct mvumi_hba *mhba, struct mvumi_cmd *cmd,
 		break;
 	default:
 		set_driver_byte(scmd, DRIVER_INVALID);
-		scmd->result |= (DID_ABORT << 16);
+		set_host_byte(scmd, DID_ABORT);
 		break;
 	}
 

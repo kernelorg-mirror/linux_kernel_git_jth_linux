@@ -1513,7 +1513,8 @@ static bool storvsc_scsi_cmd_ok(struct scsi_cmnd *scmnd)
 	 * this. So, don't send it.
 	 */
 	case SET_WINDOW:
-		scmnd->result = ILLEGAL_REQUEST << 16;
+		scmnd->result = 0;
+		set_host_byte(scmnd, ILLEGAL_REQUEST);
 		allowed = false;
 		break;
 	default:

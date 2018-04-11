@@ -649,7 +649,8 @@ mptfc_qcmd(struct Scsi_Host *shost, struct scsi_cmnd *SCpnt)
 	VirtDevice	*vdevice = SCpnt->device->hostdata;
 
 	if (!vdevice || !vdevice->vtarget) {
-		SCpnt->result = DID_NO_CONNECT << 16;
+		SCpnt->result = 0;
+		set_host_byte(SCpnt, DID_NO_CONNECT);
 		SCpnt->scsi_done(SCpnt);
 		return 0;
 	}
@@ -664,7 +665,8 @@ mptfc_qcmd(struct Scsi_Host *shost, struct scsi_cmnd *SCpnt)
 	/* dd_data is null until finished adding target */
 	ri = *((struct mptfc_rport_info **)rport->dd_data);
 	if (unlikely(!ri)) {
-		SCpnt->result = DID_IMM_RETRY << 16;
+		SCpnt->result = 0;
+		set_host_byte(SCpnt, DID_IMM_RETRY);
 		SCpnt->scsi_done(SCpnt);
 		return 0;
 	}

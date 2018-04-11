@@ -1133,20 +1133,20 @@ be_complete_io(struct beiscsi_conn *beiscsi_conn,
 	}
 	set_scsi_result(task->sc, 0, DID_OK, 0, status);
 	if (rsp != ISCSI_STATUS_CMD_COMPLETED) {
-		task->sc->result = DID_ERROR << 16;
+		set_host_byte(task->sc, DID_ERROR);
 		goto unmap;
 	}
 
 	/* bidi not initially supported */
 	if (flags & (ISCSI_FLAG_CMD_UNDERFLOW | ISCSI_FLAG_CMD_OVERFLOW)) {
 		if (!status && (flags & ISCSI_FLAG_CMD_OVERFLOW))
-			task->sc->result = DID_ERROR << 16;
+			set_host_byte(task->sc, DID_ERROR);
 
 		if (flags & ISCSI_FLAG_CMD_UNDERFLOW) {
 			scsi_set_resid(task->sc, resid);
 			if (!status && (scsi_bufflen(task->sc) - resid <
 			    task->sc->underflow))
-				task->sc->result = DID_ERROR << 16;
+				set_host_byte(task->sc, DID_ERROR);
 		}
 	}
 

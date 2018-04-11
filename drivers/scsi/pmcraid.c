@@ -840,7 +840,7 @@ static void pmcraid_erp_done(struct pmcraid_cmd *cmd)
 	u32 ioasc = le32_to_cpu(cmd->ioa_cb->ioasa.ioasc);
 
 	if (PMCRAID_IOASC_SENSE_KEY(ioasc) > 0) {
-		scsi_cmd->result |= (DID_ERROR << 16);
+		set_host_byte(scsi_cmd, DID_ERROR);
 		scmd_printk(KERN_INFO, scsi_cmd,
 			    "command CDB[0] = %x failed with IOASC: 0x%08X\n",
 			    cmd->ioa_cb->ioarcb.cdb[0], ioasc);
@@ -2037,7 +2037,7 @@ static void pmcraid_fail_outstanding_cmds(struct pmcraid_instance *pinstance)
 			struct scsi_cmnd *scsi_cmd = cmd->scsi_cmd;
 			__le32 resp = cmd->ioa_cb->ioarcb.response_handle;
 
-			scsi_cmd->result |= DID_ERROR << 16;
+			set_host_byte(scsi_cmd, DID_ERROR);
 
 			scsi_dma_unmap(scsi_cmd);
 			pmcraid_return_cmd(cmd);
@@ -2636,21 +2636,21 @@ static int pmcraid_error_handler(struct pmcraid_cmd *cmd)
 	switch (masked_ioasc) {
 
 	case PMCRAID_IOASC_AC_TERMINATED_BY_HOST:
-		scsi_cmd->result |= (DID_ABORT << 16);
+		set_host_byte(scsi_cmd, DID_ABORT);
 		break;
 
 	case PMCRAID_IOASC_IR_INVALID_RESOURCE_HANDLE:
 	case PMCRAID_IOASC_HW_CANNOT_COMMUNICATE:
-		scsi_cmd->result |= (DID_NO_CONNECT << 16);
+		set_host_byte(scsi_cmd, DID_NO_CONNECT);
 		break;
 
 	case PMCRAID_IOASC_NR_SYNC_REQUIRED:
 		res->sync_reqd = 1;
-		scsi_cmd->result |= (DID_IMM_RETRY << 16);
+		set_host_byte(scsi_cmd, DID_IMM_RETRY);
 		break;
 
 	case PMCRAID_IOASC_ME_READ_ERROR_NO_REALLOC:
-		scsi_cmd->result |= (DID_PASSTHROUGH << 16);
+		set_host_byte(scsi_cmd, DID_PASSTHROUGH);
 		break;
 
 	case PMCRAID_IOASC_UA_BUS_WAS_RESET:
@@ -2658,7 +2658,7 @@ static int pmcraid_error_handler(struct pmcraid_cmd *cmd)
 		if (!res->reset_progress)
 			scsi_report_bus_reset(pinstance->host,
 					      scsi_cmd->device->channel);
-		scsi_cmd->result |= (DID_ERROR << 16);
+		set_host_byte(scsi_cmd, DID_ERROR);
 		break;
 
 	case PMCRAID_IOASC_HW_DEVICE_BUS_STATUS_ERROR:
@@ -2701,7 +2701,7 @@ static int pmcraid_error_handler(struct pmcraid_cmd *cmd)
 
 	default:
 		if (PMCRAID_IOASC_SENSE_KEY(ioasc) > RECOVERED_ERROR)
-			scsi_cmd->result |= (DID_ERROR << 16);
+			set_host_byte(scsi_cmd, DID_ERROR);
 		break;
 	}
 	return 0;
@@ -3363,14 +3363,16 @@ static int pmcraid_queuecommand_lck(
 	fw_version = be16_to_cpu(pinstance->inq_data->fw_version);
 	scsi_cmd->scsi_done = done;
 	res = scsi_cmd->device->hostdata;
-	scsi_cmd->result = (DID_OK << 16);
+	scsi_cmd->result = 0;
+	set_host_byte(scsi_cmd, DID_OK);
 
 	/* if adapter is marked as dead, set result to DID_NO_CONNECT complete
 	 * the command
 	 */
 	if (pinstance->ioa_state == IOA_STATE_DEAD) {
 		pmcraid_info("IOA is dead, but queuecommand is scheduled\n");
-		scsi_cmd->result = (DID_NO_CONNECT << 16);
+		scsi_cmd->result = 0;
+		set_host_byte(scsi_cmd, DID_NO_CONNECT);
 		scsi_cmd->scsi_done(scsi_cmd);
 		return 0;
 	}

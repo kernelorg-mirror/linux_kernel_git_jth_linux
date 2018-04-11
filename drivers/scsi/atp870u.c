@@ -591,7 +591,8 @@ static int atp870u_queuecommand_lck(struct scsi_cmnd *req_p,
 	req_p->sense_buffer[0]=0;
 	scsi_set_resid(req_p, 0);
 	if (scmd_channel(req_p) > 1) {
-		req_p->result = 0x00040000;
+		req_p->result = 0;
+		set_host_byte(req_p, DID_BAD_TARGET);
 		done(req_p);
 #ifdef ED_DBGP		
 		printk("atp870u_queuecommand : req_p->device->channel > 1\n");	
@@ -612,7 +613,8 @@ static int atp870u_queuecommand_lck(struct scsi_cmnd *req_p,
 	 */
 
 	if ((m & dev->active_id[c]) == 0) {
-		req_p->result = 0x00040000;
+		req_p->result = 0;
+		set_host_byte(req_p, DID_BAD_TARGET);
 		done(req_p);
 		return 0;
 	}
@@ -647,7 +649,8 @@ static int atp870u_queuecommand_lck(struct scsi_cmnd *req_p,
 		printk("atp870u_queuecommand : dev->quhd[c] == dev->quend[c]\n");
 #endif		
 		dev->quend[c]--;
-		req_p->result = 0x00020000;
+		req_p->result = 0;
+		set_host_byte(req_p, DID_BUS_BUSY);
 		done(req_p);	
 		return 0;
 	}

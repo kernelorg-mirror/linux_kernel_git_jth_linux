@@ -1973,10 +1973,14 @@ static void aac_flush_ios(struct aac_dev *aac)
 		if (cmd && (cmd->SCp.phase == AAC_OWNER_FIRMWARE)) {
 			scsi_dma_unmap(cmd);
 
-			if (aac->handle_pci_error)
-				cmd->result = DID_NO_CONNECT << 16;
-			else
-				cmd->result = DID_RESET << 16;
+			if (aac->handle_pci_error) {
+				cmd->result = 0;
+				set_host_byte(cmd, DID_NO_CONNECT);
+			}
+			else {
+				cmd->result = 0;
+				set_host_byte(cmd, DID_RESET);
+			}
 
 			cmd->scsi_done(cmd);
 		}

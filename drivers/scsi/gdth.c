@@ -2146,7 +2146,8 @@ static void gdth_next(gdth_ha_str *ha)
         } else if (t >= MAX_HDRIVES || !ha->hdr[t].present || l != 0) {
             TRACE2(("Command 0x%x to bus %d id %d lun %d -> IGNORE\n",
                     nscp->cmnd[0], b, t, l));
-            nscp->result = DID_BAD_TARGET << 16;
+            nscp->result = 0;
+            set_host_byte(nscp, DID_BAD_TARGET);
             if (!nscp_cmndinfo->wait_for_completion)
                 nscp_cmndinfo->wait_for_completion++;
             else
@@ -2188,7 +2189,8 @@ static void gdth_next(gdth_ha_str *ha)
                        nscp->cmnd[4],nscp->cmnd[5]));
                 if ( (nscp->cmnd[4]&1) && !(ha->hdr[t].devtype&1) ) {
                     TRACE(("Prevent r. nonremov. drive->do nothing\n"));
-                    nscp->result = DID_OK << 16;
+                    nscp->result = 0;
+                    set_host_byte(nscp, DID_OK);
                     nscp->sense_buffer[0] = 0;
                     if (!nscp_cmndinfo->wait_for_completion)
                         nscp_cmndinfo->wait_for_completion++;
@@ -2241,7 +2243,8 @@ static void gdth_next(gdth_ha_str *ha)
                         nscp->cmnd[4],nscp->cmnd[5]));
                 printk("GDT-HA %d: Unknown SCSI command 0x%x to cache service !\n",
                        ha->hanum, nscp->cmnd[0]);
-                nscp->result = DID_ABORT << 16;
+                nscp->result = 0;
+                set_host_byte(nscp, DID_ABORT);
                 if (!nscp_cmndinfo->wait_for_completion)
                     nscp_cmndinfo->wait_for_completion++;
                 else
@@ -2333,7 +2336,8 @@ static int gdth_internal_cache_cmd(gdth_ha_str *ha, struct scsi_cmnd *scp)
     TRACE(("gdth_internal_cache_cmd() cmd 0x%x hdrive %d\n",
            scp->cmnd[0],t));
 
-    scp->result = DID_OK << 16;
+    scp->result = 0;
+    set_host_byte(scp, DID_OK);
     scp->sense_buffer[0] = 0;
 
     switch (scp->cmnd[0]) {
@@ -2405,7 +2409,8 @@ static int gdth_internal_cache_cmd(gdth_ha_str *ha, struct scsi_cmnd *scp)
             gdth_copy_internal_data(ha, scp, (char*)&rdc16,
                                                  sizeof(gdth_rdcap16_data));
         } else { 
-            scp->result = DID_ABORT << 16;
+            scp->result = 0;
+            set_host_byte(scp, DID_ABORT);
         }
         break;
 
@@ -3363,7 +3368,8 @@ static int gdth_sync_event(gdth_ha_str *ha, int service, u8 index,
                 } else if (scp->cmnd[0] == RELEASE) {
                     ha->hdr[t].cluster_type &= ~CLUSTER_RESERVED;
                 }           
-                scp->result = DID_OK << 16;
+                scp->result = 0;
+                set_host_byte(scp, DID_OK);
                 scp->sense_buffer[0] = 0;
             }
         } else {
@@ -3415,7 +3421,8 @@ static int gdth_sync_event(gdth_ha_str *ha, int service, u8 index,
             } else {
                 /* sense buffer filled from controller firmware (DMA) */
                 if (ha->status != S_RAW_SCSI || ha->info >= 0x100) {
-                    scp->result = DID_BAD_TARGET << 16;
+                    scp->result = 0;
+                    set_host_byte(scp, DID_BAD_TARGET);
                 } else {
                     set_scsi_result(scp, 0, DID_OK, 0, ha->info);
                 }

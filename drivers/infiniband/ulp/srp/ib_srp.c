@@ -2945,7 +2945,8 @@ static int srp_abort(struct scsi_cmnd *scmnd)
 		ret = FAILED;
 	if (ret == SUCCESS) {
 		srp_free_req(ch, req, scmnd, 0);
-		scmnd->result = DID_ABORT << 16;
+		scmnd->result = 0;
+		set_host_byte(scmnd, DID_ABORT);
 		scmnd->scsi_done(scmnd);
 	}
 
