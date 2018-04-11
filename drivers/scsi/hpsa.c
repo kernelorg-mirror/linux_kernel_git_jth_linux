@@ -2365,7 +2365,7 @@ static int handle_ioaccel_mode2_error(struct ctlr_info *h,
 		case IOACCEL2_STATUS_SR_UNDERRUN:
 			cmd->result = 0;
 			set_host_byte(cmd, DID_OK);		/* host byte */
-			cmd->result |= (COMMAND_COMPLETE << 8);	/* msg byte */
+			set_msg_byte(cmd, COMMAND_COMPLETE);	/* msg byte */
 			ioaccel2_resid = get_unaligned_le32(
 						&c2->error_data.resid_cnt[0]);
 			scsi_set_resid(cmd, ioaccel2_resid);
@@ -2575,7 +2575,7 @@ static void complete_scsi_command(struct CommandList *cp)
 
 	cmd->result = 0;
 	set_host_byte(cmd, DID_OK); 		/* host byte */
-	cmd->result |= (COMMAND_COMPLETE << 8);	/* msg byte */
+	set_msg_byte(cmd, COMMAND_COMPLETE);	/* msg byte */
 
 	if (cp->cmd_type == CMD_IOACCEL2 || cp->cmd_type == CMD_IOACCEL1) {
 		if (dev->physical_device && dev->expose_device &&

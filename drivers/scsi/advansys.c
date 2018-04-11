@@ -2091,7 +2091,6 @@ do { \
 
 /* struct scsi_cmnd function return codes */
 #define STATUS_BYTE(byte)   (byte)
-#define MSG_BYTE(byte)      ((byte) << 8)
 
 #define ASC_STATS(shost, counter) ASC_STATS_ADD(shost, counter, 1)
 #ifndef ADVANSYS_STATS

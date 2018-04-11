@@ -596,7 +596,7 @@ static void mesh_done(struct mesh_state *ms, int start_next)
 	if (cmd) {
 		set_scsi_result(cmd, 0, ms->stat, 0, cmd->SCp.Status);
 		if (ms->stat == DID_OK)
-			cmd->result += (cmd->SCp.Message << 8);
+			set_msg_byte(cmd, cmd->SCp.Message);
 		if (DEBUG_TARGET(cmd)) {
 			printk(KERN_DEBUG "mesh_done: result = %x, data_ptr=%d, buflen=%d\n",
 			       cmd->result, ms->data_ptr, scsi_bufflen(cmd));
