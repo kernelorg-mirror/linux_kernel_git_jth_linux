@@ -625,7 +625,7 @@ static void ppa_interrupt(struct work_struct *work)
 	}
 	/* Command must of completed hence it is safe to let go... */
 #if PPA_DEBUG > 0
-	switch ((cmd->result >> 16) & 0xff) {
+	switch (host_byte(cmd->result)) {
 	case DID_OK:
 		break;
 	case DID_NO_CONNECT:
@@ -654,7 +654,7 @@ static void ppa_interrupt(struct work_struct *work)
 		break;
 	default:
 		printk(KERN_WARNING "ppa: bad return code (%02x)\n",
-		       (cmd->result >> 16) & 0xff);
+		       host_byte(cmd->result));
 	}
 #endif
 

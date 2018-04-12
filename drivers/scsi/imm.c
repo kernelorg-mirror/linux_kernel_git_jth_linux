@@ -728,7 +728,7 @@ static void imm_interrupt(struct work_struct *work)
 	}
 	/* Command must of completed hence it is safe to let go... */
 #if IMM_DEBUG > 0
-	switch ((cmd->result >> 16) & 0xff) {
+	switch (host_byte(cmd->result)) {
 	case DID_OK:
 		break;
 	case DID_NO_CONNECT:
@@ -757,7 +757,7 @@ static void imm_interrupt(struct work_struct *work)
 		break;
 	default:
 		printk("imm: bad return code (%02x)\n",
-		       (cmd->result >> 16) & 0xff);
+		       host_byte(cmd->result));
 	}
 #endif
 

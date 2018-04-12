@@ -550,7 +550,7 @@ void ahd_set_scsi_status(struct scb *scb, uint32_t status)
 static inline
 uint32_t ahd_cmd_get_transaction_status(struct scsi_cmnd *cmd)
 {
-	return ((cmd->result >> 16) & CAM_STATUS_MASK);
+	return host_byte(cmd->result) & CAM_STATUS_MASK;
 }
 
 static inline
