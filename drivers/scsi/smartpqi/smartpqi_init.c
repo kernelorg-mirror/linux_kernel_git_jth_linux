@@ -4714,7 +4714,7 @@ static void pqi_queue_raid_bypass_retry(struct pqi_io_request *io_request)
 
 	io_request->io_complete_callback = pqi_queued_raid_bypass_complete;
 	scmd = io_request->scmd;
-	scmd->result = 0;
+	clear_scsi_result(scmd);
 	ctrl_info = shost_to_hba(scmd->device->host);
 
 	pqi_add_to_raid_bypass_retry_list(ctrl_info, io_request, false);
@@ -4958,7 +4958,7 @@ static int pqi_scsi_queue_command(struct Scsi_Host *shost,
 	 * This is necessary because the SML doesn't zero out this field during
 	 * error recovery.
 	 */
-	scmd->result = 0;
+	clear_scsi_result(scmd);
 
 	hw_queue = pqi_get_hw_queue(ctrl_info, scmd);
 	queue_group = &ctrl_info->queue_groups[hw_queue];

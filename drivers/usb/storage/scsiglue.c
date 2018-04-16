@@ -371,7 +371,7 @@ static int queuecommand_lck(struct scsi_cmnd *srb,
 	/* fail the command if we are disconnecting */
 	if (test_bit(US_FLIDX_DISCONNECTING, &us->dflags)) {
 		usb_stor_dbg(us, "Fail command during disconnect\n");
-		srb->result = 0;
+		clear_scsi_result(srb);
 		set_host_byte(srb, DID_NO_CONNECT);
 		done(srb);
 		return 0;

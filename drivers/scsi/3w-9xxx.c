@@ -1328,7 +1328,7 @@ static irqreturn_t twa_interrupt(int irq, void *dev_instance)
 				twa_scsiop_execute_scsi_complete(tw_dev, request_id);
 				/* If no error command was a success */
 				if (error == 0) {
-					cmd->result = 0;
+					clear_scsi_result(cmd);
 					set_host_byte(cmd, DID_OK);
 				}
 
@@ -1589,7 +1589,7 @@ static int twa_reset_device_extension(TW_Device_Extension *tw_dev)
 			if (tw_dev->srb[i]) {
 				struct scsi_cmnd *cmd = tw_dev->srb[i];
 
-				cmd->result = 0;
+				clear_scsi_result(cmd);
 				set_host_byte(cmd, DID_RESET);
 				if (twa_command_mapped(cmd))
 					scsi_dma_unmap(cmd);
@@ -1757,7 +1757,7 @@ static int twa_scsi_queue_lck(struct scsi_cmnd *SCpnt, void (*done)(struct scsi_
 
 	/* Check if this FW supports luns */
 	if ((SCpnt->device->lun != 0) && (tw_dev->tw_compat_info.working_srl < TW_FW_SRL_LUNS_SUPPORTED)) {
-		SCpnt->result = 0;
+		clear_scsi_result(SCpnt);
 		set_host_byte(SCpnt, DID_BAD_TARGET);
 		done(SCpnt);
 		retval = 0;
@@ -1781,7 +1781,7 @@ static int twa_scsi_queue_lck(struct scsi_cmnd *SCpnt, void (*done)(struct scsi_
 		twa_free_request_id(tw_dev, request_id);
 		break;
 	case 1:
-		SCpnt->result = 0;
+		clear_scsi_result(SCpnt);
 		set_host_byte(SCpnt, DID_ERROR);
 		if (twa_command_mapped(SCpnt))
 			scsi_dma_unmap(SCpnt);

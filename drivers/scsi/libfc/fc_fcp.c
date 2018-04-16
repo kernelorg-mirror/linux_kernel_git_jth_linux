@@ -1889,7 +1889,7 @@ int fc_queuecommand(struct Scsi_Host *shost, struct scsi_cmnd *sc_cmd)
 		 * rport is transitioning from blocked/deleted to
 		 * online
 		 */
-		sc_cmd->result = 0;
+		clear_scsi_result(sc_cmd);
 		set_host_byte(sc_cmd, DID_IMM_RETRY);
 		sc_cmd->scsi_done(sc_cmd);
 		goto out;
@@ -2003,7 +2003,7 @@ static void fc_io_compl(struct fc_fcp_pkt *fsp)
 			/*
 			 * good I/O status
 			 */
-			sc_cmd->result = 0;
+			clear_scsi_result(sc_cmd);
 			set_host_byte(sc_cmd, DID_OK);
 			if (fsp->scsi_resid)
 				CMD_RESID_LEN(sc_cmd) = fsp->scsi_resid;
@@ -2018,7 +2018,7 @@ static void fc_io_compl(struct fc_fcp_pkt *fsp)
 	case FC_ERROR:
 		FC_FCP_DBG(fsp, "Returning DID_ERROR to scsi-ml "
 			   "due to FC_ERROR\n");
-		sc_cmd->result = 0;
+		clear_scsi_result(sc_cmd);
 		set_host_byte(sc_cmd, DID_ERROR);
 		break;
 	case FC_DATA_UNDRUN:
@@ -2028,12 +2028,12 @@ static void fc_io_compl(struct fc_fcp_pkt *fsp)
 			 * underrun.
 			 */
 			if (fsp->state & FC_SRB_RCV_STATUS) {
-				sc_cmd->result = 0;
+				clear_scsi_result(sc_cmd);
 				set_host_byte(sc_cmd, DID_OK);
 			} else {
 				FC_FCP_DBG(fsp, "Returning DID_ERROR to scsi-ml"
 					   " due to FC_DATA_UNDRUN (trans)\n");
-				sc_cmd->result = 0;
+				clear_scsi_result(sc_cmd);
 				set_host_byte(sc_cmd, DID_ERROR);
 			}
 		} else {
@@ -2069,25 +2069,25 @@ static void fc_io_compl(struct fc_fcp_pkt *fsp)
 	case FC_CMD_RESET:
 		FC_FCP_DBG(fsp, "Returning DID_RESET to scsi-ml "
 			   "due to FC_CMD_RESET\n");
-		sc_cmd->result = 0;
+		clear_scsi_result(sc_cmd);
 		set_host_byte(sc_cmd, DID_RESET);
 		break;
 	case FC_TRANS_RESET:
 		FC_FCP_DBG(fsp, "Returning DID_SOFT_ERROR to scsi-ml "
 			   "due to FC_TRANS_RESET\n");
-		sc_cmd->result = 0;
+		clear_scsi_result(sc_cmd);
 		set_host_byte(sc_cmd, DID_SOFT_ERROR);
 		break;
 	case FC_HRD_ERROR:
 		FC_FCP_DBG(fsp, "Returning DID_NO_CONNECT to scsi-ml "
 			   "due to FC_HRD_ERROR\n");
-		sc_cmd->result = 0;
+		clear_scsi_result(sc_cmd);
 		set_host_byte(sc_cmd, DID_NO_CONNECT);
 		break;
 	case FC_CRC_ERROR:
 		FC_FCP_DBG(fsp, "Returning DID_PARITY to scsi-ml "
 			   "due to FC_CRC_ERROR\n");
-		sc_cmd->result = 0;
+		clear_scsi_result(sc_cmd);
 		set_host_byte(sc_cmd, DID_PARITY);
 		break;
 	case FC_TIMED_OUT:
@@ -2098,13 +2098,13 @@ static void fc_io_compl(struct fc_fcp_pkt *fsp)
 	default:
 		FC_FCP_DBG(fsp, "Returning DID_ERROR to scsi-ml "
 			   "due to unknown error\n");
-		sc_cmd->result = 0;
+		clear_scsi_result(sc_cmd);
 		set_host_byte(sc_cmd, DID_ERROR);
 		break;
 	}
 
 	if (lport->state != LPORT_ST_READY && fsp->status_code != FC_COMPLETE) {
-		sc_cmd->result = 0;
+		clear_scsi_result(sc_cmd);
 		set_host_byte(sc_cmd, DID_TRANSPORT_DISRUPTED);
 	}
 

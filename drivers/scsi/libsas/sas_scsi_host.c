@@ -187,7 +187,7 @@ int sas_queuecommand(struct Scsi_Host *host, struct scsi_cmnd *cmd)
 
 	/* If the device fell off, no sense in issuing commands */
 	if (test_bit(SAS_DEV_GONE, &dev->state)) {
-		cmd->result = 0;
+		clear_scsi_result(cmd);
 		set_host_byte(cmd, DID_BAD_TARGET);
 		goto out_done;
 	}
@@ -213,11 +213,11 @@ out_free_task:
 	ASSIGN_SAS_TASK(cmd, NULL);
 	sas_free_task(task);
 	if (res == -SAS_QUEUE_FULL) {
-		cmd->result = 0;
+		clear_scsi_result(cmd);
 		set_host_byte(cmd, DID_SOFT_ERROR);
 	} /* retry */
 	else {
-		cmd->result = 0;
+		clear_scsi_result(cmd);
 		set_host_byte(cmd, DID_ERROR);
 	}
 out_done:

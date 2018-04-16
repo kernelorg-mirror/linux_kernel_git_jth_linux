@@ -592,7 +592,7 @@ static int atp870u_queuecommand_lck(struct scsi_cmnd *req_p,
 	req_p->sense_buffer[0]=0;
 	scsi_set_resid(req_p, 0);
 	if (scmd_channel(req_p) > 1) {
-		req_p->result = 0;
+		clear_scsi_result(req_p);
 		set_host_byte(req_p, DID_BAD_TARGET);
 		done(req_p);
 #ifdef ED_DBGP		
@@ -614,7 +614,7 @@ static int atp870u_queuecommand_lck(struct scsi_cmnd *req_p,
 	 */
 
 	if ((m & dev->active_id[c]) == 0) {
-		req_p->result = 0;
+		clear_scsi_result(req_p);
 		set_host_byte(req_p, DID_BAD_TARGET);
 		done(req_p);
 		return 0;
@@ -626,7 +626,7 @@ static int atp870u_queuecommand_lck(struct scsi_cmnd *req_p,
 #ifdef ED_DBGP		
 		printk( "atp870u_queuecommand: done can't be NULL\n");
 #endif		
-		req_p->result = 0;
+		clear_scsi_result(req_p);
 		done(req_p);
 		return 0;
 	}
@@ -650,7 +650,7 @@ static int atp870u_queuecommand_lck(struct scsi_cmnd *req_p,
 		printk("atp870u_queuecommand : dev->quhd[c] == dev->quend[c]\n");
 #endif		
 		dev->quend[c]--;
-		req_p->result = 0;
+		clear_scsi_result(req_p);
 		set_host_byte(req_p, DID_BUS_BUSY);
 		done(req_p);	
 		return 0;

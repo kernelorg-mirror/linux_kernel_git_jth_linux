@@ -390,7 +390,7 @@ wd33c93_queuecommand_lck(struct scsi_cmnd *cmd,
  */
 	cmd->host_scribble = NULL;
 	cmd->scsi_done = done;
-	cmd->result = 0;
+	clear_scsi_result(cmd);
 
 /* We use the Scsi_Pointer structure that's included with each command
  * as a scratchpad (as it's intended to be used!). The handy thing about
@@ -862,7 +862,7 @@ wd33c93_intr(struct Scsi_Host *instance)
 			hostdata->selecting = NULL;
 		}
 
-		cmd->result = 0;
+		clear_scsi_result(cmd);
 		set_host_byte(cmd, DID_NO_CONNECT);
 		hostdata->busy[cmd->device->id] &= ~(1 << (cmd->device->lun & 0xff));
 		hostdata->state = S_UNCONNECTED;
@@ -1602,7 +1602,7 @@ wd33c93_host_reset(struct scsi_cmnd * SCpnt)
 	hostdata->outgoing_len = 0;
 
 	reset_wd33c93(instance);
-	SCpnt->result = 0;
+	clear_scsi_result(SCpnt);
 	set_host_byte(SCpnt, DID_RESET);
 	enable_irq(instance->irq);
 	spin_unlock_irq(instance->host_lock);
@@ -1638,7 +1638,7 @@ wd33c93_abort(struct scsi_cmnd * cmd)
 				hostdata->input_Q =
 				    (struct scsi_cmnd *) cmd->host_scribble;
 			cmd->host_scribble = NULL;
-			cmd->result = 0;
+			clear_scsi_result(cmd);
 			set_host_byte(cmd, DID_ABORT);
 			printk
 			    ("scsi%d: Abort - removing command from input_Q. ",
@@ -1713,7 +1713,7 @@ wd33c93_abort(struct scsi_cmnd * cmd)
 		hostdata->busy[cmd->device->id] &= ~(1 << (cmd->device->lun & 0xff));
 		hostdata->connected = NULL;
 		hostdata->state = S_UNCONNECTED;
-		cmd->result = 0;
+		clear_scsi_result(cmd);
 		set_host_byte(cmd, DID_ABORT);
 
 /*      sti();*/

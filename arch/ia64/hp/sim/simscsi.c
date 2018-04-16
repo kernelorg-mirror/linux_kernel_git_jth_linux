@@ -143,7 +143,7 @@ simscsi_sg_readwrite (struct scsi_cmnd *sc, int mode, unsigned long offset)
 
 		/* should not happen in our case */
 		if (stat.count != req.len) {
-			sc->result = 0;
+			clear_scsi_result(sc);
 			set_host_byte(sc, DID_ERROR);
 			return;
 		}
@@ -219,7 +219,7 @@ simscsi_queuecommand_lck (struct scsi_cmnd *sc, void (*done)(struct scsi_cmnd *)
 		       target_id, sc->cmnd[0], sc->serial_number, sp, done);
 #endif
 
-	sc->result = 0;
+	clear_scsi_result(sc);
 	set_host_byte(sc, DID_BAD_TARGET);
 	sc->scsi_done = done;
 	if (target_id <= 15 && sc->device->lun == 0) {

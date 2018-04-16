@@ -2363,7 +2363,7 @@ static int handle_ioaccel_mode2_error(struct ctlr_info *h,
 			retry = 1;
 			break;
 		case IOACCEL2_STATUS_SR_UNDERRUN:
-			cmd->result = 0;
+			clear_scsi_result(cmd);
 			set_host_byte(cmd, DID_OK);		/* host byte */
 			set_msg_byte(cmd, COMMAND_COMPLETE);	/* msg byte */
 			ioaccel2_resid = get_unaligned_le32(
@@ -2382,7 +2382,7 @@ static int handle_ioaccel_mode2_error(struct ctlr_info *h,
 			 * of the disk to get the same device node.
 			 */
 			if (dev->physical_device && dev->expose_device) {
-				cmd->result = 0;
+				clear_scsi_result(cmd);
 				set_host_byte(cmd, DID_NO_CONNECT);
 				dev->removed = 1;
 				h->drv_req_rescan = 1;
@@ -2551,14 +2551,14 @@ static void complete_scsi_command(struct CommandList *cp)
 	h = cp->h;
 
 	if (!cmd->device) {
-		cmd->result = 0;
+		clear_scsi_result(cmd);
 		set_host_byte(cmd, DID_NO_CONNECT);
 		return hpsa_cmd_free_and_done(h, cp, cmd);
 	}
 
 	dev = cmd->device->hostdata;
 	if (!dev) {
-		cmd->result = 0;
+		clear_scsi_result(cmd);
 		set_host_byte(cmd, DID_NO_CONNECT);
 		return hpsa_cmd_free_and_done(h, cp, cmd);
 	}
@@ -2573,14 +2573,14 @@ static void complete_scsi_command(struct CommandList *cp)
 		(c2->sg[0].chain_indicator == IOACCEL2_CHAIN))
 		hpsa_unmap_ioaccel2_sg_chain_block(h, c2);
 
-	cmd->result = 0;
+	clear_scsi_result(cmd);
 	set_host_byte(cmd, DID_OK); 		/* host byte */
 	set_msg_byte(cmd, COMMAND_COMPLETE);	/* msg byte */
 
 	if (cp->cmd_type == CMD_IOACCEL2 || cp->cmd_type == CMD_IOACCEL1) {
 		if (dev->physical_device && dev->expose_device &&
 			dev->removed) {
-			cmd->result = 0;
+			clear_scsi_result(cmd);
 			set_host_byte(cmd, DID_NO_CONNECT);
 			return hpsa_cmd_free_and_done(h, cp, cmd);
 		}
@@ -2595,7 +2595,7 @@ static void complete_scsi_command(struct CommandList *cp)
 	 */
 	if (unlikely(ei->CommandStatus == CMD_CTLR_LOCKUP)) {
 		/* DID_NO_CONNECT will prevent a retry */
-		cmd->result = 0;
+		clear_scsi_result(cmd);
 		set_host_byte(cmd, DID_NO_CONNECT);
 		return hpsa_cmd_free_and_done(h, cp, cmd);
 	}
@@ -2703,58 +2703,58 @@ static void complete_scsi_command(struct CommandList *cp)
 		 * This is kind of a shame because it means that any other
 		 * CMD_INVALID (e.g. driver bug) will get interpreted as a
 		 * missing target. */
-		cmd->result = 0;
+		clear_scsi_result(cmd);
 		set_host_byte(cmd, DID_NO_CONNECT);
 	}
 		break;
 	case CMD_PROTOCOL_ERR:
-		cmd->result = 0;
+		clear_scsi_result(cmd);
 		set_host_byte(cmd, DID_ERROR);
 		dev_warn(&h->pdev->dev, "CDB %16phN : protocol error\n",
 				cp->Request.CDB);
 		break;
 	case CMD_HARDWARE_ERR:
-		cmd->result = 0;
+		clear_scsi_result(cmd);
 		set_host_byte(cmd, DID_ERROR);
 		dev_warn(&h->pdev->dev, "CDB %16phN : hardware error\n",
 			cp->Request.CDB);
 		break;
 	case CMD_CONNECTION_LOST:
-		cmd->result = 0;
+		clear_scsi_result(cmd);
 		set_host_byte(cmd, DID_ERROR);
 		dev_warn(&h->pdev->dev, "CDB %16phN : connection lost\n",
 			cp->Request.CDB);
 		break;
 	case CMD_ABORTED:
-		cmd->result = 0;
+		clear_scsi_result(cmd);
 		set_host_byte(cmd, DID_ABORT);
 		break;
 	case CMD_ABORT_FAILED:
-		cmd->result = 0;
+		clear_scsi_result(cmd);
 		set_host_byte(cmd, DID_ERROR);
 		dev_warn(&h->pdev->dev, "CDB %16phN : abort failed\n",
 			cp->Request.CDB);
 		break;
 	case CMD_UNSOLICITED_ABORT:
-		cmd->result = 0;
+		clear_scsi_result(cmd);
 		set_host_byte(cmd, DID_SOFT_ERROR); /* retry the command */
 		dev_warn(&h->pdev->dev, "CDB %16phN : unsolicited abort\n",
 			cp->Request.CDB);
 		break;
 	case CMD_TIMEOUT:
-		cmd->result = 0;
+		clear_scsi_result(cmd);
 		set_host_byte(cmd, DID_TIME_OUT);
 		dev_warn(&h->pdev->dev, "CDB %16phN timed out\n",
 			cp->Request.CDB);
 		break;
 	case CMD_UNABORTABLE:
-		cmd->result = 0;
+		clear_scsi_result(cmd);
 		set_host_byte(cmd, DID_ERROR);
 		dev_warn(&h->pdev->dev, "Command unabortable\n");
 		break;
 	case CMD_TMF_STATUS:
 		if (hpsa_evaluate_tmf_status(h, cp)) /* TMF failed? */ {
-			cmd->result = 0;
+			clear_scsi_result(cmd);
 			set_host_byte(cmd, DID_ERROR);
 		}
 		break;
@@ -2762,13 +2762,13 @@ static void complete_scsi_command(struct CommandList *cp)
 		/* This only handles the direct pass-through case since RAID
 		 * offload is handled above.  Just attempt a retry.
 		 */
-		cmd->result = 0;
+		clear_scsi_result(cmd);
 		set_host_byte(cmd, DID_SOFT_ERROR);
 		dev_warn(&h->pdev->dev,
 				"cp %p had HP SSD Smart Path error\n", cp);
 		break;
 	default:
-		cmd->result = 0;
+		clear_scsi_result(cmd);
 		set_host_byte(cmd, DID_ERROR);
 		dev_warn(&h->pdev->dev, "cp %p returned unknown status %x\n",
 				cp, ei->CommandStatus);
@@ -5552,7 +5552,7 @@ static void hpsa_command_resubmit_worker(struct work_struct *work)
 	cmd = c->scsi_cmd;
 	dev = cmd->device->hostdata;
 	if (!dev) {
-		cmd->result = 0;
+		clear_scsi_result(cmd);
 		set_host_byte(cmd, DID_NO_CONNECT);
 		return hpsa_cmd_free_and_done(c->h, c, cmd);
 	}
@@ -5574,7 +5574,7 @@ static void hpsa_command_resubmit_worker(struct work_struct *work)
 				 * Try again via scsi mid layer, which will
 				 * then get SCSI_MLQUEUE_HOST_BUSY.
 				 */
-				cmd->result = 0;
+				clear_scsi_result(cmd);
 				set_host_byte(cmd, DID_IMM_RETRY);
 				return hpsa_cmd_free_and_done(h, c, cmd);
 			}
@@ -5591,7 +5591,7 @@ static void hpsa_command_resubmit_worker(struct work_struct *work)
 		 * hpsa_ciss_submit will have already freed c
 		 * if it encountered a dma mapping failure.
 		 */
-		cmd->result = 0;
+		clear_scsi_result(cmd);
 		set_host_byte(cmd, DID_IMM_RETRY);
 		cmd->scsi_done(cmd);
 	}
@@ -5613,14 +5613,14 @@ static int hpsa_scsi_queue_command(struct Scsi_Host *sh, struct scsi_cmnd *cmd)
 
 	dev = cmd->device->hostdata;
 	if (!dev) {
-		cmd->result = 0;
+		clear_scsi_result(cmd);
 		set_host_byte(cmd, DID_NO_CONNECT);
 		cmd->scsi_done(cmd);
 		return 0;
 	}
 
 	if (dev->removed) {
-		cmd->result = 0;
+		clear_scsi_result(cmd);
 		set_host_byte(cmd, DID_NO_CONNECT);
 		cmd->scsi_done(cmd);
 		return 0;
@@ -5629,7 +5629,7 @@ static int hpsa_scsi_queue_command(struct Scsi_Host *sh, struct scsi_cmnd *cmd)
 	memcpy(scsi3addr, dev->scsi3addr, sizeof(scsi3addr));
 
 	if (unlikely(lockup_detected(h))) {
-		cmd->result = 0;
+		clear_scsi_result(cmd);
 		set_host_byte(cmd, DID_NO_CONNECT);
 		cmd->scsi_done(cmd);
 		return 0;

@@ -786,7 +786,7 @@ mptspi_qcmd(struct Scsi_Host *shost, struct scsi_cmnd *SCpnt)
 	MPT_ADAPTER *ioc = hd->ioc;
 
 	if (!vdevice || !vdevice->vtarget) {
-		SCpnt->result = 0;
+		clear_scsi_result(SCpnt);
 		set_host_byte(SCpnt, DID_NO_CONNECT);
 		SCpnt->scsi_done(SCpnt);
 		return 0;
@@ -794,7 +794,7 @@ mptspi_qcmd(struct Scsi_Host *shost, struct scsi_cmnd *SCpnt)
 
 	if (SCpnt->device->channel == 1 &&
 		mptscsih_is_phys_disk(ioc, 0, SCpnt->device->id) == 0) {
-		SCpnt->result = 0;
+		clear_scsi_result(SCpnt);
 		set_host_byte(SCpnt, DID_NO_CONNECT);
 		SCpnt->scsi_done(SCpnt);
 		return 0;

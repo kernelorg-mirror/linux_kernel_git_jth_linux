@@ -189,7 +189,7 @@ static void __scsi_queue_insert(struct scsi_cmnd *cmd, int reason, bool unbusy)
 	 * lock such that the kblockd_schedule_work() call happens
 	 * before blk_cleanup_queue() finishes.
 	 */
-	cmd->result = 0;
+	clear_scsi_result(cmd);
 	if (q->mq_ops) {
 		/*
 		 * Before a SCSI command is dispatched,
@@ -1639,7 +1639,7 @@ static void scsi_kill_request(struct request *req, struct request_queue *q)
 	starget = scsi_target(sdev);
 	shost = sdev->host;
 	scsi_init_cmd_errh(cmd);
-	cmd->result = 0;
+	clear_scsi_result(cmd);
 	set_host_byte(cmd, DID_NO_CONNECT);
 	atomic_inc(&cmd->device->iorequest_cnt);
 
@@ -1714,7 +1714,7 @@ static int scsi_dispatch_cmd(struct scsi_cmnd *cmd)
 		/* in SDEV_DEL we error all commands. DID_NO_CONNECT
 		 * returns an immediate error upwards, and signals
 		 * that the device is no longer present */
-		cmd->result = 0;
+		clear_scsi_result(cmd);
 		set_host_byte(cmd, DID_NO_CONNECT);
 		goto done;
 	}
@@ -1749,13 +1749,13 @@ static int scsi_dispatch_cmd(struct scsi_cmnd *cmd)
 			       "queuecommand : command too long. "
 			       "cdb_size=%d host->max_cmd_len=%d\n",
 			       cmd->cmd_len, cmd->device->host->max_cmd_len));
-		cmd->result = 0;
+		clear_scsi_result(cmd);
 		set_host_byte(cmd, DID_ABORT);
 		goto done;
 	}
 
 	if (unlikely(host->shost_state == SHOST_DEL)) {
-		cmd->result = 0;
+		clear_scsi_result(cmd);
 		set_host_byte(cmd, DID_NO_CONNECT);
 		goto done;
 

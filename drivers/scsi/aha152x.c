@@ -2266,7 +2266,7 @@ static void rsti_run(struct Scsi_Host *shpnt)
 			kfree(ptr->host_scribble);
 			ptr->host_scribble=NULL;
 
-			ptr->result = 0;
+			clear_scsi_result(ptr);
 			set_host_byte(ptr, DID_RESET);
 			ptr->scsi_done(ptr);
 		}

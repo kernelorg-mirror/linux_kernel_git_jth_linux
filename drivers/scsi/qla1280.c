@@ -3476,7 +3476,7 @@ qla1280_isr(struct scsi_qla_host *ha, struct list_head *done_q)
 					ha->outstanding_cmds[index] = NULL;
 
 					/* Save ISP completion status */
-					CMD_RESULT(sp->cmd) = 0;
+					clear_scsi_result(sp->cmd);
 					CMD_HANDLE(sp->cmd) = COMPLETED_HANDLE;
 
 					/* Place block on done queue */

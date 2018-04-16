@@ -556,7 +556,7 @@ static void pvscsi_complete_request(struct pvscsi_adapter *adapter,
 		return;
 	}
 
-	cmd->result = 0;
+	clear_scsi_result(cmd);
 	if (sdstat != SAM_STAT_GOOD &&
 	    (btstat == BTSTAT_SUCCESS ||
 	     btstat == BTSTAT_LINKED_COMMAND_COMPLETED ||
@@ -570,7 +570,7 @@ static void pvscsi_complete_request(struct pvscsi_adapter *adapter,
 		case BTSTAT_LINKED_COMMAND_COMPLETED:
 		case BTSTAT_LINKED_COMMAND_COMPLETED_WITH_FLAG:
 			/* If everything went fine, let's move on..  */
-			cmd->result = 0;
+			clear_scsi_result(cmd);
 			set_host_byte(cmd, DID_OK);
 			break;
 
@@ -578,13 +578,13 @@ static void pvscsi_complete_request(struct pvscsi_adapter *adapter,
 		case BTSTAT_DATA_UNDERRUN:
 			/* Report residual data in underruns */
 			scsi_set_resid(cmd, scsi_bufflen(cmd) - e->dataLen);
-			cmd->result = 0;
+			clear_scsi_result(cmd);
 			set_host_byte(cmd, DID_ERROR);
 			break;
 
 		case BTSTAT_SELTIMEO:
 			/* Our emulation returns this for non-connected devs */
-			cmd->result = 0;
+			clear_scsi_result(cmd);
 			set_host_byte(cmd, DID_BAD_TARGET);
 			break;
 
@@ -608,22 +608,22 @@ static void pvscsi_complete_request(struct pvscsi_adapter *adapter,
 		case BTSTAT_SENTRST:
 		case BTSTAT_RECVRST:
 		case BTSTAT_BUSRESET:
-			cmd->result = 0;
+			clear_scsi_result(cmd);
 			set_host_byte(cmd, DID_RESET);
 			break;
 
 		case BTSTAT_ABORTQUEUE:
-			cmd->result = 0;
+			clear_scsi_result(cmd);
 			set_host_byte(cmd, DID_ABORT);
 			break;
 
 		case BTSTAT_SCSIPARITY:
-			cmd->result = 0;
+			clear_scsi_result(cmd);
 			set_host_byte(cmd, DID_PARITY);
 			break;
 
 		default:
-			cmd->result = 0;
+			clear_scsi_result(cmd);
 			set_host_byte(cmd, DID_ERROR);
 			scmd_printk(KERN_DEBUG, cmd,
 				    "Unknown completion status: 0x%x\n",
@@ -848,7 +848,7 @@ static int pvscsi_abort(struct scsi_cmnd *cmd)
 	/*
 	 * Successfully aborted the command.
 	 */
-	cmd->result = 0;
+	clear_scsi_result(cmd);
 	set_host_byte(cmd, DID_ABORT);
 	cmd->scsi_done(cmd);
 
@@ -875,7 +875,7 @@ static void pvscsi_reset_all(struct pvscsi_adapter *adapter)
 				    "Forced reset on cmd %p\n", cmd);
 			pvscsi_unmap_buffers(adapter, ctx);
 			pvscsi_release_context(adapter, ctx);
-			cmd->result = 0;
+			clear_scsi_result(cmd);
 			set_host_byte(cmd, DID_RESET);
 			cmd->scsi_done(cmd);
 		}

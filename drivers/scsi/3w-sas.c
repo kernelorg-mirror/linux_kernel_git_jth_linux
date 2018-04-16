@@ -1209,7 +1209,7 @@ static irqreturn_t twl_interrupt(int irq, void *dev_instance)
 			cmd = tw_dev->srb[request_id];
 
 			if (!error) {
-				cmd->result = 0;
+				clear_scsi_result(cmd);
 				set_host_byte(cmd, DID_OK);
 			}
 			
@@ -1372,7 +1372,7 @@ static int twl_reset_device_extension(TW_Device_Extension *tw_dev, int ioctl_res
 			struct scsi_cmnd *cmd = tw_dev->srb[i];
 
 			if (cmd) {
-				cmd->result = 0;
+				clear_scsi_result(cmd);
 				set_host_byte(cmd, DID_RESET);
 				scsi_dma_unmap(cmd);
 				cmd->scsi_done(cmd);
@@ -1483,7 +1483,7 @@ static int twl_scsi_queue_lck(struct scsi_cmnd *SCpnt, void (*done)(struct scsi_
 	if (retval) {
 		tw_dev->state[request_id] = TW_S_COMPLETED;
 		twl_free_request_id(tw_dev, request_id);
-		SCpnt->result = 0;
+		clear_scsi_result(SCpnt);
 		set_host_byte(SCpnt, DID_ERROR);
 		done(SCpnt);
 		retval = 0;

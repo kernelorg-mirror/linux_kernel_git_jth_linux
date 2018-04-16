@@ -1152,7 +1152,7 @@ static int tw_setfeature(TW_Device_Extension *tw_dev, int parm, int param_size,
 		printk(KERN_WARNING "3w-xxxx: tw_setfeature(): Bad alignment physical address.\n");
 		tw_dev->state[request_id] = TW_S_COMPLETED;
 		tw_state_request_finish(tw_dev, request_id);
-		tw_dev->srb[request_id]->result = 0;
+		clear_scsi_result(tw_dev->srb[request_id]);
 		set_host_byte(tw_dev->srb[request_id], DID_OK);
 		tw_dev->srb[request_id]->scsi_done(tw_dev->srb[request_id]);
 	}
@@ -1297,7 +1297,7 @@ static int tw_reset_device_extension(TW_Device_Extension *tw_dev)
 		    (tw_dev->state[i] != TW_S_COMPLETED)) {
 			srb = tw_dev->srb[i];
 			if (srb != NULL) {
-				srb->result = 0;
+				clear_scsi_result(srb);
 				set_host_byte(srb, DID_RESET);
 				scsi_dma_unmap(srb);
 				srb->scsi_done(srb);
@@ -1480,7 +1480,7 @@ static int tw_scsiop_inquiry_complete(TW_Device_Extension *tw_dev, int request_i
 		tw_dev->is_unit_present[tw_dev->srb[request_id]->device->id] = 1;
 	} else {
 		tw_dev->is_unit_present[tw_dev->srb[request_id]->device->id] = 0;
-		tw_dev->srb[request_id]->result = 0;
+		clear_scsi_result(tw_dev->srb[request_id]);
 		set_host_byte(tw_dev->srb[request_id], DID_BAD_TARGET);
 		return TW_ISR_DONT_RESULT;
 	}
@@ -1502,7 +1502,7 @@ static int tw_scsiop_mode_sense(TW_Device_Extension *tw_dev, int request_id)
 	if (tw_dev->srb[request_id]->cmnd[2] != 0x8) {
 		tw_dev->state[request_id] = TW_S_COMPLETED;
 		tw_state_request_finish(tw_dev, request_id);
-		tw_dev->srb[request_id]->result = 0;
+		clear_scsi_result(tw_dev->srb[request_id]);
 		set_host_byte(tw_dev->srb[request_id], DID_OK);
 		tw_dev->srb[request_id]->scsi_done(tw_dev->srb[request_id]);
 		return 0;
@@ -1794,7 +1794,7 @@ static int tw_scsiop_request_sense(TW_Device_Extension *tw_dev, int request_id)
 	tw_state_request_finish(tw_dev, request_id);
 
 	/* If we got a request_sense, we probably want a reset, return error */
-	tw_dev->srb[request_id]->result = 0;
+	clear_scsi_result(tw_dev->srb[request_id]);
 	set_host_byte(tw_dev->srb[request_id], DID_ERROR);
 	tw_dev->srb[request_id]->scsi_done(tw_dev->srb[request_id]);
 
@@ -1910,7 +1910,7 @@ static int tw_scsiop_test_unit_ready_complete(TW_Device_Extension *tw_dev, int r
 		tw_dev->is_unit_present[tw_dev->srb[request_id]->device->id] = 1;
 	} else {
 		tw_dev->is_unit_present[tw_dev->srb[request_id]->device->id] = 0;
-		tw_dev->srb[request_id]->result = 0;
+		clear_scsi_result(tw_dev->srb[request_id]);
 		set_host_byte(tw_dev->srb[request_id], DID_BAD_TARGET);
 		return TW_ISR_DONT_RESULT;
 	}
@@ -1987,7 +1987,7 @@ static int tw_scsi_queue_lck(struct scsi_cmnd *SCpnt, void (*done)(struct scsi_c
 	if (retval) {
 		tw_dev->state[request_id] = TW_S_COMPLETED;
 		tw_state_request_finish(tw_dev, request_id);
-		SCpnt->result = 0;
+		clear_scsi_result(SCpnt);
 		set_host_byte(SCpnt, DID_ERROR);
 		done(SCpnt);
 		retval = 0;

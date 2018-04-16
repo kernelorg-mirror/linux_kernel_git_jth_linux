@@ -2839,7 +2839,7 @@ scsih_abort(struct scsi_cmnd *scmd)
 	    ioc->remove_host) {
 		sdev_printk(KERN_INFO, scmd->device,
 			"device been deleted! scmd(%p)\n", scmd);
-		scmd->result = 0;
+		clear_scsi_result(scmd);
 		set_host_byte(scmd, DID_NO_CONNECT);
 		scmd->scsi_done(scmd);
 		r = SUCCESS;
@@ -2848,7 +2848,7 @@ scsih_abort(struct scsi_cmnd *scmd)
 
 	/* check for completed command */
 	if (st == NULL || st->cb_idx == 0xFF) {
-		scmd->result = 0;
+		clear_scsi_result(scmd);
 		set_host_byte(scmd, DID_RESET);
 		r = SUCCESS;
 		goto out;
@@ -2858,7 +2858,7 @@ scsih_abort(struct scsi_cmnd *scmd)
 	if (sas_device_priv_data->sas_target->flags &
 	    MPT_TARGET_FLAGS_RAID_COMPONENT ||
 	    sas_device_priv_data->sas_target->flags & MPT_TARGET_FLAGS_VOLUME) {
-		scmd->result = 0;
+		clear_scsi_result(scmd);
 		set_host_byte(scmd, DID_RESET);
 		r = FAILED;
 		goto out;
@@ -2906,7 +2906,7 @@ scsih_dev_reset(struct scsi_cmnd *scmd)
 	    ioc->remove_host) {
 		sdev_printk(KERN_INFO, scmd->device,
 			"device been deleted! scmd(%p)\n", scmd);
-		scmd->result = 0;
+		clear_scsi_result(scmd);
 		set_host_byte(scmd, DID_NO_CONNECT);
 		scmd->scsi_done(scmd);
 		r = SUCCESS;
@@ -2925,7 +2925,7 @@ scsih_dev_reset(struct scsi_cmnd *scmd)
 		handle = sas_device_priv_data->sas_target->handle;
 
 	if (!handle) {
-		scmd->result = 0;
+		clear_scsi_result(scmd);
 		set_host_byte(scmd, DID_RESET);
 		r = FAILED;
 		goto out;
@@ -2972,7 +2972,7 @@ scsih_target_reset(struct scsi_cmnd *scmd)
 	    ioc->remove_host) {
 		starget_printk(KERN_INFO, starget, "target been deleted! scmd(%p)\n",
 			scmd);
-		scmd->result = 0;
+		clear_scsi_result(scmd);
 		set_host_byte(scmd, DID_NO_CONNECT);
 		scmd->scsi_done(scmd);
 		r = SUCCESS;
@@ -2991,7 +2991,7 @@ scsih_target_reset(struct scsi_cmnd *scmd)
 		handle = sas_device_priv_data->sas_target->handle;
 
 	if (!handle) {
-		scmd->result = 0;
+		clear_scsi_result(scmd);
 		set_host_byte(scmd, DID_RESET);
 		r = FAILED;
 		goto out;
@@ -4464,11 +4464,11 @@ _scsih_flush_running_cmds(struct MPT3SAS_ADAPTER *ioc)
 		mpt3sas_base_clear_st(ioc, st);
 		scsi_dma_unmap(scmd);
 		if (ioc->pci_error_recovery || ioc->remove_host) {
-			scmd->result = 0;
+			clear_scsi_result(scmd);
 			set_host_byte(scmd, DID_NO_CONNECT);
 		}
 		else {
-			scmd->result = 0;
+			clear_scsi_result(scmd);
 			set_host_byte(scmd, DID_RESET);
 		}
 		scmd->scsi_done(scmd);
@@ -4603,14 +4603,14 @@ scsih_qcmd(struct Scsi_Host *shost, struct scsi_cmnd *scmd)
 
 	sas_device_priv_data = scmd->device->hostdata;
 	if (!sas_device_priv_data || !sas_device_priv_data->sas_target) {
-		scmd->result = 0;
+		clear_scsi_result(scmd);
 		set_host_byte(scmd, DID_NO_CONNECT);
 		scmd->scsi_done(scmd);
 		return 0;
 	}
 
 	if (ioc->pci_error_recovery || ioc->remove_host) {
-		scmd->result = 0;
+		clear_scsi_result(scmd);
 		set_host_byte(scmd, DID_NO_CONNECT);
 		scmd->scsi_done(scmd);
 		return 0;
@@ -4621,7 +4621,7 @@ scsih_qcmd(struct Scsi_Host *shost, struct scsi_cmnd *scmd)
 	/* invalid device handle */
 	handle = sas_target_priv_data->handle;
 	if (handle == MPT3SAS_INVALID_DEVICE_HANDLE) {
-		scmd->result = 0;
+		clear_scsi_result(scmd);
 		set_host_byte(scmd, DID_NO_CONNECT);
 		scmd->scsi_done(scmd);
 		return 0;
@@ -4634,7 +4634,7 @@ scsih_qcmd(struct Scsi_Host *shost, struct scsi_cmnd *scmd)
 
 	/* device has been deleted */
 	else if (sas_target_priv_data->deleted) {
-		scmd->result = 0;
+		clear_scsi_result(scmd);
 		set_host_byte(scmd, DID_NO_CONNECT);
 		scmd->scsi_done(scmd);
 		return 0;
@@ -5212,7 +5212,7 @@ _scsih_io_done(struct MPT3SAS_ADAPTER *ioc, u16 smid, u8 msix_index, u32 reply)
 	mpi_request = mpt3sas_base_get_msg_frame(ioc, smid);
 
 	if (mpi_reply == NULL) {
-		scmd->result = 0;
+		clear_scsi_result(scmd);
 		set_host_byte(scmd, DID_OK);
 		goto out;
 	}
@@ -5220,7 +5220,7 @@ _scsih_io_done(struct MPT3SAS_ADAPTER *ioc, u16 smid, u8 msix_index, u32 reply)
 	sas_device_priv_data = scmd->device->hostdata;
 	if (!sas_device_priv_data || !sas_device_priv_data->sas_target ||
 	     sas_device_priv_data->sas_target->deleted) {
-		scmd->result = 0;
+		clear_scsi_result(scmd);
 		set_host_byte(scmd, DID_NO_CONNECT);
 		goto out;
 	}
@@ -5298,56 +5298,56 @@ _scsih_io_done(struct MPT3SAS_ADAPTER *ioc, u16 smid, u8 msix_index, u32 reply)
 	switch (ioc_status) {
 	case MPI2_IOCSTATUS_BUSY:
 	case MPI2_IOCSTATUS_INSUFFICIENT_RESOURCES:
-		scmd->result = 0;
+		clear_scsi_result(scmd);
 		set_status_byte(scmd, SAM_STAT_BUSY);
 		break;
 
 	case MPI2_IOCSTATUS_SCSI_DEVICE_NOT_THERE:
-		scmd->result = 0;
+		clear_scsi_result(scmd);
 		set_host_byte(scmd, DID_NO_CONNECT);
 		break;
 
 	case MPI2_IOCSTATUS_SCSI_IOC_TERMINATED:
 		if (sas_device_priv_data->block) {
-			scmd->result = 0;
+			clear_scsi_result(scmd);
 			set_host_byte(scmd, DID_TRANSPORT_DISRUPTED);
 			goto out;
 		}
 		if (log_info == 0x31110630) {
 			if (scmd->retries > 2) {
-				scmd->result = 0;
+				clear_scsi_result(scmd);
 				set_host_byte(scmd, DID_NO_CONNECT);
 				scsi_device_set_state(scmd->device,
 				    SDEV_OFFLINE);
 			} else {
-				scmd->result = 0;
+				clear_scsi_result(scmd);
 				set_host_byte(scmd, DID_SOFT_ERROR);
 				scmd->device->expecting_cc_ua = 1;
 			}
 			break;
 		} else if (log_info == VIRTUAL_IO_FAILED_RETRY) {
-			scmd->result = 0;
+			clear_scsi_result(scmd);
 			set_host_byte(scmd, DID_RESET);
 			break;
 		} else if ((scmd->device->channel == RAID_CHANNEL) &&
 		   (scsi_state == (MPI2_SCSI_STATE_TERMINATED |
 		   MPI2_SCSI_STATE_NO_SCSI_STATUS))) {
-			scmd->result = 0;
+			clear_scsi_result(scmd);
 			set_host_byte(scmd, DID_RESET);
 			break;
 		}
-		scmd->result = 0;
+		clear_scsi_result(scmd);
 		set_host_byte(scmd, DID_SOFT_ERROR);
 		break;
 	case MPI2_IOCSTATUS_SCSI_TASK_TERMINATED:
 	case MPI2_IOCSTATUS_SCSI_EXT_TERMINATED:
-		scmd->result = 0;
+		clear_scsi_result(scmd);
 		set_host_byte(scmd, DID_RESET);
 		break;
 
 	case MPI2_IOCSTATUS_SCSI_RESIDUAL_MISMATCH:
 		if ((xfer_cnt == 0) || (scmd->underflow > xfer_cnt)) {
-			scmd->result = 0;
+			clear_scsi_result(scmd);
 			set_host_byte(scmd, DID_SOFT_ERROR);
 		}
 		else
@@ -5362,19 +5362,19 @@ _scsih_io_done(struct MPT3SAS_ADAPTER *ioc, u16 smid, u8 msix_index, u32 reply)
 
 		if (xfer_cnt < scmd->underflow) {
 			if (scsi_status == SAM_STAT_BUSY) {
-				scmd->result = 0;
+				clear_scsi_result(scmd);
 				set_status_byte(scmd, SAM_STAT_BUSY);
 			} else {
-				scmd->result = 0;
+				clear_scsi_result(scmd);
 				set_host_byte(scmd, DID_SOFT_ERROR);
 			}
 		} else if (scsi_state & (MPI2_SCSI_STATE_AUTOSENSE_FAILED |
 		     MPI2_SCSI_STATE_NO_SCSI_STATUS)) {
-			scmd->result = 0;
+			clear_scsi_result(scmd);
 			set_host_byte(scmd, DID_SOFT_ERROR);
 		}
 		else if (scsi_state & MPI2_SCSI_STATE_TERMINATED) {
-			scmd->result = 0;
+			clear_scsi_result(scmd);
 			set_host_byte(scmd, DID_RESET);
 		}
 		else if (!xfer_cnt && scmd->cmnd[0] == REPORT_LUNS) {
@@ -5398,11 +5398,11 @@ _scsih_io_done(struct MPT3SAS_ADAPTER *ioc, u16 smid, u8 msix_index, u32 reply)
 		    MPI2_SCSITASKMGMT_RSP_INVALID_FRAME ||
 		    (scsi_state & (MPI2_SCSI_STATE_AUTOSENSE_FAILED |
 		     MPI2_SCSI_STATE_NO_SCSI_STATUS))) {
-			scmd->result = 0;
+			clear_scsi_result(scmd);
 			set_host_byte(scmd, DID_SOFT_ERROR);
 		}
 		else if (scsi_state & MPI2_SCSI_STATE_TERMINATED) {
-			scmd->result = 0;
+			clear_scsi_result(scmd);
 			set_host_byte(scmd, DID_RESET);
 		}
 		break;
@@ -5423,7 +5423,7 @@ _scsih_io_done(struct MPT3SAS_ADAPTER *ioc, u16 smid, u8 msix_index, u32 reply)
 	case MPI2_IOCSTATUS_SCSI_TASK_MGMT_FAILED:
 	case MPI2_IOCSTATUS_INSUFFICIENT_POWER:
 	default:
-		scmd->result = 0;
+		clear_scsi_result(scmd);
 		set_host_byte(scmd, DID_SOFT_ERROR);
 		break;
 

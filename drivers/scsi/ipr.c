@@ -6525,7 +6525,7 @@ static int ipr_queuecommand(struct Scsi_Host *shost,
 
 	ioa_cfg = (struct ipr_ioa_cfg *)shost->hostdata;
 
-	scsi_cmd->result = 0;
+	clear_scsi_result(scsi_cmd);
 	set_host_byte(scsi_cmd, DID_OK);
 	res = scsi_cmd->device->hostdata;
 
@@ -6639,7 +6639,7 @@ static int ipr_queuecommand(struct Scsi_Host *shost,
 err_nodev:
 	spin_lock_irqsave(hrrq->lock, hrrq_flags);
 	memset(scsi_cmd->sense_buffer, 0, SCSI_SENSE_BUFFERSIZE);
-	scsi_cmd->result = 0;
+	clear_scsi_result(scsi_cmd);
 	set_host_byte(scsi_cmd, DID_NO_CONNECT);
 	scsi_cmd->scsi_done(scsi_cmd);
 	spin_unlock_irqrestore(hrrq->lock, hrrq_flags);

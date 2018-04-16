@@ -450,7 +450,7 @@ static int fnic_queuecommand_lck(struct scsi_cmnd *sc, void (*done)(struct scsi_
 	if (!rport) {
 		FNIC_SCSI_DBG(KERN_DEBUG, fnic->lport->host,
 				"returning DID_NO_CONNECT for IO as rport is NULL\n");
-		sc->result = 0;
+		clear_scsi_result(sc);
 		set_host_byte(sc, DID_NO_CONNECT);
 		done(sc);
 		return 0;
@@ -473,7 +473,7 @@ static int fnic_queuecommand_lck(struct scsi_cmnd *sc, void (*done)(struct scsi_
 			rport->port_id);
 
 		atomic64_inc(&fnic_stats->misc_stats.rport_not_ready);
-		sc->result = 0;
+		clear_scsi_result(sc);
 		set_host_byte(sc, DID_NO_CONNECT);
 		done(sc);
 		return 0;
@@ -484,7 +484,7 @@ static int fnic_queuecommand_lck(struct scsi_cmnd *sc, void (*done)(struct scsi_
 			"rport 0x%x in state 0x%x, returning DID_IMM_RETRY\n",
 			rport->port_id, rp->rp_state);
 
-		sc->result = 0;
+		clear_scsi_result(sc);
 		set_host_byte(sc, DID_IMM_RETRY);
 		done(sc);
 		return 0;
@@ -1194,7 +1194,7 @@ static void fnic_fcpio_itmf_cmpl_handler(struct fnic *fnic,
 			FNIC_SCSI_DBG(KERN_DEBUG, fnic->lport->host,
 				      "abts cmpl, completing IO\n");
 			CMD_SP(sc) = NULL;
-			sc->result = 0;
+			clear_scsi_result(sc);
 			set_host_byte(sc, DID_ERROR);
 
 			spin_unlock_irqrestore(io_lock, flags);
@@ -1407,7 +1407,7 @@ static void fnic_cleanup_io(struct fnic *fnic, int exclude_id)
 		mempool_free(io_req, fnic->io_req_pool);
 
 cleanup_scsi_cmd:
-		sc->result = 0;
+		clear_scsi_result(sc);
 		set_host_byte(sc, DID_TRANSPORT_DISRUPTED);
 		FNIC_SCSI_DBG(KERN_DEBUG, fnic->lport->host,
 			      "%s: sc duration = %lu DID_TRANSPORT_DISRUPTED\n",
@@ -1478,7 +1478,7 @@ void fnic_wq_copy_cleanup_handler(struct vnic_wq_copy *wq,
 	mempool_free(io_req, fnic->io_req_pool);
 
 wq_copy_cleanup_scsi_cmd:
-	sc->result = 0;
+	clear_scsi_result(sc);
 	set_host_byte(sc, DID_NO_CONNECT);
 	FNIC_SCSI_DBG(KERN_DEBUG, fnic->lport->host, "wq_copy_cleanup_handler:"
 		      " DID_NO_CONNECT\n");
@@ -2025,7 +2025,7 @@ int fnic_abort_cmd(struct scsi_cmnd *sc)
 
 	if (sc->scsi_done) {
 	/* Call SCSI completion function to complete the IO */
-		sc->result = 0;
+		clear_scsi_result(sc);
 		set_host_byte(sc, DID_ABORT);
 		sc->scsi_done(sc);
 		atomic64_dec(&fnic_stats->io_stats.active_ios);
@@ -2259,7 +2259,7 @@ static int fnic_clean_pending_aborts(struct fnic *fnic,
 		 */
 		if (sc->scsi_done) {
 			/* Set result to let upper SCSI layer retry */
-			sc->result = 0;
+			clear_scsi_result(sc);
 			set_host_byte(sc, DID_RESET);
 			sc->scsi_done(sc);
 		}

@@ -1265,14 +1265,14 @@ static void arcmsr_report_ccb_state(struct AdapterControlBlock *acb,
 	if (!error) {
 		if (acb->devstate[id][lun] == ARECA_RAID_GONE)
 			acb->devstate[id][lun] = ARECA_RAID_GOOD;
-		ccb->pcmd->result = 0;
+		clear_scsi_result(ccb->pcmd);
 		set_host_byte(ccb->pcmd, DID_OK);
 		arcmsr_ccb_complete(ccb);
 	}else{
 		switch (ccb->arcmsr_cdb.DeviceStatus) {
 		case ARCMSR_DEV_SELECT_TIMEOUT: {
 			acb->devstate[id][lun] = ARECA_RAID_GONE;
-			ccb->pcmd->result = 0;
+			clear_scsi_result(ccb->pcmd);
 			set_host_byte(ccb->pcmd, DID_NO_CONNECT);
 			arcmsr_ccb_complete(ccb);
 			}
@@ -1282,7 +1282,7 @@ static void arcmsr_report_ccb_state(struct AdapterControlBlock *acb,
 
 		case ARCMSR_DEV_INIT_FAIL: {
 			acb->devstate[id][lun] = ARECA_RAID_GONE;
-			ccb->pcmd->result = 0;
+			clear_scsi_result(ccb->pcmd);
 			set_host_byte(ccb->pcmd, DID_BAD_TARGET);
 			arcmsr_ccb_complete(ccb);
 			}
@@ -1304,7 +1304,7 @@ static void arcmsr_report_ccb_state(struct AdapterControlBlock *acb,
 				, lun
 				, ccb->arcmsr_cdb.DeviceStatus);
 				acb->devstate[id][lun] = ARECA_RAID_GONE;
-				ccb->pcmd->result = 0;
+				clear_scsi_result(ccb->pcmd);
 				set_host_byte(ccb->pcmd, DID_NO_CONNECT);
 				arcmsr_ccb_complete(ccb);
 			break;
@@ -1461,7 +1461,7 @@ static void arcmsr_remove_scsi_devices(struct AdapterControlBlock *acb)
 	for (i = 0; i < acb->maxFreeCCB; i++) {
 		ccb = acb->pccb_pool[i];
 		if (ccb->startdone == ARCMSR_CCB_START) {
-			ccb->pcmd->result = 0;
+			clear_scsi_result(ccb->pcmd);
 			set_host_byte(ccb->pcmd, DID_NO_CONNECT);
 			arcmsr_pci_unmap_dma(ccb);
 			ccb->pcmd->scsi_done(ccb->pcmd);
@@ -1553,7 +1553,7 @@ static void arcmsr_remove(struct pci_dev *pdev)
 			struct CommandControlBlock *ccb = acb->pccb_pool[i];
 			if (ccb->startdone == ARCMSR_CCB_START) {
 				ccb->startdone = ARCMSR_CCB_ABORTED;
-				ccb->pcmd->result = 0;
+				clear_scsi_result(ccb->pcmd);
 				set_host_byte(ccb->pcmd, DID_ABORT);
 				arcmsr_ccb_complete(ccb);
 			}
@@ -2960,7 +2960,7 @@ static void arcmsr_handle_virtual_command(struct AdapterControlBlock *acb,
 		struct scatterlist *sg;
 
 		if (cmd->device->lun) {
-			cmd->result = 0;
+			clear_scsi_result(cmd);
 			set_host_byte(cmd, DID_TIME_OUT);
 			cmd->scsi_done(cmd);
 			return;
@@ -2992,7 +2992,7 @@ static void arcmsr_handle_virtual_command(struct AdapterControlBlock *acb,
 	case WRITE_BUFFER:
 	case READ_BUFFER: {
 		if (arcmsr_iop_message_xfer(acb, cmd)) {
-			cmd->result = 0;
+			clear_scsi_result(cmd);
 			set_host_byte(cmd, DID_ERROR);
 		}
 		cmd->scsi_done(cmd);
@@ -3012,14 +3012,14 @@ static int arcmsr_queue_command_lck(struct scsi_cmnd *cmd,
 	int target = cmd->device->id;
 
 	if (acb->acb_flags & ACB_F_ADAPTER_REMOVED) {
-		cmd->result = 0;
+		clear_scsi_result(cmd);
 		set_host_byte(cmd, DID_NO_CONNECT);
 		cmd->scsi_done(cmd);
 		return 0;
 	}
 	cmd->scsi_done = done;
 	cmd->host_scribble = NULL;
-	cmd->result = 0;
+	clear_scsi_result(cmd);
 	if (target == 16) {
 		/* virtual device for iop message transfer */
 		arcmsr_handle_virtual_command(acb, cmd);
@@ -3260,7 +3260,7 @@ static int arcmsr_hbaA_polling_ccbdone(struct AdapterControlBlock *acb,
 					, ccb->pcmd->device->id
 					, (u32)ccb->pcmd->device->lun
 					, ccb);
-				ccb->pcmd->result = 0;
+				clear_scsi_result(ccb->pcmd);
 				set_host_byte(ccb->pcmd, DID_ABORT);
 				arcmsr_ccb_complete(ccb);
 				continue;
@@ -3326,7 +3326,7 @@ static int arcmsr_hbaB_polling_ccbdone(struct AdapterControlBlock *acb,
 					,ccb->pcmd->device->id
 					,(u32)ccb->pcmd->device->lun
 					,ccb);
-				ccb->pcmd->result = 0;
+				clear_scsi_result(ccb->pcmd);
 				set_host_byte(ccb->pcmd, DID_ABORT);
 				arcmsr_ccb_complete(ccb);
 				continue;
@@ -3385,7 +3385,7 @@ polling_hbc_ccb_retry:
 					, pCCB->pcmd->device->id
 					, (u32)pCCB->pcmd->device->lun
 					, pCCB);
-					pCCB->pcmd->result = 0;
+					clear_scsi_result(pCCB->pcmd);
 					set_host_byte(pCCB->pcmd, DID_ABORT);
 					arcmsr_ccb_complete(pCCB);
 				continue;
@@ -3459,7 +3459,7 @@ polling_hbaD_ccb_retry:
 					, pCCB->pcmd->device->id
 					, (u32)pCCB->pcmd->device->lun
 					, pCCB);
-				pCCB->pcmd->result = 0;
+				clear_scsi_result(pCCB->pcmd);
 				set_host_byte(pCCB->pcmd, DID_ABORT);
 				arcmsr_ccb_complete(pCCB);
 				continue;
@@ -3528,7 +3528,7 @@ static int arcmsr_hbaE_polling_ccbdone(struct AdapterControlBlock *acb,
 					, pCCB->pcmd->device->id
 					, (u32)pCCB->pcmd->device->lun
 					, pCCB);
-				pCCB->pcmd->result = 0;
+				clear_scsi_result(pCCB->pcmd);
 				set_host_byte(pCCB->pcmd, DID_ABORT);
 				arcmsr_ccb_complete(pCCB);
 				continue;

@@ -3363,7 +3363,7 @@ static int pmcraid_queuecommand_lck(
 	fw_version = be16_to_cpu(pinstance->inq_data->fw_version);
 	scsi_cmd->scsi_done = done;
 	res = scsi_cmd->device->hostdata;
-	scsi_cmd->result = 0;
+	clear_scsi_result(scsi_cmd);
 	set_host_byte(scsi_cmd, DID_OK);
 
 	/* if adapter is marked as dead, set result to DID_NO_CONNECT complete
@@ -3371,7 +3371,7 @@ static int pmcraid_queuecommand_lck(
 	 */
 	if (pinstance->ioa_state == IOA_STATE_DEAD) {
 		pmcraid_info("IOA is dead, but queuecommand is scheduled\n");
-		scsi_cmd->result = 0;
+		clear_scsi_result(scsi_cmd);
 		set_host_byte(scsi_cmd, DID_NO_CONNECT);
 		scsi_cmd->scsi_done(scsi_cmd);
 		return 0;

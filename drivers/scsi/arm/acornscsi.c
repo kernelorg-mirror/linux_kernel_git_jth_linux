@@ -2484,7 +2484,7 @@ static int acornscsi_queuecmd_lck(struct scsi_cmnd *SCpnt,
     if (acornscsi_cmdtype(SCpnt->cmnd[0]) == CMD_WRITE && (NO_WRITE & (1 << SCpnt->device->id))) {
 	printk(KERN_CRIT "scsi%d.%c: WRITE attempted with NO_WRITE flag set\n",
 	    host->host->host_no, '0' + SCpnt->device->id);
-	SCpnt->result = 0;
+	clear_scsi_result(SCpnt);
 	set_host_byte(SCpnt, DID_NO_CONNECT);
 	done(SCpnt);
 	return 0;
@@ -2493,7 +2493,7 @@ static int acornscsi_queuecmd_lck(struct scsi_cmnd *SCpnt,
 
     SCpnt->scsi_done = done;
     SCpnt->host_scribble = NULL;
-    SCpnt->result = 0;
+    clear_scsi_result(SCpnt);
     SCpnt->tag = 0;
     SCpnt->SCp.phase = (int)acornscsi_datadirection(SCpnt->cmnd[0]);
     SCpnt->SCp.sent_command = 0;
@@ -2507,7 +2507,7 @@ static int acornscsi_queuecmd_lck(struct scsi_cmnd *SCpnt,
 	unsigned long flags;
 
 	if (!queue_add_cmd_ordered(&host->queues.issue, SCpnt)) {
-	    SCpnt->result = 0;
+	    clear_scsi_result(SCpnt);
 	    set_host_byte(SCpnt, DID_ERROR);
 	    done(SCpnt);
 	    return 0;

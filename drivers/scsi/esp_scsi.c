@@ -2034,7 +2034,7 @@ static void esp_reset_cleanup_one(struct esp *esp, struct esp_cmd_entry *ent)
 
 	esp_unmap_dma(esp, cmd);
 	esp_free_lun_tag(ent, cmd->device->hostdata);
-	cmd->result = 0;
+	clear_scsi_result(cmd);
 	set_host_byte(cmd, DID_RESET);
 
 	if (ent->flags & ESP_CMD_FLAG_AUTOSENSE) {
@@ -2065,7 +2065,7 @@ static void esp_reset_cleanup(struct esp *esp)
 		struct scsi_cmnd *cmd = ent->cmd;
 
 		list_del(&ent->list);
-		cmd->result = 0;
+		clear_scsi_result(cmd);
 		set_host_byte(cmd, DID_RESET);
 		cmd->scsi_done(cmd);
 		esp_put_ent(esp, ent);
@@ -2539,7 +2539,7 @@ static int esp_eh_abort_handler(struct scsi_cmnd *cmd)
 		 */
 		list_del(&ent->list);
 
-		cmd->result = 0;
+		clear_scsi_result(cmd);
 		set_host_byte(cmd, DID_ABORT);
 		cmd->scsi_done(cmd);
 

@@ -1779,7 +1779,7 @@ map_cmd_status(struct fusion_context *fusion,
 	switch (status) {
 
 	case MFI_STAT_OK:
-		scmd->result = 0;
+		clear_scsi_result(scmd);
 		set_host_byte(scmd, DID_OK);
 		break;
 
@@ -1818,15 +1818,15 @@ map_cmd_status(struct fusion_context *fusion,
 
 	case MFI_STAT_LD_OFFLINE:
 	case MFI_STAT_DEVICE_NOT_FOUND:
-		scmd->result = 0;
+		clear_scsi_result(scmd);
 		set_host_byte(scmd, DID_BAD_TARGET);
 		break;
 	case MFI_STAT_CONFIG_SEQ_MISMATCH:
-		scmd->result = 0;
+		clear_scsi_result(scmd);
 		set_host_byte(scmd, DID_IMM_RETRY);
 		break;
 	default:
-		scmd->result = 0;
+		clear_scsi_result(scmd);
 		set_host_byte(scmd, DID_ERROR);
 		break;
 	}
@@ -4326,7 +4326,7 @@ int megasas_task_abort_fusion(struct scsi_cmnd *scmd)
 	if (!mr_device_priv_data) {
 		sdev_printk(KERN_INFO, scmd->device, "device been deleted! "
 			"scmd(%p)\n", scmd);
-		scmd->result = 0;
+		clear_scsi_result(scmd);
 		set_host_byte(scmd, DID_NO_CONNECT);
 		ret = SUCCESS;
 		goto out;
@@ -4410,7 +4410,7 @@ int megasas_reset_target_fusion(struct scsi_cmnd *scmd)
 	if (!mr_device_priv_data) {
 		sdev_printk(KERN_INFO, scmd->device, "device been deleted! "
 			"scmd(%p)\n", scmd);
-		scmd->result = 0;
+		clear_scsi_result(scmd);
 		set_host_byte(scmd, DID_NO_CONNECT);
 		ret = SUCCESS;
 		goto out;

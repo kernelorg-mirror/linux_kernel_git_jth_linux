@@ -70,7 +70,7 @@ static void process_cmd_err(struct afu_cmd *cmd, struct scsi_cmnd *scp)
 	if (ioasa->rc.flags & SISL_RC_FLAGS_OVERRUN) {
 		dev_dbg(dev, "%s: cmd underrun cmd = %p scp = %p\n",
 			__func__, cmd, scp);
-		scp->result = 0;
+		clear_scsi_result(scp);
 		set_host_byte(scp, DID_ERROR);
 	}
 
@@ -98,7 +98,7 @@ static void process_cmd_err(struct afu_cmd *cmd, struct scsi_cmnd *scp)
 		/* We have an FC status */
 		switch (ioasa->rc.fc_rc) {
 		case SISL_FC_RC_LINKDOWN:
-			scp->result = 0;
+			clear_scsi_result(scp);
 			set_host_byte(scp, DID_REQUEUE);
 			break;
 		case SISL_FC_RC_RESID:
@@ -109,7 +109,7 @@ static void process_cmd_err(struct afu_cmd *cmd, struct scsi_cmnd *scp)
 				 * If not then we must handle it here.
 				 * This is probably an AFU bug.
 				 */
-				scp->result = 0;
+				clear_scsi_result(scp);
 				set_host_byte(scp, DID_ERROR);
 			}
 			break;
@@ -123,7 +123,7 @@ static void process_cmd_err(struct afu_cmd *cmd, struct scsi_cmnd *scp)
 		case SISL_FC_RC_WRABORTPEND:
 		case SISL_FC_RC_NOEXP:
 		case SISL_FC_RC_INUSE:
-			scp->result = 0;
+			clear_scsi_result(scp);
 			set_host_byte(scp, DID_ERROR);
 			break;
 		}
@@ -133,29 +133,29 @@ static void process_cmd_err(struct afu_cmd *cmd, struct scsi_cmnd *scp)
 		/* We have an AFU error */
 		switch (ioasa->rc.afu_rc) {
 		case SISL_AFU_RC_NO_CHANNELS:
-			scp->result = 0;
+			clear_scsi_result(scp);
 			set_host_byte(scp, DID_NO_CONNECT);
 			break;
 		case SISL_AFU_RC_DATA_DMA_ERR:
 			switch (ioasa->afu_extra) {
 			case SISL_AFU_DMA_ERR_PAGE_IN:
 				/* Retry */
-				scp->result = 0;
+				clear_scsi_result(scp);
 				set_host_byte(scp, DID_IMM_RETRY);
 				break;
 			case SISL_AFU_DMA_ERR_INVALID_EA:
 			default:
-				scp->result = 0;
+				clear_scsi_result(scp);
 				set_host_byte(scp, DID_ERROR);
 			}
 			break;
 		case SISL_AFU_RC_OUT_OF_DATA_BUFS:
 			/* Retry */
-			scp->result = 0;
+			clear_scsi_result(scp);
 			set_host_byte(scp, DID_ALLOC_FAILURE);
 			break;
 		default:
-			scp->result = 0;
+			clear_scsi_result(scp);
 			set_host_byte(scp, DID_ERROR);
 		}
 	}
@@ -188,7 +188,7 @@ static void cmd_complete(struct afu_cmd *cmd)
 		if (unlikely(cmd->sa.ioasc))
 			process_cmd_err(cmd, scp);
 		else {
-			scp->result = 0;
+			clear_scsi_result(scp);
 			set_host_byte(scp, DID_OK);
 		}
 
@@ -227,7 +227,7 @@ static void flush_pending_cmds(struct hwq *hwq)
 
 		if (cmd->scp) {
 			scp = cmd->scp;
-			scp->result = 0;
+			clear_scsi_result(scp);
 			set_host_byte(scp, DID_IMM_RETRY);
 			scp->scsi_done(scp);
 		} else {
@@ -616,7 +616,7 @@ static int cxlflash_queuecommand(struct Scsi_Host *host, struct scsi_cmnd *scp)
 		goto out;
 	case STATE_FAILTERM:
 		dev_dbg_ratelimited(dev, "%s: device has failed\n", __func__);
-		scp->result = 0;
+		clear_scsi_result(scp);
 		set_host_byte(scp, DID_NO_CONNECT);
 		scp->scsi_done(scp);
 		rc = 0;

@@ -611,7 +611,7 @@ void usb_stor_invoke_transport(struct scsi_cmnd *srb, struct us_data *us)
 	 */
 	if (test_bit(US_FLIDX_TIMED_OUT, &us->dflags)) {
 		usb_stor_dbg(us, "-- command was aborted\n");
-		srb->result = 0;
+		clear_scsi_result(srb);
 		set_host_byte(srb, DID_ABORT);
 		goto Handle_Errors;
 	}
@@ -619,7 +619,7 @@ void usb_stor_invoke_transport(struct scsi_cmnd *srb, struct us_data *us)
 	/* if there is a transport error, reset and don't auto-sense */
 	if (result == USB_STOR_TRANSPORT_ERROR) {
 		usb_stor_dbg(us, "-- transport indicates error, resetting\n");
-		srb->result = 0;
+		clear_scsi_result(srb);
 		set_host_byte(srb, DID_ERROR);
 		goto Handle_Errors;
 	}
@@ -724,7 +724,7 @@ Retry_Sense:
 
 		if (test_bit(US_FLIDX_TIMED_OUT, &us->dflags)) {
 			usb_stor_dbg(us, "-- auto-sense aborted\n");
-			srb->result = 0;
+			clear_scsi_result(srb);
 			set_host_byte(srb, DID_ABORT);
 
 			/* If SANE_SENSE caused this problem, disable it */
@@ -759,7 +759,7 @@ Retry_Sense:
 			 * multi-target device, since failure of an
 			 * auto-sense is perfectly valid
 			 */
-			srb->result = 0;
+			clear_scsi_result(srb);
 			set_host_byte(srb, DID_ERROR);
 			if (!(us->fflags & US_FL_SCM_MULT_TARG))
 				goto Handle_Errors;
@@ -841,7 +841,7 @@ Retry_Sense:
 			 * entering an infinite retry loop.
 			 */
 			else {
-				srb->result = 0;
+				clear_scsi_result(srb);
 				set_host_byte(srb, DID_ERROR);
 				if ((sshdr.response_code & 0x72) == 0x72)
 					srb->sense_buffer[1] = HARDWARE_ERROR;
@@ -875,7 +875,7 @@ Retry_Sense:
 		 */
 		if (test_bit(US_FLIDX_REDO_READ10, &us->dflags)) {
 			clear_bit(US_FLIDX_REDO_READ10, &us->dflags);
-			srb->result = 0;
+			clear_scsi_result(srb);
 			set_host_byte(srb, DID_IMM_RETRY);
 			srb->sense_buffer[0] = 0;
 		}
@@ -885,7 +885,7 @@ Retry_Sense:
 	if ((status_byte(srb->result) == SAM_STAT_GOOD ||
 	     srb->sense_buffer[2] == 0) &&
 	    scsi_bufflen(srb) - scsi_get_resid(srb) < srb->underflow) {
-		srb->result = 0;
+		clear_scsi_result(srb);
 		set_host_byte(srb, DID_ERROR);
 	}
 

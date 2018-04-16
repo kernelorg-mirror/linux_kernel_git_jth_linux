@@ -157,7 +157,7 @@ imm_fail(imm_struct *dev, int error_code)
 {
 	/* If we fail a device then we trash status / message bytes */
 	if (dev->cur_cmd) {
-		dev->cur_cmd->result = 0;
+		clear_scsi_result(dev->cur_cmd);
 		set_host_byte(dev->cur_cmd, error_code);
 		dev->failed = 1;
 	}
@@ -923,7 +923,7 @@ static int imm_queuecommand_lck(struct scsi_cmnd *cmd,
 	dev->jstart = jiffies;
 	dev->cur_cmd = cmd;
 	cmd->scsi_done = done;
-	cmd->result = 0;
+	clear_scsi_result(cmd);
 	set_host_byte(cmd, DID_ERROR);	/* default return code */
 	cmd->SCp.phase = 0;	/* bus free */
 

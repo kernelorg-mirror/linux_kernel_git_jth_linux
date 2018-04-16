@@ -530,7 +530,7 @@ ahc_linux_queue_lck(struct scsi_cmnd * cmd, void (*scsi_done) (struct scsi_cmnd 
 	ahc_lock(ahc, &flags);
 	if (ahc->platform_data->qfrozen == 0) {
 		cmd->scsi_done = scsi_done;
-		cmd->result = 0;
+		clear_scsi_result(cmd);
 		set_host_byte(cmd, CAM_REQ_INPROG);
 		rtn = ahc_linux_run_command(ahc, dev, cmd);
 	}

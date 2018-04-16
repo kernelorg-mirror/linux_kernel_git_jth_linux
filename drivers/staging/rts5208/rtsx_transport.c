@@ -172,7 +172,7 @@ void rtsx_invoke_transport(struct scsi_cmnd *srb, struct rtsx_chip *chip)
 	 */
 	if (rtsx_chk_stat(chip, RTSX_STAT_ABORT)) {
 		dev_dbg(rtsx_dev(chip), "-- command was aborted\n");
-		srb->result = 0;
+		clear_scsi_result(srb);
 		set_host_byte(srb, DID_ABORT);
 		goto handle_errors;
 	}
@@ -180,7 +180,7 @@ void rtsx_invoke_transport(struct scsi_cmnd *srb, struct rtsx_chip *chip)
 	/* if there is a transport error, reset and don't auto-sense */
 	if (result == TRANSPORT_ERROR) {
 		dev_dbg(rtsx_dev(chip), "-- transport indicates error, resetting\n");
-		srb->result = 0;
+		clear_scsi_result(srb);
 		set_host_byte(srb, DID_ERROR);
 		goto handle_errors;
 	}

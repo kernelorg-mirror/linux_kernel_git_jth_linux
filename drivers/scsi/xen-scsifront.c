@@ -533,7 +533,7 @@ static int scsifront_queuecommand(struct Scsi_Host *shost,
 	unsigned long flags;
 	int err;
 
-	sc->result = 0;
+	clear_scsi_result(sc);
 
 	shadow->sc  = sc;
 	shadow->act = VSCSIIF_ACT_SCSI_CDB;
@@ -551,7 +551,7 @@ static int scsifront_queuecommand(struct Scsi_Host *shost,
 		spin_unlock_irqrestore(shost->host_lock, flags);
 		if (err == -ENOMEM)
 			return SCSI_MLQUEUE_HOST_BUSY;
-		sc->result = 0;
+		clear_scsi_result(sc);
 		set_host_byte(sc, DID_ERROR);
 		sc->scsi_done(sc);
 		return 0;

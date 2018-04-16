@@ -627,7 +627,7 @@ static int aac_probe_container_callback2(struct scsi_cmnd * scsicmd)
 	if ((fsa_dev_ptr[scmd_id(scsicmd)].valid & 1))
 		return aac_scsi_cmd(scsicmd);
 
-	scsicmd->result = 0;
+	clear_scsi_result(scsicmd);
 	set_host_byte(scsicmd, DID_NO_CONNECT);
 	scsicmd->scsi_done(scsicmd);
 	return 0;
@@ -2879,7 +2879,7 @@ int aac_scsi_cmd(struct scsi_cmnd * scsicmd)
 		if (scmd_channel(scsicmd) == CONTAINER_CHANNEL) {
 			if((cid >= dev->maximum_num_containers) ||
 					(scsicmd->device->lun != 0)) {
-				scsicmd->result = 0;
+				clear_scsi_result(scsicmd);
 				set_host_byte(scsicmd, DID_NO_CONNECT);
 				goto scsi_done_ret;
 			}
@@ -2923,7 +2923,7 @@ int aac_scsi_cmd(struct scsi_cmnd * scsicmd)
 					return -1;
 				return aac_send_srb_fib(scsicmd);
 			} else {
-				scsicmd->result = 0;
+				clear_scsi_result(scsicmd);
 				set_host_byte(scsicmd, DID_NO_CONNECT);
 				goto scsi_done_ret;
 			}
@@ -3852,7 +3852,7 @@ static int aac_send_srb_fib(struct scsi_cmnd* scsicmd)
 	dev = (struct aac_dev *)scsicmd->device->host->hostdata;
 	if (scmd_id(scsicmd) >= dev->maximum_num_physicals ||
 			scsicmd->device->lun > 7) {
-		scsicmd->result = 0;
+		clear_scsi_result(scsicmd);
 		set_host_byte(scsicmd, DID_NO_CONNECT);
 		scsicmd->scsi_done(scsicmd);
 		return 0;
@@ -3895,7 +3895,7 @@ static int aac_send_hba_fib(struct scsi_cmnd *scsicmd)
 	dev = shost_priv(scsicmd->device->host);
 	if (scmd_id(scsicmd) >= dev->maximum_num_physicals ||
 			scsicmd->device->lun > AAC_MAX_LUN - 1) {
-		scsicmd->result = 0;
+		clear_scsi_result(scsicmd);
 		set_host_byte(scsicmd, DID_NO_CONNECT);
 		scsicmd->scsi_done(scsicmd);
 		return 0;

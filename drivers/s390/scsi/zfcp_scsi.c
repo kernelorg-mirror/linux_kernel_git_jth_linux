@@ -67,7 +67,7 @@ int zfcp_scsi_queuecommand(struct Scsi_Host *shost, struct scsi_cmnd *scpnt)
 	int    status, scsi_result, ret;
 
 	/* reset the status for this request */
-	scpnt->result = 0;
+	clear_scsi_result(scpnt);
 	scpnt->host_scribble = NULL;
 
 	scsi_result = fc_remote_port_chkready(rport);

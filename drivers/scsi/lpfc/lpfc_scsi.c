@@ -3017,7 +3017,7 @@ out:
 	if (err_type == BGS_GUARD_ERR_MASK) {
 		scsi_build_sense_buffer(1, cmd->sense_buffer, ILLEGAL_REQUEST,
 					0x10, 0x1);
-		cmd->result = 0;
+		clear_scsi_result(cmd);
 		set_scsi_result(cmd, DRIVER_SENSE, DID_ABORT, 0,
 				SAM_STAT_CHECK_CONDITION);
 		phba->bg_guard_err_cnt++;
@@ -3029,7 +3029,7 @@ out:
 	} else if (err_type == BGS_REFTAG_ERR_MASK) {
 		scsi_build_sense_buffer(1, cmd->sense_buffer, ILLEGAL_REQUEST,
 					0x10, 0x3);
-		cmd->result = 0;
+		clear_scsi_result(cmd);
 		set_scsi_result(cmd, DRIVER_SENSE, DID_ABORT, 0,
 				SAM_STAT_CHECK_CONDITION);
 
@@ -3042,7 +3042,7 @@ out:
 	} else if (err_type == BGS_APPTAG_ERR_MASK) {
 		scsi_build_sense_buffer(1, cmd->sense_buffer, ILLEGAL_REQUEST,
 					0x10, 0x2);
-		cmd->result = 0;
+		clear_scsi_result(cmd);
 		set_scsi_result(cmd, DRIVER_SENSE, DID_ABORT, 0,
 				SAM_STAT_CHECK_CONDITION);
 
@@ -3127,7 +3127,7 @@ lpfc_parse_bg_err(struct lpfc_hba *phba, struct lpfc_scsi_buf *lpfc_cmd,
 
 		scsi_build_sense_buffer(1, cmd->sense_buffer, ILLEGAL_REQUEST,
 				0x10, 0x1);
-		cmd->result = 0;
+		clear_scsi_result(cmd);
 		set_scsi_result(cmd, DRIVER_SENSE, DID_ABORT, 0,
 				SAM_STAT_CHECK_CONDITION);
 		phba->bg_guard_err_cnt++;
@@ -3144,7 +3144,7 @@ lpfc_parse_bg_err(struct lpfc_hba *phba, struct lpfc_scsi_buf *lpfc_cmd,
 
 		scsi_build_sense_buffer(1, cmd->sense_buffer, ILLEGAL_REQUEST,
 				0x10, 0x3);
-		cmd->result = 0;
+		clear_scsi_result(cmd);
 		set_scsi_result(cmd, DRIVER_SENSE, DID_ABORT, 0,
 				SAM_STAT_CHECK_CONDITION);
 		phba->bg_reftag_err_cnt++;
@@ -3161,7 +3161,7 @@ lpfc_parse_bg_err(struct lpfc_hba *phba, struct lpfc_scsi_buf *lpfc_cmd,
 
 		scsi_build_sense_buffer(1, cmd->sense_buffer, ILLEGAL_REQUEST,
 				0x10, 0x2);
-		cmd->result = 0;
+		clear_scsi_result(cmd);
 		set_scsi_result(cmd, DRIVER_SENSE, DID_ABORT, 0,
 				SAM_STAT_CHECK_CONDITION);
 

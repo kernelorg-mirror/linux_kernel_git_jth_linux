@@ -193,7 +193,7 @@ static void wd719x_finish_cmd(struct scsi_cmnd *cmd, int result)
 				 SCSI_SENSE_BUFFERSIZE, DMA_FROM_DEVICE);
 		scsi_dma_unmap(cmd);
 	}
-	cmd->result = 0;
+	clear_scsi_result(cmd);
 	set_host_byte(cmd, result);
 	cmd->scsi_done(cmd);
 }

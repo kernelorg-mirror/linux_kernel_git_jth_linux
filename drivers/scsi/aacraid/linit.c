@@ -1974,11 +1974,11 @@ static void aac_flush_ios(struct aac_dev *aac)
 			scsi_dma_unmap(cmd);
 
 			if (aac->handle_pci_error) {
-				cmd->result = 0;
+				clear_scsi_result(cmd);
 				set_host_byte(cmd, DID_NO_CONNECT);
 			}
 			else {
-				cmd->result = 0;
+				clear_scsi_result(cmd);
 				set_host_byte(cmd, DID_RESET);
 			}
 

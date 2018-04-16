@@ -369,6 +369,11 @@ static inline void set_scsi_result(struct scsi_cmnd *cmd,
 	cmd->result = db << 24 | hb << 16 | mb << 8 | status;
 }
 
+static inline void clear_scsi_result(struct scsi_cmnd *cmd)
+{
+	cmd->result = 0;
+}
+
 static inline unsigned scsi_transfer_length(struct scsi_cmnd *scmd)
 {
 	unsigned int xfer_len = scsi_out(scmd)->length;

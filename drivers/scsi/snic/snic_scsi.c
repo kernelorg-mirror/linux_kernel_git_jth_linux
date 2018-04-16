@@ -847,7 +847,7 @@ snic_process_itmf_cmpl(struct snic *snic,
 		}
 
 		CMD_SP(sc) = NULL;
-		sc->result = 0;
+		clear_scsi_result(sc);
 		set_host_byte(sc, DID_ERROR);
 		SNIC_SCSI_DBG(snic->shost,
 			      "itmf_cmpl: Completing IO. sc %p flags 0x%llx\n",
@@ -1480,7 +1480,7 @@ snic_abort_finish(struct snic *snic, struct scsi_cmnd *sc)
 		 * the # IO timeouts == 2, will cause the LUN offline.
 		 * Call scsi_done to complete the IO.
 		 */
-		sc->result = 0;
+		clear_scsi_result(sc);
 		set_host_byte(sc, DID_ERROR);
 		sc->scsi_done(sc);
 		break;
@@ -1861,7 +1861,7 @@ snic_dr_clean_single_req(struct snic *snic,
 
 	snic_release_req_buf(snic, rqi, sc);
 
-	sc->result = 0;
+	clear_scsi_result(sc);
 	set_host_byte(sc, DID_ERROR);
 	sc->scsi_done(sc);
 
@@ -2499,7 +2499,7 @@ snic_scsi_cleanup(struct snic *snic, int ex_tag)
 		snic_release_req_buf(snic, rqi, sc);
 
 cleanup:
-		sc->result = 0;
+		clear_scsi_result(sc);
 		set_host_byte(sc, DID_TRANSPORT_DISRUPTED);
 		SNIC_HOST_INFO(snic->shost,
 			       "sc_clean: DID_TRANSPORT_DISRUPTED for sc %p, Tag %d flags 0x%llx rqi %p duration %u msecs\n",

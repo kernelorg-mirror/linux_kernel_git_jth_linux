@@ -2129,7 +2129,7 @@ qla2x00_handle_dif_error(srb_t *sp, struct sts_entry_24xx *sts24)
 		    cmd->device->sector_size);
 
 		scsi_set_resid(cmd, resid);
-		cmd->result = 0;
+		clear_scsi_result(cmd);
 		set_host_byte(cmd, DID_OK);
 
 		/* Update protection tag */

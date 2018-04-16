@@ -436,7 +436,7 @@ static int adpt_queue_lck(struct scsi_cmnd * cmd, void (*done) (struct scsi_cmnd
 	 */
 
 	if ((cmd->cmnd[0] == REQUEST_SENSE) && (cmd->sense_buffer[0] != 0)) {
-		cmd->result = 0;
+		clear_scsi_result(cmd);
 		set_host_byte(cmd, DID_OK);
 		cmd->scsi_done(cmd);
 		return 0;
@@ -462,7 +462,7 @@ static int adpt_queue_lck(struct scsi_cmnd * cmd, void (*done) (struct scsi_cmnd
 		if ((pDev = adpt_find_device(pHba, (u32)cmd->device->channel, (u32)cmd->device->id, cmd->device->lun)) == NULL) {
 			// TODO: if any luns are at this bus, scsi id then fake a TEST_UNIT_READY and INQUIRY response 
 			// with type 7F (for all luns less than the max for this bus,id) so the lun scan will continue.
-			cmd->result = 0;
+			clear_scsi_result(cmd);
 			set_host_byte(cmd, DID_NO_CONNECT);
 			cmd->scsi_done(cmd);
 			return 0;
@@ -2396,17 +2396,17 @@ static s32 adpt_i2o_to_scsi(void __iomem *reply, struct scsi_cmnd* cmd)
 	if(!(reply_flags & MSG_FAIL)) {
 		switch(detailed_status & I2O_SCSI_DSC_MASK) {
 		case I2O_SCSI_DSC_SUCCESS:
-			cmd->result = 0;
+			clear_scsi_result(cmd);
 			set_host_byte(cmd, DID_OK);
 			// handle underflow
 			if (readl(reply+20) < cmd->underflow) {
-				cmd->result = 0;
+				clear_scsi_result(cmd);
 				set_host_byte(cmd, DID_ERROR);
 				printk(KERN_WARNING"%s: SCSI CMD underflow\n",pHba->name);
 			}
 			break;
 		case I2O_SCSI_DSC_REQUEST_ABORTED:
-			cmd->result = 0;
+			clear_scsi_result(cmd);
 			set_host_byte(cmd, DID_ABORT);
 			break;
 		case I2O_SCSI_DSC_PATH_INVALID:
@@ -2417,22 +2417,22 @@ static s32 adpt_i2o_to_scsi(void __iomem *reply, struct scsi_cmnd* cmd)
 		case I2O_SCSI_DSC_RESOURCE_UNAVAILABLE:
 			printk(KERN_WARNING"%s: SCSI Timeout-Device (%d,%d,%llu) hba status=0x%x, dev status=0x%x, cmd=0x%x\n",
 				pHba->name, (u32)cmd->device->channel, (u32)cmd->device->id, cmd->device->lun, hba_status, dev_status, cmd->cmnd[0]);
-			cmd->result = 0;
+			clear_scsi_result(cmd);
 			set_host_byte(cmd, DID_TIME_OUT);
 			break;
 		case I2O_SCSI_DSC_ADAPTER_BUSY:
 		case I2O_SCSI_DSC_BUS_BUSY:
-			cmd->result = 0;
+			clear_scsi_result(cmd);
 			set_host_byte(cmd, DID_BUS_BUSY);
 			break;
 		case I2O_SCSI_DSC_SCSI_BUS_RESET:
 		case I2O_SCSI_DSC_BDR_MESSAGE_SENT:
-			cmd->result = 0;
+			clear_scsi_result(cmd);
 			set_host_byte(cmd, DID_RESET);
 			break;
 		case I2O_SCSI_DSC_PARITY_ERROR_FAILURE:
 			printk(KERN_WARNING"%s: SCSI CMD parity error\n",pHba->name);
-			cmd->result = 0;
+			clear_scsi_result(cmd);
 			set_host_byte(cmd, DID_PARITY);
 			break;
 		case I2O_SCSI_DSC_UNABLE_TO_ABORT:
@@ -2462,7 +2462,7 @@ static s32 adpt_i2o_to_scsi(void __iomem *reply, struct scsi_cmnd* cmd)
 			printk(KERN_WARNING"%s: SCSI error %0x-Device(%d,%d,%llu) hba_status=0x%x, dev_status=0x%x, cmd=0x%x\n",
 				pHba->name, detailed_status & I2O_SCSI_DSC_MASK, (u32)cmd->device->channel, (u32)cmd->device->id, cmd->device->lun,
 			       hba_status, dev_status, cmd->cmnd[0]);
-			cmd->result = 0;
+			clear_scsi_result(cmd);
 			set_host_byte(cmd, DID_ERROR);
 			break;
 		}
@@ -2476,7 +2476,7 @@ static s32 adpt_i2o_to_scsi(void __iomem *reply, struct scsi_cmnd* cmd)
 			if(cmd->sense_buffer[0] == 0x70 /* class 7 */ && 
 			   cmd->sense_buffer[2] == DATA_PROTECT ){
 				/* This is to handle an array failed */
-				cmd->result = 0;
+				clear_scsi_result(cmd);
 				set_host_byte(cmd, DID_TIME_OUT);
 				printk(KERN_WARNING"%s: SCSI Data Protect-Device (%d,%d,%llu) hba_status=0x%x, dev_status=0x%x, cmd=0x%x\n",
 					pHba->name, (u32)cmd->device->channel, (u32)cmd->device->id, cmd->device->lun,
@@ -2489,7 +2489,7 @@ static s32 adpt_i2o_to_scsi(void __iomem *reply, struct scsi_cmnd* cmd)
 		 * the card rejected it.  We should signal a retry
 		 * for a limitted number of retries.
 		 */
-		cmd->result = 0;
+		clear_scsi_result(cmd);
 		set_host_byte(cmd, DID_TIME_OUT);
 		printk(KERN_WARNING"%s: I2O MSG_FAIL - Device (%d,%d,%llu) tid=%d, cmd=0x%x\n",
 			pHba->name, (u32)cmd->device->channel, (u32)cmd->device->id, cmd->device->lun,

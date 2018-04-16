@@ -586,7 +586,7 @@ mega_build_cmd(adapter_t *adapter, struct scsi_cmnd *cmd, int *busy)
 
 		/* have just LUN 0 for each target on virtual channels */
 		if (cmd->device->lun) {
-			cmd->result = 0;
+			clear_scsi_result(cmd);
 			set_host_byte(cmd, DID_BAD_TARGET);
 			cmd->scsi_done(cmd);
 			return NULL;
@@ -606,7 +606,7 @@ mega_build_cmd(adapter_t *adapter, struct scsi_cmnd *cmd, int *busy)
 			max_ldrv_num += 0x80;
 
 		if(ldrv_num > max_ldrv_num ) {
-			cmd->result = 0;
+			clear_scsi_result(cmd);
 			set_host_byte(cmd, DID_BAD_TARGET);
 			cmd->scsi_done(cmd);
 			return NULL;
@@ -619,7 +619,7 @@ mega_build_cmd(adapter_t *adapter, struct scsi_cmnd *cmd, int *busy)
 			 * Do not support lun >7 for physically accessed
 			 * devices
 			 */
-			cmd->result = 0;
+			clear_scsi_result(cmd);
 			set_host_byte(cmd, DID_BAD_TARGET);
 			cmd->scsi_done(cmd);
 			return NULL;
@@ -640,7 +640,7 @@ mega_build_cmd(adapter_t *adapter, struct scsi_cmnd *cmd, int *busy)
 			 * If no, return success always
 			 */
 			if( !adapter->has_cluster ) {
-				cmd->result = 0;
+				clear_scsi_result(cmd);
 				set_host_byte(cmd, DID_OK);
 				cmd->scsi_done(cmd);
 				return NULL;
@@ -659,7 +659,7 @@ mega_build_cmd(adapter_t *adapter, struct scsi_cmnd *cmd, int *busy)
 
 			return scb;
 #else
-			cmd->result = 0;
+			clear_scsi_result(cmd);
 			set_host_byte(cmd, DID_OK);
 			cmd->scsi_done(cmd);
 			return NULL;
@@ -675,7 +675,7 @@ mega_build_cmd(adapter_t *adapter, struct scsi_cmnd *cmd, int *busy)
 			memset(buf, 0, cmd->cmnd[4]);
 			kunmap_atomic(buf - sg->offset);
 
-			cmd->result = 0;
+			clear_scsi_result(cmd);
 			set_host_byte(cmd, DID_OK);
 			cmd->scsi_done(cmd);
 			return NULL;
@@ -872,7 +872,7 @@ mega_build_cmd(adapter_t *adapter, struct scsi_cmnd *cmd, int *busy)
 			 */
 			if( ! adapter->has_cluster ) {
 
-				cmd->result = 0;
+				clear_scsi_result(cmd);
 				set_host_byte(cmd, DID_BAD_TARGET);
 				cmd->scsi_done(cmd);
 				return NULL;
@@ -896,7 +896,7 @@ mega_build_cmd(adapter_t *adapter, struct scsi_cmnd *cmd, int *busy)
 #endif
 
 		default:
-			cmd->result = 0;
+			clear_scsi_result(cmd);
 			set_host_byte(cmd, DID_BAD_TARGET);
 			cmd->scsi_done(cmd);
 			return NULL;
@@ -1481,7 +1481,7 @@ mega_cmd_done(adapter_t *adapter, u8 completed[], int nstatus, int status)
 					"aborted cmd [%x] complete\n",
 					scb->idx);
 
-				scb->cmd->result = 0;
+				clear_scsi_result(scb->cmd);
 				set_host_byte(scb->cmd, DID_ABORT);
 
 				list_add_tail(SCSI_LIST(scb->cmd),
@@ -1501,7 +1501,7 @@ mega_cmd_done(adapter_t *adapter, u8 completed[], int nstatus, int status)
 					"reset cmd [%x] complete\n",
 					scb->idx);
 
-				scb->cmd->result = 0;
+				clear_scsi_result(scb->cmd);
 				set_host_byte(scb->cmd, DID_RESET);
 
 				list_add_tail(SCSI_LIST(scb->cmd),
@@ -1576,7 +1576,7 @@ mega_cmd_done(adapter_t *adapter, u8 completed[], int nstatus, int status)
 		}
 
 		/* clear result; otherwise, success returns corrupt value */
-		cmd->result = 0;
+		clear_scsi_result(cmd);
 
 		/* Convert MegaRAID status to Linux error code */
 		switch (status) {
@@ -1999,11 +1999,11 @@ megaraid_abort_and_reset(adapter_t *adapter, struct scsi_cmnd *cmd, int aor)
 				mega_free_scb(adapter, scb);
 
 				if( aor == SCB_ABORT ) {
-					cmd->result = 0;
+					clear_scsi_result(cmd);
 					set_host_byte(cmd, DID_ABORT);
 				}
 				else {
-					cmd->result = 0;
+					clear_scsi_result(cmd);
 					set_host_byte(cmd, DID_RESET);
 				}
 

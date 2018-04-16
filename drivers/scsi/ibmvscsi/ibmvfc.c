@@ -808,7 +808,7 @@ static void ibmvfc_scsi_eh_done(struct ibmvfc_event *evt)
 static void ibmvfc_fail_request(struct ibmvfc_event *evt, int error_code)
 {
 	if (evt->cmnd) {
-		evt->cmnd->result = 0;
+		clear_scsi_result(evt->cmnd);
 		set_host_byte(evt->cmnd, error_code);
 		evt->done = ibmvfc_scsi_eh_done;
 	} else
@@ -1456,7 +1456,7 @@ static int ibmvfc_send_event(struct ibmvfc_event *evt,
 
 		dev_err(vhost->dev, "Send error (rc=%d)\n", rc);
 		if (evt->cmnd) {
-			evt->cmnd->result = 0;
+			clear_scsi_result(evt->cmnd);
 			set_host_byte(evt->cmnd, DID_ERROR);
 			evt->done = ibmvfc_scsi_eh_done;
 		} else
@@ -1559,7 +1559,7 @@ static void ibmvfc_scsi_done(struct ibmvfc_event *evt)
 				ibmvfc_relogin(cmnd->device);
 
 			if (!cmnd->result && (!scsi_get_resid(cmnd) || (rsp->flags & FCP_RESID_OVER))) {
-				cmnd->result = 0;
+				clear_scsi_result(cmnd);
 				set_host_byte(cmnd, DID_ERROR);
 			}
 
@@ -1568,7 +1568,7 @@ static void ibmvfc_scsi_done(struct ibmvfc_event *evt)
 
 		if (!cmnd->result &&
 		    (scsi_bufflen(cmnd) - scsi_get_resid(cmnd) < cmnd->underflow)) {
-			cmnd->result = 0;
+			clear_scsi_result(cmnd);
 			set_host_byte(cmnd, DID_ERROR);
 		}
 
@@ -1636,7 +1636,7 @@ static int ibmvfc_queuecommand_lck(struct scsi_cmnd *cmnd,
 		return 0;
 	}
 
-	cmnd->result = 0;
+	clear_scsi_result(cmnd);
 	set_host_byte(cmnd, DID_OK);
 	evt = ibmvfc_get_event(vhost);
 	ibmvfc_init_event(evt, ibmvfc_scsi_done, IBMVFC_CMD_FORMAT);
@@ -1671,7 +1671,7 @@ static int ibmvfc_queuecommand_lck(struct scsi_cmnd *cmnd,
 		scmd_printk(KERN_ERR, cmnd,
 			    "Failed to map DMA buffer for command. rc=%d\n", rc);
 
-	cmnd->result = 0;
+	clear_scsi_result(cmnd);
 	set_host_byte(cmnd, DID_ERROR);
 	done(cmnd);
 	return 0;

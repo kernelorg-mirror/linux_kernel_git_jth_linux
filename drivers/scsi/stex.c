@@ -581,7 +581,7 @@ static void return_abnormal_state(struct st_hba *hba, int status)
 		ccb->req = NULL;
 		if (ccb->cmd) {
 			scsi_dma_unmap(ccb->cmd);
-			ccb->cmd->result = 0;
+			clear_scsi_result(ccb->cmd);
 			set_host_byte(ccb->cmd, status);
 			ccb->cmd->scsi_done(ccb->cmd);
 			ccb->cmd = NULL;
@@ -613,7 +613,7 @@ stex_queuecommand_lck(struct scsi_cmnd *cmd, void (*done)(struct scsi_cmnd *))
 	lun = cmd->device->lun;
 	hba = (struct st_hba *) &host->hostdata[0];
 	if (hba->mu_status == MU_STATE_NOCONNECT) {
-		cmd->result = 0;
+		clear_scsi_result(cmd);
 		set_host_byte(cmd, DID_NO_CONNECT);
 		done(cmd);
 		return 0;
@@ -658,7 +658,7 @@ stex_queuecommand_lck(struct scsi_cmnd *cmd, void (*done)(struct scsi_cmnd *))
 		break;
 	case INQUIRY:
 		if (lun >= host->max_lun) {
-			cmd->result = 0;
+			clear_scsi_result(cmd);
 			set_host_byte(cmd, DID_NO_CONNECT);
 			done(cmd);
 			return 0;

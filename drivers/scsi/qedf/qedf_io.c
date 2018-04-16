@@ -926,7 +926,7 @@ qedf_queuecommand(struct Scsi_Host *host, struct scsi_cmnd *sc_cmd)
 
 	if (test_bit(QEDF_UNLOADING, &qedf->flags) ||
 	    test_bit(QEDF_DBG_STOP_IO, &qedf->flags)) {
-		sc_cmd->result = 0;
+		clear_scsi_result(sc_cmd);
 		set_host_byte(sc_cmd, DID_NO_CONNECT);
 		sc_cmd->scsi_done(sc_cmd);
 		return 0;
@@ -1125,7 +1125,7 @@ void qedf_scsi_completion(struct qedf_ctx *qedf, struct fcoe_cqe *cqe,
 		    "FCP I/O protocol failure xid=0x%x fcp_rsp_len=%d "
 		    "fcp_rsp_code=%d.\n", io_req->xid, io_req->fcp_rsp_len,
 		    io_req->fcp_rsp_code);
-		sc_cmd->result = 0;
+		clear_scsi_result(sc_cmd);
 		set_host_byte(sc_cmd, DID_BUS_BUSY);
 		goto out;
 	}
@@ -1167,7 +1167,7 @@ void qedf_scsi_completion(struct qedf_ctx *qedf, struct fcoe_cqe *cqe,
 	case FC_GOOD:
 		if (io_req->cdb_status == 0) {
 			/* Good I/O completion */
-			sc_cmd->result = 0;
+			clear_scsi_result(sc_cmd);
 			set_host_byte(sc_cmd, DID_OK);
 		} else {
 			refcount = kref_read(&io_req->refcount);
@@ -1255,7 +1255,7 @@ void qedf_scsi_done(struct qedf_ctx *qedf, struct qedf_ioreq *io_req,
 
 	qedf_unmap_sg_list(qedf, io_req);
 
-	sc_cmd->result = 0;
+	clear_scsi_result(sc_cmd);
 	set_host_byte(sc_cmd, result);
 	refcount = kref_read(&io_req->refcount);
 	QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_IO, "%d:0:%d:%lld: Completing "

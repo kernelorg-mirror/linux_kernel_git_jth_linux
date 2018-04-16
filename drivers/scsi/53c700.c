@@ -1565,7 +1565,7 @@ NCR_700_intr(int irq, void *dev_id)
 				 * command again otherwise we'll
 				 * deadlock on the
 				 * hostdata->state_lock */
-				SCp->result = 0;
+				clear_scsi_result(SCp);
 				set_host_byte(SCp, DID_RESET);
 				SCp->scsi_done(SCp);
 			}
