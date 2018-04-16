@@ -10,6 +10,7 @@
 #include <linux/scatterlist.h>
 #include <scsi/scsi_device.h>
 #include <scsi/scsi_request.h>
+#include <scsi/scsi.h>
 
 struct Scsi_Host;
 struct scsi_driver;
@@ -144,7 +145,7 @@ struct scsi_cmnd {
 					 * obtained by scsi_malloc is guaranteed
 					 * to be at an address < 16Mb). */
 
-	int result;		/* Status code from lower level driver */
+	struct scsi_result result;	/* Status code from LLDD */
 	int flags;		/* Command flags */
 
 	unsigned char tag;	/* SCSI-II queued command tag */
@@ -340,25 +341,25 @@ static inline struct scsi_data_buffer *scsi_prot(struct scsi_cmnd *cmd)
 static inline void set_msg_byte(struct scsi_cmnd *cmd,
 				enum scsi_msg_byte status)
 {
-	cmd->result = (cmd->result & 0xffff00ff) | (status << 8);
+	cmd->result.msg_byte = status;
 }
 
 static inline void set_host_byte(struct scsi_cmnd *cmd,
 				 enum scsi_host_byte status)
 {
-	cmd->result = (cmd->result & 0xff00ffff) | (status << 16);
+	cmd->result.host_byte = status;
 }
 
 static inline void set_driver_byte(struct scsi_cmnd *cmd,
 				   enum scsi_driver_byte status)
 {
-	cmd->result = (cmd->result & 0x00ffffff) | (status << 24);
+	cmd->result.driver_byte = status;
 }
 
 static inline void set_status_byte(struct scsi_cmnd *cmd,
 				   char status)
 {
-	cmd->result = (cmd->result & 0xffffff00) | status;
+	cmd->result.status_byte = status;
 }
 
 static inline void set_scsi_result(struct scsi_cmnd *cmd,
@@ -366,12 +367,15 @@ static inline void set_scsi_result(struct scsi_cmnd *cmd,
 				   enum scsi_host_byte hb,
 				   enum scsi_msg_byte mb, char status)
 {
-	cmd->result = db << 24 | hb << 16 | mb << 8 | status;
+	cmd->result.driver_byte = db;
+	cmd->result.host_byte = hb;
+	cmd->result.msg_byte = mb;
+	cmd->result.status_byte = status;
 }
 
 static inline void clear_scsi_result(struct scsi_cmnd *cmd)
 {
-	cmd->result = 0;
+	memset(&cmd->result, 0, FIELD_SIZEOF(struct scsi_cmnd, result));
 }
 
 static inline unsigned scsi_transfer_length(struct scsi_cmnd *scmd)

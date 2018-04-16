@@ -894,7 +894,7 @@ static void esp_cmd_is_done(struct esp *esp, struct esp_cmd_entry *ent,
 	esp->active_cmd = NULL;
 	esp_unmap_dma(esp, cmd);
 	esp_free_lun_tag(ent, dev->hostdata);
-	cmd->result = result;
+	to_scsi_result(cmd->result, result);
 
 	if (ent->eh_done) {
 		complete(ent->eh_done);

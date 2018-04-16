@@ -415,7 +415,7 @@ static void ql_ihandl(void *dev_id)
 		return;
 	}
 	icmd = priv->qlcmd;
-	icmd->result = ql_pcmd(icmd);
+	to_scsi_result(icmd->result, ql_pcmd(icmd));
 	priv->qlcmd = NULL;
 	/*
 	 *	If result is CHECK CONDITION done calls qcommand to request 

@@ -92,16 +92,16 @@ bfa_cb_ioim_done(void *drv, struct bfad_ioim_s *dio,
 		scsi_dma_unmap(cmnd);
 
 	cmnd->host_scribble = NULL;
-	bfa_trc(bfad, cmnd->result);
+	bfa_trc(bfad, from_scsi_result(cmnd->result));
 
 	itnim_data = cmnd->device->hostdata;
 	if (itnim_data) {
 		itnim = itnim_data->itnim;
-		if (!cmnd->result && itnim &&
+		if (from_scsi_result(cmnd->result) == 0 && itnim &&
 			 (bfa_lun_queue_depth > cmnd->device->queue_depth)) {
 			/* Queue depth adjustment for good status completion */
 			bfad_ramp_up_qdepth(itnim, cmnd->device);
-		} else if (cmnd->result == SAM_STAT_TASK_SET_FULL && itnim) {
+		} else if (status_byte(cmnd->result) == SAM_STAT_TASK_SET_FULL && itnim) {
 			/* qfull handling */
 			bfad_handle_qfull(itnim, cmnd->device);
 		}
@@ -150,7 +150,7 @@ bfa_cb_ioim_abort(void *drv, struct bfad_ioim_s *dio)
 	if (cmnd->device->host != NULL)
 		scsi_dma_unmap(cmnd);
 
-	bfa_trc(bfad, cmnd->result);
+	bfa_trc(bfad, from_scsi_result(cmnd->result));
 	cmnd->host_scribble = NULL;
 }
 
@@ -1228,7 +1228,7 @@ bfad_im_queuecommand_lck(struct scsi_cmnd *cmnd, void (*done) (struct scsi_cmnd 
 
 	rc = fc_remote_port_chkready(rport);
 	if (rc) {
-		cmnd->result = rc;
+		to_scsi_result(cmnd->result, rc);
 		done(cmnd);
 		return 0;
 	}

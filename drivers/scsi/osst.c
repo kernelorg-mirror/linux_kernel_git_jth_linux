@@ -284,8 +284,7 @@ static int osst_chk_result(struct osst_tape * STp, struct osst_request * SRpnt)
 
 			printk(KERN_WARNING
 			     "%s:W: Warning %x (driver bt 0x%x, host bt 0x%x).\n",
-			     name, result, driver_byte(result),
-			     host_byte(result));
+			     name, result, result >> 24, result >> 16);
 			if (notyetprinted) {
 				notyetprinted = 0;
 				printk(KERN_INFO

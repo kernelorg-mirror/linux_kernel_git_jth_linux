@@ -732,7 +732,10 @@ static bool scsi_end_request(struct request *req, blk_status_t error,
  */
 static blk_status_t scsi_result_to_blk_status(struct scsi_cmnd *cmd, int result)
 {
-	switch (host_byte(result)) {
+	struct scsi_result scsi_result = { 0 };
+
+	to_scsi_result(scsi_result, result);
+	switch (host_byte(scsi_result)) {
 	case DID_OK:
 		/*
 		 * Also check the other bytes than the status byte in result
@@ -791,7 +794,7 @@ static blk_status_t scsi_result_to_blk_status(struct scsi_cmnd *cmd, int result)
  */
 void scsi_io_completion(struct scsi_cmnd *cmd, unsigned int good_bytes)
 {
-	int result = cmd->result;
+	int result = from_scsi_result(cmd->result);
 	struct request_queue *q = cmd->device->request_queue;
 	struct request *req = cmd->request;
 	blk_status_t error = BLK_STS_OK;
@@ -824,7 +827,7 @@ void scsi_io_completion(struct scsi_cmnd *cmd, unsigned int good_bytes)
 		/*
 		 * scsi_result_to_blk_status may have reset the host_byte
 		 */
-		scsi_req(req)->result = cmd->result;
+		scsi_req(req)->result = result;
 		scsi_req(req)->resid_len = scsi_get_resid(cmd);
 
 		if (scsi_bidi_cmnd(cmd)) {
@@ -884,7 +887,7 @@ void scsi_io_completion(struct scsi_cmnd *cmd, unsigned int good_bytes)
 	 * if it can't fit). Treat SAM_STAT_CONDITION_MET and the related
 	 * intermediate statuses (both obsolete in SAM-4) as good.
 	 */
-	if (status_byte(result) && scsi_status_is_good(result)) {
+	if (status_byte(cmd->result) && scsi_status_is_good(result)) {
 		result = 0;
 		error = BLK_STS_OK;
 	}
@@ -916,7 +919,7 @@ void scsi_io_completion(struct scsi_cmnd *cmd, unsigned int good_bytes)
 
 	error = scsi_result_to_blk_status(cmd, result);
 
-	if (host_byte(result) == DID_RESET) {
+	if (host_byte(cmd->result) == DID_RESET) {
 		/* Third party bus reset or reset for error recovery
 		 * reasons.  Just retry the command and see what
 		 * happens.
@@ -1027,7 +1030,7 @@ void scsi_io_completion(struct scsi_cmnd *cmd, unsigned int good_bytes)
 			 */
 			if (!level && __ratelimit(&_rs)) {
 				scsi_print_result(cmd, NULL, FAILED);
-				if (driver_byte(result) & DRIVER_SENSE)
+				if (driver_byte(cmd->result) & DRIVER_SENSE)
 					scsi_print_sense(cmd);
 				scsi_print_command(cmd);
 			}
@@ -1665,7 +1668,7 @@ static void scsi_softirq_done(struct request *rq)
 	INIT_LIST_HEAD(&cmd->eh_entry);
 
 	atomic_inc(&cmd->device->iodone_cnt);
-	if (cmd->result)
+	if (from_scsi_result(cmd->result))
 		atomic_inc(&cmd->device->ioerr_cnt);
 
 	disposition = scsi_decide_disposition(cmd);
@@ -2575,7 +2578,7 @@ scsi_mode_sense(struct scsi_device *sdev, int dbd, int modepage,
 	 * ILLEGAL REQUEST if the code page isn't supported */
 
 	if (use_10_for_ms && !scsi_status_is_good(result) &&
-	    (driver_byte(result) & DRIVER_SENSE)) {
+	    ((result >> 24) == DRIVER_SENSE)) {
 		if (scsi_sense_valid(sshdr)) {
 			if ((sshdr->sense_key == ILLEGAL_REQUEST) &&
 			    (sshdr->asc == 0x20) && (sshdr->ascq == 0)) {
@@ -2612,7 +2615,7 @@ scsi_mode_sense(struct scsi_device *sdev, int dbd, int modepage,
 			data->block_descriptor_length = buffer[3];
 		}
 		data->header_length = header_length;
-	} else if ((status_byte(result) == CHECK_CONDITION) &&
+	} else if (((result & 0xff) == SAM_STAT_CHECK_CONDITION) &&
 		   scsi_sense_valid(sshdr) &&
 		   sshdr->sense_key == UNIT_ATTENTION && retry_count) {
 		retry_count--;

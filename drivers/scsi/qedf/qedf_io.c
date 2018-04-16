@@ -814,7 +814,7 @@ static void qedf_trace_io(struct qedf_rport *fcport, struct qedf_ioreq *io_req,
 	io_log->lba[3] = sc_cmd->cmnd[5];
 	io_log->bufflen = scsi_bufflen(sc_cmd);
 	io_log->sg_count = scsi_sg_count(sc_cmd);
-	io_log->result = sc_cmd->result;
+	io_log->result = from_scsi_result(sc_cmd->result);
 	io_log->jiffies = jiffies;
 	io_log->refcount = kref_read(&io_req->refcount);
 
@@ -934,7 +934,7 @@ qedf_queuecommand(struct Scsi_Host *host, struct scsi_cmnd *sc_cmd)
 
 	rval = fc_remote_port_chkready(rport);
 	if (rval) {
-		sc_cmd->result = rval;
+		to_scsi_result(sc_cmd->result, rval);
 		sc_cmd->scsi_done(sc_cmd);
 		return 0;
 	}
@@ -1262,8 +1262,8 @@ void qedf_scsi_done(struct qedf_ctx *qedf, struct qedf_ioreq *io_req,
 	    "sc_cmd=%p result=0x%08x op=0x%02x lba=0x%02x%02x%02x%02x, "
 	    "allowed=%d retries=%d refcount=%d.\n",
 	    qedf->lport->host->host_no, sc_cmd->device->id,
-	    sc_cmd->device->lun, sc_cmd, sc_cmd->result, sc_cmd->cmnd[0],
-	    sc_cmd->cmnd[2], sc_cmd->cmnd[3], sc_cmd->cmnd[4],
+	    sc_cmd->device->lun, sc_cmd, from_scsi_result(sc_cmd->result),
+	    sc_cmd->cmnd[0], sc_cmd->cmnd[2], sc_cmd->cmnd[3], sc_cmd->cmnd[4],
 	    sc_cmd->cmnd[5], sc_cmd->allowed, sc_cmd->retries,
 	    refcount);
 

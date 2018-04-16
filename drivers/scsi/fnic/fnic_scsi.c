@@ -461,7 +461,7 @@ static int fnic_queuecommand_lck(struct scsi_cmnd *sc, void (*done)(struct scsi_
 		FNIC_SCSI_DBG(KERN_DEBUG, fnic->lport->host,
 				"rport is not ready\n");
 		atomic64_inc(&fnic_stats->misc_stats.rport_not_ready);
-		sc->result = ret;
+		to_scsi_result(sc->result, ret);
 		done(sc);
 		return 0;
 	}

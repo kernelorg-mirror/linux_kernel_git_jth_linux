@@ -147,7 +147,7 @@ static void cypress_atacb_passthrough(struct scsi_cmnd *srb, struct us_data *us)
 	usb_stor_transparent_scsi_command(srb, us);
 
 	/* if the device doesn't support ATACB */
-	if (srb->result == SAM_STAT_CHECK_CONDITION &&
+	if (status_byte(srb->result) == SAM_STAT_CHECK_CONDITION &&
 			memcmp(srb->sense_buffer, usb_stor_sense_invalidCDB,
 				sizeof(usb_stor_sense_invalidCDB)) == 0) {
 		usb_stor_dbg(us, "cypress atacb not supported ???\n");
@@ -158,8 +158,8 @@ static void cypress_atacb_passthrough(struct scsi_cmnd *srb, struct us_data *us)
 	 * if ck_cond flags is set, and there wasn't critical error,
 	 * build the special sense
 	 */
-	if ((srb->result != (DID_ERROR << 16) &&
-				srb->result != (DID_ABORT << 16)) &&
+	if ((host_byte(srb->result) != DID_ERROR &&
+	     host_byte(srb->result) != DID_ABORT) &&
 			save_cmnd[2] & 0x20) {
 		struct scsi_eh_save ses;
 		unsigned char regs[8];
@@ -181,7 +181,7 @@ static void cypress_atacb_passthrough(struct scsi_cmnd *srb, struct us_data *us)
 
 		usb_stor_transparent_scsi_command(srb, us);
 		memcpy(regs, srb->sense_buffer, sizeof(regs));
-		tmp_result = srb->result;
+		tmp_result = from_scsi_result(srb->result);
 		scsi_eh_restore_cmnd(srb, &ses);
 		/* we fail to get registers, report invalid command */
 		if (tmp_result != SAM_STAT_GOOD)

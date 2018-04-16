@@ -754,7 +754,7 @@ static void scsi_eh_done(struct scsi_cmnd *scmd)
 	struct completion *eh_action;
 
 	SCSI_LOG_ERROR_RECOVERY(3, scmd_printk(KERN_INFO, scmd,
-			"%s result: %x\n", __func__, scmd->result));
+			"%s result: %x\n", __func__, from_scsi_result(scmd->result)));
 
 	eh_action = scmd->device->host->eh_action;
 	if (eh_action)
@@ -948,7 +948,7 @@ void scsi_eh_prep_cmnd(struct scsi_cmnd *scmd, struct scsi_eh_save *ses,
 	ses->data_direction = scmd->sc_data_direction;
 	ses->sdb = scmd->sdb;
 	ses->next_rq = scmd->request->next_rq;
-	ses->result = scmd->result;
+	ses->result = from_scsi_result(scmd->result);
 	ses->underflow = scmd->underflow;
 	ses->prot_op = scmd->prot_op;
 	ses->eh_eflags = scmd->eh_eflags;
@@ -1012,7 +1012,7 @@ void scsi_eh_restore_cmnd(struct scsi_cmnd* scmd, struct scsi_eh_save *ses)
 	scmd->sc_data_direction = ses->data_direction;
 	scmd->sdb = ses->sdb;
 	scmd->request->next_rq = ses->next_rq;
-	scmd->result = ses->result;
+	to_scsi_result(scmd->result, ses->result);
 	scmd->underflow = ses->underflow;
 	scmd->prot_op = ses->prot_op;
 	scmd->eh_eflags = ses->eh_eflags;
@@ -1213,7 +1213,7 @@ int scsi_eh_get_sense(struct list_head *work_q,
 			continue;
 
 		SCSI_LOG_ERROR_RECOVERY(3, scmd_printk(KERN_INFO, scmd,
-			"sense requested, result %x\n", scmd->result));
+			      "sense requested, result %x\n", from_scsi_result(scmd->result)));
 		SCSI_LOG_ERROR_RECOVERY(3, scsi_print_sense(scmd));
 
 		rtn = scsi_decide_disposition(scmd);
@@ -1757,7 +1757,7 @@ int scsi_decide_disposition(struct scsi_cmnd *scmd)
 		 * nuke this special code so that it looks like we are saying
 		 * did_ok.
 		 */
-		scmd->result &= 0xff00ffff;
+		set_host_byte(scmd, DID_OK);
 		return SUCCESS;
 	case DID_OK:
 		/*
@@ -2067,7 +2067,7 @@ void scsi_eh_flush_done_q(struct list_head *done_q)
 			 * scsi_eh_get_sense), scmd->result is already
 			 * set, do not set DRIVER_TIMEOUT.
 			 */
-			if (!scmd->result)
+			if (!from_scsi_result(scmd->result))
 				set_driver_byte(scmd, DRIVER_TIMEOUT);
 			SCSI_LOG_ERROR_RECOVERY(3,
 				scmd_printk(KERN_INFO, scmd,

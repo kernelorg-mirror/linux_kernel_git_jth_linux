@@ -94,7 +94,7 @@ static int sd_zbc_report_zones(struct scsi_disk *sdkp, unsigned char *buf,
 		sd_printk(KERN_ERR, sdkp,
 			  "REPORT ZONES lba %llu failed with %d/%d\n",
 			  (unsigned long long)lba,
-			  host_byte(result), driver_byte(result));
+			  result >> 16, result >> 24);
 		return -EIO;
 	}
 
@@ -279,7 +279,7 @@ int sd_zbc_setup_reset_cmnd(struct scsi_cmnd *cmd)
 void sd_zbc_complete(struct scsi_cmnd *cmd, unsigned int good_bytes,
 		     struct scsi_sense_hdr *sshdr)
 {
-	int result = cmd->result;
+	int result = from_scsi_result(cmd->result);
 	struct request *rq = cmd->request;
 
 	switch (req_op(rq)) {

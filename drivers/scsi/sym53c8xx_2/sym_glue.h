@@ -237,7 +237,6 @@ static inline struct sym_hcb * sym_get_hcb(struct Scsi_Host *host)
 static inline void
 sym_set_cam_status(struct scsi_cmnd *cmd, int status)
 {
-	cmd->result &= ~(0xff  << 16);
 	set_host_byte(cmd, status);
 }
 

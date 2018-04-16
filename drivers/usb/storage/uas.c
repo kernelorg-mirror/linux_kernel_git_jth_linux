@@ -316,7 +316,7 @@ static void uas_stat_cmplt(struct urb *urb)
 	switch (iu->iu_id) {
 	case IU_ID_STATUS:
 		uas_sense(urb, cmnd);
-		if (cmnd->result != 0) {
+		if (from_scsi_result(cmnd->result) != 0) {
 			/* cancel data transfers on error */
 			data_in_urb = usb_get_urb(cmdinfo->data_in_urb);
 			data_out_urb = usb_get_urb(cmdinfo->data_out_urb);

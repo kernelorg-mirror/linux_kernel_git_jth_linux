@@ -203,7 +203,7 @@ int sr_do_ioctl(Scsi_CD *cd, struct packet_command *cgc)
 			      cgc->timeout, IOCTL_RETRIES, 0, 0, NULL);
 
 	/* Minimal error checking.  Ignore cases we know about, and report the rest. */
-	if (driver_byte(result) != 0) {
+	if ((result >> 24) != 0) {
 		switch (sshdr.sense_key) {
 		case UNIT_ATTENTION:
 			SDev->changed = 1;

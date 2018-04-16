@@ -815,7 +815,7 @@ static void do_scsi_linuxstat(struct uiscmdrsp *cmdrsp,
 
 	/* Do not log errors for disk-not-present inquiries */
 	if (cmdrsp->scsi.cmnd[0] == INQUIRY &&
-	    (host_byte(cmdrsp->scsi.linuxstat) == DID_NO_CONNECT) &&
+	    ((cmdrsp->scsi.linuxstat >> 16) == DID_NO_CONNECT) &&
 	    cmdrsp->scsi.addlstat == ADDL_SEL_TIMEOUT)
 		return;
 	/* Okay see what our error_count is here.... */
@@ -919,7 +919,7 @@ static void complete_scsi_command(struct uiscmdrsp *cmdrsp,
 				  struct scsi_cmnd *scsicmd)
 {
 	/* take what we need out of cmdrsp and complete the scsicmd */
-	scsicmd->result = cmdrsp->scsi.linuxstat;
+	to_scsi_result(scsicmd->result, cmdrsp->scsi.linuxstat);
 	if (cmdrsp->scsi.linuxstat)
 		do_scsi_linuxstat(cmdrsp, scsicmd);
 	else

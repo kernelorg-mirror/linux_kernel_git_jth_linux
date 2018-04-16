@@ -57,14 +57,16 @@ static int bsg_transport_complete_rq(struct request *rq, struct sg_io_v4 *hdr)
 {
 	struct bsg_job *job = blk_mq_rq_to_pdu(rq);
 	int ret = 0;
+	struct scsi_result sres = { 0 };
 
 	/*
 	 * The assignments below don't make much sense, but are kept for
 	 * bug by bug backwards compatibility:
 	 */
-	hdr->device_status = job->result & 0xff;
-	hdr->transport_status = host_byte(job->result);
-	hdr->driver_status = driver_byte(job->result);
+	to_scsi_result(sres, job->result);
+	hdr->device_status = status_byte(sres);
+	hdr->transport_status = host_byte(sres);
+	hdr->driver_status = driver_byte(sres);
 	hdr->info = 0;
 	if (hdr->device_status || hdr->transport_status || hdr->driver_status)
 		hdr->info |= SG_INFO_CHECK;

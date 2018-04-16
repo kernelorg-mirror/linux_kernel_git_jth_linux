@@ -162,14 +162,16 @@ static int bsg_scsi_fill_hdr(struct request *rq, struct sg_io_v4 *hdr,
 static int bsg_scsi_complete_rq(struct request *rq, struct sg_io_v4 *hdr)
 {
 	struct scsi_request *sreq = scsi_req(rq);
+	struct scsi_result scsi_res = { 0 };
 	int ret = 0;
 
 	/*
 	 * fill in all the output members
 	 */
-	hdr->device_status = sreq->result & 0xff;
-	hdr->transport_status = host_byte(sreq->result);
-	hdr->driver_status = driver_byte(sreq->result);
+	to_scsi_result(scsi_res, sreq->result);
+	hdr->device_status = status_byte(scsi_res);
+	hdr->transport_status = host_byte(scsi_res);
+	hdr->driver_status = driver_byte(scsi_res);
 	hdr->info = 0;
 	if (hdr->device_status || hdr->transport_status || hdr->driver_status)
 		hdr->info |= SG_INFO_CHECK;

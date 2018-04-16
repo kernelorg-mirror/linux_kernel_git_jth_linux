@@ -1327,10 +1327,10 @@ sg_rq_end_io(struct request *rq, blk_status_t status)
 		struct scsi_sense_hdr sshdr;
 
 		srp->header.status = 0xff & result;
-		srp->header.masked_status = status_byte(result);
-		srp->header.msg_status = msg_byte(result);
-		srp->header.host_status = host_byte(result);
-		srp->header.driver_status = driver_byte(result);
+		srp->header.masked_status = result >> 1;
+		srp->header.msg_status = result >> 8;
+		srp->header.host_status = result >> 16;
+		srp->header.driver_status = result >> 24;
 		if ((sdp->sgdebug > 0) &&
 		    ((CHECK_CONDITION == srp->header.masked_status) ||
 		     (COMMAND_TERMINATED == srp->header.masked_status)))
@@ -1338,7 +1338,7 @@ sg_rq_end_io(struct request *rq, blk_status_t status)
 					   SCSI_SENSE_BUFFERSIZE);
 
 		/* Following if statement is a patch supplied by Eric Youngdale */
-		if (driver_byte(result) != 0
+		if ((result >> 24) != 0
 		    && scsi_normalize_sense(sense, SCSI_SENSE_BUFFERSIZE, &sshdr)
 		    && !scsi_sense_is_deferred(&sshdr)
 		    && sshdr.sense_key == UNIT_ATTENTION

@@ -164,7 +164,6 @@
 #define RES_TARGET		0x000000FF	/* Target State */
 #define RES_TARGET_LNX  STATUS_MASK	/* Only official ... */
 #define RES_ENDMSG		0x0000FF00	/* End Message */
-#define RES_DID			0x00FF0000	/* DID_ codes */
 #define RES_DRV			0xFF000000	/* DRIVER_ codes */
 
 #define MK_RES(drv,did,msg,tgt) ((int)(drv)<<24 | (int)(did)<<16 | (int)(msg)<<8 | (int)(tgt))
@@ -3400,10 +3399,10 @@ static void srb_done(struct AdapterCtlBlk *acb, struct DeviceCtlBlk *dcb,
 		/*
 		 * target status..........................
 		 */
-		if (status_byte(status) == CHECK_CONDITION) {
+		if ((status & 0xff) == SAM_STAT_CHECK_CONDITION) {
 			request_sense(acb, dcb, srb);
 			return;
-		} else if (status_byte(status) == QUEUE_FULL) {
+		} else if ((status & 0xff) == SAM_STAT_TASK_SET_FULL) {
 			tempcnt = (u8)list_size(&dcb->srb_going_list);
 			dprintkl(KERN_INFO, "QUEUE_FULL for dev <%02i-%i> with %i cmnds\n",
 			     dcb->target_id, dcb->target_lun, tempcnt);
@@ -3464,7 +3463,7 @@ static void srb_done(struct AdapterCtlBlk *acb, struct DeviceCtlBlk *dcb,
 		base = scsi_kmap_atomic_sg(sg, scsi_sg_count(cmd), &offset, &len);
 		ptr = (struct ScsiInqData *)(base + offset);
 
-		if (!ckc_only && (cmd->result & RES_DID) == 0
+		if (!ckc_only && host_byte(cmd->result) == DID_OK
 		    && cmd->cmnd[2] == 0 && scsi_bufflen(cmd) >= 8
 		    && dir != PCI_DMA_NONE && ptr && (ptr->Vers & 0x07) >= 2)
 			dcb->inquiry7 = ptr->Flags;
@@ -3537,7 +3536,7 @@ static void doing_srb_done(struct AdapterCtlBlk *acb, u8 did_flag,
 			srb_going_remove(dcb, srb);
 			free_tag(dcb, srb);
 			srb_free_insert(acb, srb);
-			p->result = result;
+			to_scsi_result(p->result, result);
 			pci_unmap_srb_sense(acb, srb);
 			pci_unmap_srb(acb, srb);
 			if (force) {
@@ -3566,7 +3565,7 @@ static void doing_srb_done(struct AdapterCtlBlk *acb, u8 did_flag,
 			       (u8)p->device->lun);
 			srb_waiting_remove(dcb, srb);
 			srb_free_insert(acb, srb);
-			p->result = result;
+			to_scsi_result(p->result, result);
 			pci_unmap_srb_sense(acb, srb);
 			pci_unmap_srb(acb, srb);
 			if (force) {

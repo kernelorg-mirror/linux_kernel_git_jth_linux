@@ -1793,7 +1793,7 @@ csio_queuecommand(struct Scsi_Host *host, struct scsi_cmnd *cmnd)
 
 	nr = fc_remote_port_chkready(rport);
 	if (nr) {
-		cmnd->result = nr;
+		to_scsi_result(cmnd->result, nr);
 		CSIO_INC_STATS(scsim, n_rn_nr_error);
 		goto err_done;
 	}

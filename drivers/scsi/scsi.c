@@ -158,7 +158,8 @@ void scsi_log_completion(struct scsi_cmnd *cmd, int disposition)
 	if (unlikely(scsi_logging_level)) {
 		level = SCSI_LOG_LEVEL(SCSI_LOG_MLCOMPLETE_SHIFT,
 				       SCSI_LOG_MLCOMPLETE_BITS);
-		if (((level > 0) && (cmd->result || disposition != SUCCESS)) ||
+		if (((level > 0) && (from_scsi_result(cmd->result) ||
+				     disposition != SUCCESS)) ||
 		    (level > 1)) {
 			scsi_print_result(cmd, "Done", disposition);
 			scsi_print_command(cmd);
@@ -228,7 +229,7 @@ void scsi_finish_command(struct scsi_cmnd *cmd)
 
 	SCSI_LOG_MLCOMPLETE(4, sdev_printk(KERN_INFO, sdev,
 				"Notifying upper driver of completion "
-				"(result %x)\n", cmd->result));
+				"(result %x)\n", from_scsi_result(cmd->result)));
 
 	good_bytes = scsi_bufflen(cmd);
 	if (!blk_rq_is_passthrough(cmd->request)) {

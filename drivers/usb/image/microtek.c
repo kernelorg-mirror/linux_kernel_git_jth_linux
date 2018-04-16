@@ -135,6 +135,7 @@
 #include <linux/blkdev.h>
 #include "../../scsi/scsi.h"
 #include <scsi/scsi_host.h>
+#include <scsi/scsi_proto.h>
 
 #include "microtek.h"
 
@@ -406,10 +407,10 @@ static void mts_transfer_cleanup( struct urb *transfer )
 
 static void mts_transfer_done( struct urb *transfer )
 {
-	enum status_byte scsi_stauts;
+	enum scsi_status_byte scsi_status;
 	MTS_INT_INIT();
 
-	scsi_status = (enum status_byte)(*context->scsi_status) << 1);
+	scsi_status = (enum scsi_status_byte)(*context->scsi_status) << 1;
 	set_status_byte(context->srb, scsi_status);
 
 	mts_transfer_cleanup(transfer);
@@ -439,8 +440,9 @@ static void mts_data_done( struct urb* transfer )
 		scsi_set_resid(context->srb, context->data_length -
 			       transfer->actual_length);
 	} else if ( unlikely(status) ) {
-		enum host_byte shb = status == -ENOENT ? DID_ABORT : DID_ERROR;
+		enum scsi_host_byte shb;
 
+		shb = status == -ENOENT ? DID_ABORT : DID_ERROR;
 		set_host_byte(context->srb, shb);
 	}
 
@@ -499,8 +501,9 @@ static void mts_do_sg (struct urb* transfer)
 	                                          scsi_sg_count(context->srb));
 
 	if (unlikely(status)) {
-		enum host_byte shb = status == -ENOENT ? DID_ABORT : DID_ERROR;
+		enum scsi_host_byte shb;
 
+		shb = status == -ENOENT ? DID_ABORT : DID_ERROR;
 		set_host_byte(context->srb, shb);
 		mts_transfer_cleanup(transfer);
         }

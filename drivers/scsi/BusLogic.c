@@ -2828,8 +2828,8 @@ static void blogic_process_ccbs(struct blogic_adapter *adapter)
 				set_host_byte(command, DID_ABORT);
 				break;
 			case BLOGIC_CMD_COMPLETE_ERROR:
-				command->result = blogic_resultcode(adapter,
-					ccb->adapter_status, ccb->tgt_status);
+				to_scsi_result(command->result, blogic_resultcode(adapter,
+								ccb->adapter_status, ccb->tgt_status));
 				if (ccb->adapter_status != BLOGIC_SELECT_TIMEOUT) {
 					adapter->tgt_stats[ccb->tgt_id]
 					    .cmds_complete++;

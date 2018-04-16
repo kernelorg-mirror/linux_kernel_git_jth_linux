@@ -317,7 +317,7 @@ do_tur:
  */
 static int sr_done(struct scsi_cmnd *SCpnt)
 {
-	int result = SCpnt->result;
+	int result = from_scsi_result(SCpnt->result);
 	int this_count = scsi_bufflen(SCpnt);
 	int good_bytes = (result == 0 ? this_count : 0);
 	int block_sectors = 0;
@@ -334,7 +334,7 @@ static int sr_done(struct scsi_cmnd *SCpnt)
 	 * care is taken to avoid unnecessary additional work such as
 	 * memcpy's that could be avoided.
 	 */
-	if (driver_byte(result) != 0 &&		/* An error occurred */
+	if ((result >> 24) != 0 &&		/* An error occurred */
 	    (SCpnt->sense_buffer[0] & 0x7f) == 0x70) { /* Sense current */
 		switch (SCpnt->sense_buffer[2]) {
 		case MEDIUM_ERROR:

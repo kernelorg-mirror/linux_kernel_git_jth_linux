@@ -1323,7 +1323,7 @@ static void srp_finish_req(struct srp_rdma_ch *ch, struct srp_request *req,
 
 	if (scmnd) {
 		srp_free_req(ch, req, scmnd, 0);
-		scmnd->result = result;
+		to_scsi_result(scmnd->result, result);
 		scmnd->scsi_done(scmnd);
 	}
 }
@@ -2291,7 +2291,7 @@ static int srp_queuecommand(struct Scsi_Host *shost, struct scsi_cmnd *scmnd)
 	unsigned long flags;
 	u32 tag;
 	u16 idx;
-	int len, ret;
+	int len, ret, scsi_res;
 	const bool in_scsi_eh = !in_interrupt() && current == shost->ehandler;
 
 	/*
@@ -2303,10 +2303,11 @@ static int srp_queuecommand(struct Scsi_Host *shost, struct scsi_cmnd *scmnd)
 	if (in_scsi_eh)
 		mutex_lock(&rport->mutex);
 
-	scmnd->result = srp_chkready(target->rport);
-	if (unlikely(scmnd->result))
+	scsi_res = srp_chkready(target->rport);
+	if (unlikely(scsi_res))
 		goto err;
 
+	to_scsi_result(scmnd->result, scsi_res);
 	WARN_ON_ONCE(scmnd->request->tag < 0);
 	tag = blk_mq_unique_tag(scmnd->request);
 	ch = &target->ch[blk_mq_unique_tag_to_hwq(tag)];
@@ -2387,7 +2388,7 @@ err_iu:
 	req->scmnd = NULL;
 
 err:
-	if (scmnd->result) {
+	if (from_scsi_result(scmnd->result)) {
 		scmnd->scsi_done(scmnd);
 		ret = 0;
 	} else {

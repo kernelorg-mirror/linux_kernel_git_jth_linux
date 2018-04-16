@@ -657,7 +657,7 @@ mptfc_qcmd(struct Scsi_Host *shost, struct scsi_cmnd *SCpnt)
 
 	err = fc_remote_port_chkready(rport);
 	if (unlikely(err)) {
-		SCpnt->result = err;
+		to_scsi_result(SCpnt->result, err);
 		SCpnt->scsi_done(SCpnt);
 		return 0;
 	}

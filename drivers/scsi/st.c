@@ -387,7 +387,7 @@ static int st_chk_result(struct scsi_tape *STp, struct st_request * SRpnt)
 		if (!cmdstatp->have_sense)
 			st_printk(KERN_WARNING, STp,
 			       "Error %x (driver bt 0x%x, host bt 0x%x).\n",
-			       result, driver_byte(result), host_byte(result));
+			       result, result >> 24, result >> 16);
 		else if (cmdstatp->have_sense &&
 			 scode != NO_SENSE &&
 			 scode != RECOVERED_ERROR &&

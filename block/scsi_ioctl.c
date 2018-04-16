@@ -257,16 +257,18 @@ static int blk_complete_sghdr_rq(struct request *rq, struct sg_io_hdr *hdr,
 				 struct bio *bio)
 {
 	struct scsi_request *req = scsi_req(rq);
+	struct scsi_result sres = { 0 };
 	int r, ret = 0;
 
 	/*
 	 * fill in all the output members
 	 */
-	hdr->status = req->result & 0xff;
-	hdr->masked_status = status_byte(req->result);
-	hdr->msg_status = msg_byte(req->result);
-	hdr->host_status = host_byte(req->result);
-	hdr->driver_status = driver_byte(req->result);
+	to_scsi_result(sres, req->result);
+	hdr->status = status_byte(sres);
+	hdr->masked_status = status_byte(sres) >> 1;
+	hdr->msg_status = msg_byte(sres);
+	hdr->host_status = host_byte(sres);
+	hdr->driver_status = driver_byte(sres);
 	hdr->info = 0;
 	if (hdr->masked_status || hdr->host_status || hdr->driver_status)
 		hdr->info |= SG_INFO_CHECK;

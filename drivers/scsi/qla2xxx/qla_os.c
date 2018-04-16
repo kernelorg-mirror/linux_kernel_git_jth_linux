@@ -740,7 +740,7 @@ qla2x00_sp_compl(void *ptr, int res)
 	srb_t *sp = ptr;
 	struct scsi_cmnd *cmd = GET_CMD_SP(sp);
 
-	cmd->result = res;
+	to_scsi_result(cmd->result, res);
 
 	if (atomic_read(&sp->ref_count) == 0) {
 		ql_dbg(ql_dbg_io, sp->vha, 0x3015,
@@ -812,7 +812,7 @@ qla2xxx_qpair_sp_compl(void *ptr, int res)
 	srb_t *sp = ptr;
 	struct scsi_cmnd *cmd = GET_CMD_SP(sp);
 
-	cmd->result = res;
+	to_scsi_result(cmd->result, res);
 
 	if (atomic_read(&sp->ref_count) == 0) {
 		ql_dbg(ql_dbg_io, sp->fcport->vha, 0x3079,
@@ -883,7 +883,7 @@ qla2xxx_queuecommand(struct Scsi_Host *host, struct scsi_cmnd *cmd)
 
 	rval = fc_remote_port_chkready(rport);
 	if (rval) {
-		cmd->result = rval;
+		to_scsi_result(cmd->result, rval);
 		ql_dbg(ql_dbg_io + ql_dbg_verbose, vha, 0x3003,
 		    "fc_remote_port_chkready failed for cmd=%p, rval=0x%x.\n",
 		    cmd, rval);
@@ -981,7 +981,7 @@ qla2xxx_mqueuecommand(struct Scsi_Host *host, struct scsi_cmnd *cmd,
 
 	rval = fc_remote_port_chkready(rport);
 	if (rval) {
-		cmd->result = rval;
+		to_scsi_result(cmd->result, rval);
 		ql_dbg(ql_dbg_io + ql_dbg_verbose, vha, 0x3076,
 		    "fc_remote_port_chkready failed for cmd=%p, rval=0x%x.\n",
 		    cmd, rval);

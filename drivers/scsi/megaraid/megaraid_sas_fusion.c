@@ -4580,9 +4580,9 @@ int megasas_reset_fusion(struct Scsi_Host *shost, int reason)
 					scsi_print_command(cmd_fusion->scmd);
 				}
 
-				scmd_local->result =
-					megasas_check_mpio_paths(instance,
-							scmd_local);
+				to_scsi_result(scmd_local->result,
+					       megasas_check_mpio_paths(instance,
+								 scmd_local));
 				if (instance->ldio_threshold &&
 					megasas_cmd_type(scmd_local) == READ_WRITE_LDIO)
 					atomic_dec(&instance->ldio_outstanding);

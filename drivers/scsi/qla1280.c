@@ -1286,7 +1286,7 @@ qla1280_done(struct scsi_qla_host *ha)
 		target = SCSI_TCN_32(cmd);
 		lun = SCSI_LUN_32(cmd);
 
-		switch ((CMD_RESULT(cmd) >> 16)) {
+		switch ((host_byte(cmd->result))) {
 		case DID_RESET:
 			/* Issue marker command. */
 			if (!ha->flags.abort_isp_active)
@@ -3711,7 +3711,7 @@ qla1280_status_entry(struct scsi_qla_host *ha, struct response *pkt,
 	} else {
 
 		/* Save ISP completion status */
-		CMD_RESULT(cmd) = qla1280_return_status(pkt, cmd);
+		to_scsi_result(cmd->result, qla1280_return_status(pkt, cmd));
 
 		if (scsi_status & SAM_STAT_CHECK_CONDITION) {
 			if (comp_status != CS_ARS_FAILED) {

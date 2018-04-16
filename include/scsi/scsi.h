@@ -203,6 +203,27 @@ enum scsi_driver_byte {
 #define SCSI_MLQUEUE_EH_RETRY    0x1057
 #define SCSI_MLQUEUE_TARGET_BUSY 0x1058
 
+struct scsi_result {
+	u8 driver_byte;
+	u8 host_byte;
+	u8 msg_byte;
+	u8 status_byte;
+};
+
+static inline int from_scsi_result(struct scsi_result r)
+{
+	return r.driver_byte << 24 | r.host_byte << 16 | r.msg_byte << 8
+		| r.status_byte;
+}
+
+static inline void to_scsi_result(struct scsi_result r, int res)
+{
+	r.driver_byte = (res & 0xff000000) << 24;
+	r.host_byte = (res & 0x00ff0000) << 16;
+	r.msg_byte = (res & 0x0000ff00) << 8;
+	r.status_byte = res & 0xff;
+}
+
 /*
  *  Use these to separate status msg and our bytes
  *
@@ -213,24 +234,24 @@ enum scsi_driver_byte {
  *      host_byte   = set by low-level driver to indicate status.
  *      driver_byte = set by mid-level.
  */
-static inline enum scsi_status_byte status_byte(int result)
+static inline enum scsi_status_byte status_byte(struct scsi_result result)
 {
-	return (result >> 1) & 0x7f;
+	return result.status_byte;
 }
 
-static inline enum scsi_msg_byte msg_byte(int result)
+static inline enum scsi_msg_byte msg_byte(struct scsi_result result)
 {
-	return (result >> 8) & 0xff;
+	return result.msg_byte;
 }
 
-static inline enum scsi_host_byte host_byte(int result)
+static inline enum scsi_host_byte host_byte(struct scsi_result result)
 {
-	return (result >> 16) & 0xff;
+	return result.host_byte;
 }
 
-static inline enum scsi_driver_byte driver_byte(int result)
+static inline enum scsi_driver_byte driver_byte(struct scsi_result result)
 {
-	return (result >> 24) & 0xff;
+	return result.driver_byte;
 }
 
 #define sense_class(sense)  (((sense) >> 4) & 0x7)

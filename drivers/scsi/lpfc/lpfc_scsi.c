@@ -36,6 +36,7 @@
 #include <scsi/scsi_host.h>
 #include <scsi/scsi_tcq.h>
 #include <scsi/scsi_transport_fc.h>
+#include <scsi/scsi_proto.h>
 
 #include "lpfc_version.h"
 #include "lpfc_hw4.h"
@@ -211,7 +212,7 @@ lpfc_update_stats(struct lpfc_hba *phba, struct  lpfc_scsi_buf *lpfc_cmd)
 	unsigned long latency;
 	int i;
 
-	if (cmd->result)
+	if (from_scsi_result(cmd->result))
 		return;
 
 	latency = jiffies_to_msecs((long)jiffies - (long)lpfc_cmd->start_time);
@@ -3586,22 +3587,22 @@ lpfc_send_scsi_error_event(struct lpfc_hba *phba, struct lpfc_vport *vport,
 	uint32_t fcpi_parm = rsp_iocb->iocb.un.fcpi.fcpi_parm;
 	struct lpfc_fast_path_event *fast_path_evt = NULL;
 	struct lpfc_nodelist *pnode = lpfc_cmd->rdata->pnode;
+	enum scsi_status_byte sb = status_byte(cmnd->result);
 	unsigned long flags;
 
 	if (!pnode || !NLP_CHK_NODE_ACT(pnode))
 		return;
 
 	/* If there is queuefull or busy condition send a scsi event */
-	if ((cmnd->result == SAM_STAT_TASK_SET_FULL) ||
-		(cmnd->result == SAM_STAT_BUSY)) {
+	if (sb == SAM_STAT_TASK_SET_FULL || sb == SAM_STAT_BUSY) {
 		fast_path_evt = lpfc_alloc_fast_evt(phba);
 		if (!fast_path_evt)
 			return;
 		fast_path_evt->un.scsi_evt.event_type =
 			FC_REG_SCSI_EVENT;
 		fast_path_evt->un.scsi_evt.subcategory =
-		(cmnd->result == SAM_STAT_TASK_SET_FULL) ?
-		LPFC_EVENT_QFULL : LPFC_EVENT_DEVBSY;
+			(sb == SAM_STAT_TASK_SET_FULL) ?
+			LPFC_EVENT_QFULL : LPFC_EVENT_DEVBSY;
 		fast_path_evt->un.scsi_evt.lun = cmnd->device->lun;
 		memcpy(&fast_path_evt->un.scsi_evt.wwpn,
 			&pnode->nlp_portname, sizeof(struct lpfc_name));
@@ -4113,15 +4114,15 @@ lpfc_scsi_cmd_iocb_cmpl(struct lpfc_hba *phba, struct lpfc_iocbq *pIocbIn,
 	} else
 		set_scsi_result(cmd, 0, DID_OK, 0, 0);
 
-	if (cmd->result || lpfc_cmd->fcp_rsp->rspSnsLen) {
+	if (from_scsi_result(cmd->result) || lpfc_cmd->fcp_rsp->rspSnsLen) {
 		uint32_t *lp = (uint32_t *)cmd->sense_buffer;
 
 		lpfc_printf_vlog(vport, KERN_INFO, LOG_FCP,
 				 "0710 Iodone <%d/%llu> cmd %p, error "
 				 "x%x SNS x%x x%x Data: x%x x%x\n",
 				 cmd->device->id, cmd->device->lun, cmd,
-				 cmd->result, *lp, *(lp + 3), cmd->retries,
-				 scsi_get_resid(cmd));
+				 from_scsi_result(cmd->result), *lp, *(lp + 3),
+				 cmd->retries, scsi_get_resid(cmd));
 	}
 
 	lpfc_update_stats(phba, lpfc_cmd);
@@ -4547,7 +4548,7 @@ lpfc_queuecommand(struct Scsi_Host *shost, struct scsi_cmnd *cmnd)
 	rdata = lpfc_rport_data_from_scsi_device(cmnd->device);
 	err = fc_remote_port_chkready(rport);
 	if (err) {
-		cmnd->result = err;
+		to_scsi_result(cmnd->result, err);
 		goto out_fail_command;
 	}
 	ndlp = rdata->pnode;

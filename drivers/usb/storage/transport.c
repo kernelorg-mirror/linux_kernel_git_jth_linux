@@ -555,7 +555,8 @@ static void last_sector_hacks(struct us_data *us, struct scsi_cmnd *srb)
 	if (sector + 1 != sdkp->capacity)
 		goto done;
 
-	if (srb->result == SAM_STAT_GOOD && scsi_get_resid(srb) == 0) {
+	if (status_byte(srb->result) == SAM_STAT_GOOD
+	    && scsi_get_resid(srb) == 0) {
 
 		/*
 		 * The command succeeded.  We know this device doesn't

@@ -342,7 +342,7 @@ snic_queuecommand(struct Scsi_Host *shost, struct scsi_cmnd *sc)
 	if (ret) {
 		SNIC_HOST_ERR(shost, "Tgt %p id %d Not Ready.\n", tgt, tgt->id);
 		atomic64_inc(&snic->s_stats.misc.tgt_not_rdy);
-		sc->result = ret;
+		to_scsi_result(sc->result, ret);
 		sc->scsi_done(sc);
 
 		return 0;

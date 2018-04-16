@@ -413,7 +413,7 @@ static const char * const driverbyte_table[]={
 const char *scsi_hostbyte_string(int result)
 {
 	const char *hb_string = NULL;
-	int hb = host_byte(result);
+	int hb = result >> 16;
 
 	if (hb < ARRAY_SIZE(hostbyte_table))
 		hb_string = hostbyte_table[hb];
@@ -424,7 +424,7 @@ EXPORT_SYMBOL(scsi_hostbyte_string);
 const char *scsi_driverbyte_string(int result)
 {
 	const char *db_string = NULL;
-	int db = driver_byte(result);
+	int db = result >> 24;
 
 	if (db < ARRAY_SIZE(driverbyte_table))
 		db_string = driverbyte_table[db];

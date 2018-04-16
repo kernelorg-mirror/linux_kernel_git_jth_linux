@@ -1391,7 +1391,7 @@ static void complete_command_orb(struct sbp2_orb *base_orb,
 			 sizeof(orb->request), DMA_TO_DEVICE);
 	sbp2_unmap_scatterlist(device->card->device, orb);
 
-	orb->cmd->result = result;
+	to_scsi_result(orb->cmd->result, result);
 	orb->cmd->scsi_done(orb->cmd);
 }
 

@@ -389,7 +389,7 @@ static int usb_stor_control_thread(void * __us)
 		scsi_lock(host);
 
 		/* was the command aborted? */
-		if (srb->result == DID_ABORT << 16) {
+		if (host_byte(srb->result) == DID_ABORT << 16) {
 SkipForAbort:
 			usb_stor_dbg(us, "scsi command aborted\n");
 			srb = NULL;	/* Don't call srb->scsi_done() */
@@ -420,7 +420,7 @@ SkipForAbort:
 		/* now that the locks are released, notify the SCSI core */
 		if (srb) {
 			usb_stor_dbg(us, "scsi cmd done, result=0x%x\n",
-					srb->result);
+				     from_scsi_result(srb->result));
 			srb->scsi_done(srb);
 		}
 	} /* for (;;) */

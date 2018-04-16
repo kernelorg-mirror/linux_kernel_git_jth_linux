@@ -544,6 +544,10 @@ static int alua_rtpg(struct scsi_device *sdev, struct alua_port_group *pg)
 	retval = submit_rtpg(sdev, buff, bufflen, &sense_hdr, pg->flags);
 
 	if (retval) {
+		struct scsi_result scsi_res;
+
+		to_scsi_result(scsi_res, retval);
+
 		/*
 		 * Some (broken) implementations have a habit of returning
 		 * an error during things like firmware update etc.
@@ -565,7 +569,7 @@ static int alua_rtpg(struct scsi_device *sdev, struct alua_port_group *pg)
 				    "%s: rtpg failed, result %d\n",
 				    ALUA_DH_NAME, retval);
 			kfree(buff);
-			if (driver_byte(retval) == DRIVER_ERROR)
+			if ((retval >> 24) == DRIVER_ERROR)
 				return SCSI_DH_DEV_TEMP_BUSY;
 			return SCSI_DH_IO;
 		}
@@ -745,6 +749,7 @@ static unsigned alua_stpg(struct scsi_device *sdev, struct alua_port_group *pg)
 {
 	int retval;
 	struct scsi_sense_hdr sense_hdr;
+	struct scsi_result scsi_result;
 
 	if (!(pg->tpgs & TPGS_MODE_EXPLICIT)) {
 		/* Only implicit ALUA supported, retry */
@@ -773,13 +778,14 @@ static unsigned alua_stpg(struct scsi_device *sdev, struct alua_port_group *pg)
 		return SCSI_DH_NOSYS;
 	}
 	retval = submit_stpg(sdev, pg->group_id, &sense_hdr);
+	to_scsi_result(scsi_result, retval);
 
 	if (retval) {
 		if (!scsi_sense_valid(&sense_hdr)) {
 			sdev_printk(KERN_INFO, sdev,
 				    "%s: stpg failed, result %d",
 				    ALUA_DH_NAME, retval);
-			if (driver_byte(retval) == DRIVER_ERROR)
+			if (driver_byte(scsi_result) == DRIVER_ERROR)
 				return SCSI_DH_DEV_TEMP_BUSY;
 		} else {
 			sdev_printk(KERN_INFO, sdev, "%s: stpg failed\n",

@@ -4552,7 +4552,7 @@ ufshcd_transfer_rsp_status(struct ufs_hba *hba, struct ufshcd_lrb *lrbp)
 		break;
 	} /* end of switch */
 
-	if (host_byte(result) != DID_OK)
+	if ((result >> 16) != DID_OK)
 		ufshcd_print_trs(hba, 1 << lrbp->task_tag, true);
 	return result;
 }
@@ -4596,7 +4596,7 @@ static void __ufshcd_transfer_req_compl(struct ufs_hba *hba,
 			ufshcd_add_command_trace(hba, index, "complete");
 			result = ufshcd_transfer_rsp_status(hba, lrbp);
 			scsi_dma_unmap(cmd);
-			cmd->result = result;
+			to_scsi_result(cmd->result, result);
 			/* Mark completed command as NULL in LRB */
 			lrbp->cmd = NULL;
 			clear_bit_unlock(index, &hba->lrb_in_use);
@@ -7050,7 +7050,7 @@ static int ufshcd_set_dev_pwr_mode(struct ufs_hba *hba,
 		sdev_printk(KERN_WARNING, sdp,
 			    "START_STOP failed for power mode: %d, result %x\n",
 			    pwr_mode, ret);
-		if (driver_byte(ret) & DRIVER_SENSE)
+		if ((ret >> 24) == DRIVER_SENSE)
 			scsi_print_sense_hdr(sdp, NULL, &sshdr);
 	}
 

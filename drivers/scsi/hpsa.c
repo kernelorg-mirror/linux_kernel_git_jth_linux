@@ -2667,7 +2667,7 @@ static void complete_scsi_command(struct CommandList *cp)
 				"Returning result: 0x%x\n",
 				cp, ei->ScsiStatus,
 				sense_key, asc, ascq,
-				cmd->result);
+				from_scsi_result(cmd->result));
 		} else {  /* scsi status is zero??? How??? */
 			dev_warn(&h->pdev->dev, "cp %p SCSI status was 0. "
 				"Returning no connection.\n", cp),

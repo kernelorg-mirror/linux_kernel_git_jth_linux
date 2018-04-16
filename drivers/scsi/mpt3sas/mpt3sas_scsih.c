@@ -4973,7 +4973,8 @@ _scsih_scsi_ioc_info(struct MPT3SAS_ADAPTER *ioc, struct scsi_cmnd *scmd,
 	pr_warn(MPT3SAS_FMT
 		"\ttag(%d), transfer_count(%d), sc->result(0x%08x)\n",
 		ioc->name, le16_to_cpu(mpi_reply->TaskTag),
-	    le32_to_cpu(mpi_reply->TransferCount), scmd->result);
+		le32_to_cpu(mpi_reply->TransferCount),
+		from_scsi_result(scmd->result));
 	pr_warn(MPT3SAS_FMT
 		"\tscsi_status(%s)(0x%02x), scsi_state(%s)(0x%02x)\n",
 		ioc->name, desc_scsi_status,
@@ -5429,7 +5430,8 @@ _scsih_io_done(struct MPT3SAS_ADAPTER *ioc, u16 smid, u8 msix_index, u32 reply)
 
 	}
 
-	if (scmd->result && (ioc->logging_level & MPT_DEBUG_REPLY))
+	if (from_scsi_result(scmd->result) &&
+	    (ioc->logging_level & MPT_DEBUG_REPLY))
 		_scsih_scsi_ioc_info(ioc , scmd, mpi_reply, smid);
 
  out:

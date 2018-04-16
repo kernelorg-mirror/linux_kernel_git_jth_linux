@@ -4398,7 +4398,10 @@ static int schedule_resp(struct scsi_cmnd *cmnd, struct sdebug_dev_info *devip,
 			return SCSI_MLQUEUE_HOST_BUSY;
 	}
 
-	cmnd->result = pfp != NULL ? pfp(cmnd, devip) : 0;
+	if (pfp != NULL)
+		to_scsi_result(cmnd->result, pfp(cmnd, devip));
+	else
+		clear_scsi_result(cmnd);
 	if (cmnd->result & SDEG_RES_IMMED_MASK) {
 		/*
 		 * This is the F_DELAY_OVERR case. No delay.
@@ -4406,12 +4409,12 @@ static int schedule_resp(struct scsi_cmnd *cmnd, struct sdebug_dev_info *devip,
 		cmnd->result &= ~SDEG_RES_IMMED_MASK;
 		delta_jiff = ndelay = 0;
 	}
-	if (cmnd->result == 0 && scsi_result != 0)
-		cmnd->result = scsi_result;
+	if (from_scsi_result(cmnd->result) == 0 && scsi_result != 0)
+		to_scsi_result(cmnd->result, scsi_result);
 
-	if (unlikely(sdebug_verbose && cmnd->result))
+	if (unlikely(sdebug_verbose && from_scsi_result(cmnd->result)))
 		sdev_printk(KERN_INFO, sdp, "%s: non-zero result=0x%x\n",
-			    __func__, cmnd->result);
+			    __func__, from_scsi_result(cmnd->result));
 
 	if (delta_jiff > 0 || ndelay > 0) {
 		ktime_t kt;
@@ -4455,10 +4458,14 @@ static int schedule_resp(struct scsi_cmnd *cmnd, struct sdebug_dev_info *devip,
 	return 0;
 
 respond_in_thread:	/* call back to mid-layer using invocation thread */
-	cmnd->result = pfp != NULL ? pfp(cmnd, devip) : 0;
+	if (pfp != NULL)
+		to_scsi_result(cmnd->result, pfp(cmnd, devip));
+	else
+		clear_scsi_result(cmnd);
+
 	cmnd->result &= ~SDEG_RES_IMMED_MASK;
-	if (cmnd->result == 0 && scsi_result != 0)
-		cmnd->result = scsi_result;
+	if (from_scsi_result(cmnd->result) == 0 && scsi_result != 0)
+		to_scsi_result(cmnd->result, scsi_result);
 	cmnd->scsi_done(cmnd);
 	return 0;
 }

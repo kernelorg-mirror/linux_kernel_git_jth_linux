@@ -1012,7 +1012,7 @@ static void storvsc_command_completion(struct storvsc_cmd_request *cmd_request,
 
 	set_status_byte(scmnd, vm_srb->scsi_status);
 
-	if (scmnd->result) {
+	if (from_scsi_result(scmnd->result) != 0) {
 		if (scsi_normalize_sense(scmnd->sense_buffer,
 				SCSI_SENSE_BUFFERSIZE, &sense_hdr) &&
 		    !(sense_hdr.sense_key == NOT_READY &&

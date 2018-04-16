@@ -632,7 +632,8 @@ static void pvscsi_complete_request(struct pvscsi_adapter *adapter,
 
 	dev_dbg(&cmd->device->sdev_gendev,
 		"cmd=%p %x ctx=%p result=0x%x status=0x%x,%x\n",
-		cmd, cmd->cmnd[0], ctx, cmd->result, btstat, sdstat);
+		cmd, cmd->cmnd[0], ctx, from_scsi_result(cmd->result),
+		btstat, sdstat);
 
 	cmd->scsi_done(cmd);
 }

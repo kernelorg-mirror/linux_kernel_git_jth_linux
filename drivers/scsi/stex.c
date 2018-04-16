@@ -775,7 +775,7 @@ static void stex_scsi_done(struct st_ccb *ccb)
 			break;
 	}
 
-	cmd->result = result;
+	to_scsi_result(cmd->result, result);
 	cmd->scsi_done(cmd);
 }
 

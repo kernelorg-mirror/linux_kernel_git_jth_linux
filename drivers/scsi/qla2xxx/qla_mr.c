@@ -2158,7 +2158,7 @@ qlafx00_handle_sense(srb_t *sp, uint8_t *sense_data, uint32_t par_sense_len,
 	    sense_len, par_sense_len, track_sense_len);
 	if (GET_FW_SENSE_LEN(sp) > 0) {
 		rsp->status_srb = sp;
-		cp->result = res;
+		to_scsi_result(cp->result, res);
 	}
 
 	if (sense_len) {
@@ -2616,7 +2616,7 @@ qlafx00_status_cont_entry(struct rsp_que *rsp, sts_cont_entry_t *pkt)
 	/* Place command on done queue. */
 	if (sense_len == 0) {
 		rsp->status_srb = NULL;
-		sp->done(sp, cp->result);
+		sp->done(sp, from_scsi_result(cp->result));
 	}
 }
 

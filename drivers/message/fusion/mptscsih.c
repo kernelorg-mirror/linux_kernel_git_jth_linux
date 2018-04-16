@@ -543,7 +543,7 @@ mptscsih_info_scsiio(MPT_ADAPTER *ioc, struct scsi_cmnd *sc, SCSIIOReply_t * pSc
 	    scsi_get_resid(sc));
 	printk(MYIOC_s_DEBUG_FMT "\ttag = %d, transfer_count = %d, "
 	    "sc->result = %08X\n", ioc->name, le16_to_cpu(pScsiReply->TaskTag),
-	    le32_to_cpu(pScsiReply->TransferCount), sc->result);
+	    le32_to_cpu(pScsiReply->TransferCount), from_scsi_result(sc->result));
 
 	printk(MYIOC_s_DEBUG_FMT "\tiocstatus = %s (0x%04x), "
 	    "scsi_status = %s (0x%02x), scsi_state = (0x%02x)\n",
@@ -824,7 +824,8 @@ mptscsih_io_done(MPT_ADAPTER *ioc, MPT_FRAME_HDR *mf, MPT_FRAME_HDR *mr)
 				set_scsi_result(sc, 0, DID_OK, 0, scsi_status);
 			dreplyprintk(ioc, printk(MYIOC_s_DEBUG_FMT
 			    "RESIDUAL_MISMATCH: result=%x on channel=%d id=%d\n",
-			    ioc->name, sc->result, sc->device->channel, sc->device->id));
+			    ioc->name, from_scsi_result(sc->result),
+			    sc->device->channel, sc->device->id));
 			break;
 
 		case MPI_IOCSTATUS_SCSI_DATA_UNDERRUN:		/* 0x0045 */
@@ -992,7 +993,7 @@ mptscsih_io_done(MPT_ADAPTER *ioc, MPT_FRAME_HDR *mf, MPT_FRAME_HDR *mr)
 				 * Not real sure here either so do nothing...  */
 			}
 
-			if (sc->result == MPI_SCSI_STATUS_TASK_SET_FULL)
+			if (status_byte(sc->result) == SAM_STAT_TASK_SET_FULL)
 				mptscsih_report_queue_full(sc, pScsiReply, pScsiReq);
 
 			/* Add handling of:
@@ -1025,7 +1026,8 @@ mptscsih_io_done(MPT_ADAPTER *ioc, MPT_FRAME_HDR *mf, MPT_FRAME_HDR *mr)
 		}	/* switch(status) */
 
 #ifdef CONFIG_FUSION_LOGGING
-		if (sc->result && (ioc->debug_level & MPT_DEBUG_REPLY))
+		if (from_scsi_result(sc->result) != 0
+		    && (ioc->debug_level & MPT_DEBUG_REPLY))
 			mptscsih_info_scsiio(ioc, sc, pScsiReply);
 #endif
 

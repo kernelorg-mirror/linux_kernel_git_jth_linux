@@ -927,7 +927,7 @@ invalid_datalen:
 	}
 out:
 	ISCSI_DBG_SESSION(session, "cmd rsp done [sc %p res %d itt 0x%x]\n",
-			  sc, sc->result, task->itt);
+			  sc, from_scsi_result(sc->result), task->itt);
 	conn->scsirsp_pdus_cnt++;
 	iscsi_complete_task(task, ISCSI_TASK_COMPLETED);
 }
@@ -966,7 +966,7 @@ iscsi_data_in_rsp(struct iscsi_conn *conn, struct iscsi_hdr *hdr,
 
 	ISCSI_DBG_SESSION(conn->session, "data in with status done "
 			  "[sc %p res %d itt 0x%x]\n",
-			  sc, sc->result, task->itt);
+			  sc, from_scsi_result(sc->result), task->itt);
 	conn->scsirsp_pdus_cnt++;
 	iscsi_complete_task(task, ISCSI_TASK_COMPLETED);
 }
@@ -1690,7 +1690,7 @@ int iscsi_queuecommand(struct Scsi_Host *host, struct scsi_cmnd *sc)
 
 	reason = iscsi_session_chkready(cls_session);
 	if (reason) {
-		sc->result = reason;
+		to_scsi_result(sc->result, reason);
 		goto fault;
 	}
 

@@ -1295,7 +1295,7 @@ static void done(struct Scsi_Host *shpnt, int error)
 
 		DONE_SC = CURRENT_SC;
 		CURRENT_SC = NULL;
-		DONE_SC->result = error;
+		to_scsi_result(DONE_SC->result, error);
 	} else
 		printk(KERN_ERR "aha152x: done() called outside of command\n");
 }

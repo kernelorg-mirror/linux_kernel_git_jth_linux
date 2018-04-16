@@ -513,7 +513,7 @@ static void complete_cmd(struct Scsi_Host *instance,
 
 	if (hostdata->sensing == cmd) {
 		/* Autosense processing ends here */
-		if ((cmd->result & 0xff) != SAM_STAT_GOOD) {
+		if (status_byte(cmd->result) != SAM_STAT_GOOD) {
 			scsi_eh_restore_cmnd(cmd, &hostdata->ses);
 			set_host_byte(cmd, DID_ERROR);
 		} else

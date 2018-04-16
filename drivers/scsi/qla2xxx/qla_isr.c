@@ -2054,7 +2054,7 @@ qla2x00_handle_sense(srb_t *sp, uint8_t *sense_data, uint32_t par_sense_len,
 
 	if (track_sense_len != 0) {
 		rsp->status_srb = sp;
-		cp->result = res;
+		to_scsi_result(cp->result, res);
 	}
 
 	if (sense_len) {
@@ -2695,7 +2695,7 @@ check_scsi_status:
 
 	case CS_DIF_ERROR:
 		logit = qla2x00_handle_dif_error(sp, sts24);
-		res = cp->result;
+		res = from_scsi_result(cp->result);
 		break;
 
 	case CS_TRANSPORT:
@@ -2785,7 +2785,7 @@ qla2x00_status_cont_entry(struct rsp_que *rsp, sts_cont_entry_t *pkt)
 	/* Place command on done queue. */
 	if (sense_len == 0) {
 		rsp->status_srb = NULL;
-		sp->done(sp, cp->result);
+		sp->done(sp, from_scsi_result(cp->result));
 	}
 }
 
