@@ -2659,15 +2659,6 @@ static inline u64 btrfs_name_hash(const char *name, int len)
        return crc32c((u32)~1, name, len);
 }
 
-/*
- * Figure the key offset of an extended inode ref
- */
-static inline u64 btrfs_extref_hash(u64 parent_objectid, const char *name,
-                                   int len)
-{
-       return (u64) crc32c(parent_objectid, name, len);
-}
-
 static inline bool btrfs_mixed_space_info(struct btrfs_space_info *space_info)
 {
 	return ((space_info->flags & BTRFS_BLOCK_GROUP_METADATA) &&

@@ -1111,7 +1111,7 @@ again:
 
 			search_key.objectid = inode_objectid;
 			search_key.type = BTRFS_INODE_EXTREF_KEY;
-			search_key.offset = btrfs_extref_hash(parent_objectid,
+			search_key.offset = (u64) btrfs_crc32c(parent_objectid,
 							      victim_name,
 							      victim_name_len);
 			ret = 0;
@@ -1323,7 +1323,7 @@ static int btrfs_inode_ref_exists(struct inode *inode, struct inode *dir,
 	if (key.type == BTRFS_INODE_REF_KEY)
 		key.offset = parent_id;
 	else
-		key.offset = btrfs_extref_hash(parent_id, name, namelen);
+		key.offset = (u64) btrfs_crc32c(parent_id, name, namelen);
 
 	ret = btrfs_search_slot(NULL, BTRFS_I(inode)->root, &key, path, 0, 0);
 	if (ret < 0)
@@ -1901,7 +1901,7 @@ static bool name_in_log_ref(struct btrfs_root *log_root,
 		return true;
 
 	search_key.type = BTRFS_INODE_EXTREF_KEY;
-	search_key.offset = btrfs_extref_hash(dirid, name, name_len);
+	search_key.offset = (u64) btrfs_crc32c(dirid, name, name_len);
 	if (backref_in_log(log_root, &search_key, dirid, name, name_len))
 		return true;
 
