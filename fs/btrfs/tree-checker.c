@@ -343,7 +343,8 @@ static int check_dir_item(struct extent_buffer *leaf,
 
 			read_extent_buffer(leaf, namebuf,
 					(unsigned long)(di + 1), name_len);
-			name_hash = btrfs_name_hash(namebuf, name_len);
+			name_hash = (u64) btrfs_crc32c((u32)~1, namebuf,
+						       name_len);
 			if (key->offset != name_hash) {
 				dir_item_err(leaf, slot,
 		"name hash mismatch with key, have 0x%016x expect 0x%016llx",

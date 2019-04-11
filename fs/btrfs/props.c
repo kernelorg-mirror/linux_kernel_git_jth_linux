@@ -41,7 +41,7 @@ find_prop_handler(const char *name,
 	struct prop_handler *h;
 
 	if (!handlers) {
-		u64 hash = btrfs_name_hash(name, strlen(name));
+		u64 hash = (u64) btrfs_crc32c((u32)~1, name, strlen(name));
 
 		handlers = find_prop_handlers_by_hash(hash);
 		if (!handlers)
@@ -445,7 +445,8 @@ void __init btrfs_props_init(void)
 
 	for (i = 0; i < ARRAY_SIZE(prop_handlers); i++) {
 		struct prop_handler *p = &prop_handlers[i];
-		u64 h = btrfs_name_hash(p->xattr_name, strlen(p->xattr_name));
+		u64 h = (u64) btrfs_crc32c((u32)~1, p->xattr_name,
+					   strlen(p->xattr_name));
 
 		hash_add(prop_handlers_ht, &p->node, h);
 	}

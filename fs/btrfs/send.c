@@ -3434,7 +3434,8 @@ static int wait_for_dest_dir_move(struct send_ctx *sctx,
 
 	key.objectid = parent_ref->dir;
 	key.type = BTRFS_DIR_ITEM_KEY;
-	key.offset = btrfs_name_hash(parent_ref->name, parent_ref->name_len);
+	key.offset = (u64) btrfs_crc32c((u32)~1, parent_ref->name,
+					parent_ref->name_len);
 
 	ret = btrfs_search_slot(NULL, sctx->parent_root, &key, path, 0, 0);
 	if (ret < 0) {

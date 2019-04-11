@@ -2654,11 +2654,6 @@ static inline void btrfs_crc32c_final(u32 crc, u8 *result)
 	put_unaligned_le32(~crc, result);
 }
 
-static inline u64 btrfs_name_hash(const char *name, int len)
-{
-       return crc32c((u32)~1, name, len);
-}
-
 static inline bool btrfs_mixed_space_info(struct btrfs_space_info *space_info)
 {
 	return ((space_info->flags & BTRFS_BLOCK_GROUP_METADATA) &&
