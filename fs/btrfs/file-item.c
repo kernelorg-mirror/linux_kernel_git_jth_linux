@@ -22,9 +22,9 @@
 #define MAX_CSUM_ITEMS(r, size) (min_t(u32, __MAX_CSUM_ITEMS(r, size), \
 				       PAGE_SIZE))
 
-#define MAX_ORDERED_SUM_BYTES(fs_info) ((PAGE_SIZE - \
+#define MAX_ORDERED_SUM_BYTES(fs_info, csum_size) ((PAGE_SIZE - \
 				   sizeof(struct btrfs_ordered_sum)) / \
-				   sizeof(u32) * (fs_info)->sectorsize)
+				   (csum_size) * (fs_info)->sectorsize)
 
 int btrfs_insert_file_extent(struct btrfs_trans_handle *trans,
 			     struct btrfs_root *root,
@@ -144,7 +144,7 @@ int btrfs_lookup_file_extent(struct btrfs_trans_handle *trans,
 }
 
 static blk_status_t __btrfs_lookup_bio_sums(struct inode *inode, struct bio *bio,
-				   u64 logical_offset, u32 *dst, int dio)
+				   u64 logical_offset, u8 *dst, int dio)
 {
 	struct btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
 	struct bio_vec bvec;
@@ -211,7 +211,7 @@ static blk_status_t __btrfs_lookup_bio_sums(struct inode *inode, struct bio *bio
 		if (!dio)
 			offset = page_offset(bvec.bv_page) + bvec.bv_offset;
 		count = btrfs_find_ordered_sum(inode, offset, disk_bytenr,
-					       (u32 *)csum, nblocks);
+					       csum, nblocks);
 		if (count)
 			goto found;
 
@@ -283,7 +283,8 @@ next:
 	return 0;
 }
 
-blk_status_t btrfs_lookup_bio_sums(struct inode *inode, struct bio *bio, u32 *dst)
+blk_status_t btrfs_lookup_bio_sums(struct inode *inode, struct bio *bio,
+				   u8 *dst)
 {
 	return __btrfs_lookup_bio_sums(inode, bio, 0, dst, 0);
 }
@@ -374,7 +375,7 @@ int btrfs_lookup_csums_range(struct btrfs_root *root, u64 start, u64 end,
 				      struct btrfs_csum_item);
 		while (start < csum_end) {
 			size = min_t(size_t, csum_end - start,
-				     MAX_ORDERED_SUM_BYTES(fs_info));
+				     MAX_ORDERED_SUM_BYTES(fs_info, csum_size));
 			sums = kzalloc(btrfs_ordered_sum_size(fs_info, size),
 				       GFP_NOFS);
 			if (!sums) {
@@ -439,6 +440,7 @@ blk_status_t btrfs_csum_one_bio(struct inode *inode, struct bio *bio,
 	int i;
 	u64 offset;
 	unsigned nofs_flag;
+	u16 csum_size = btrfs_super_csum_size(fs_info->super_copy);
 
 	nofs_flag = memalloc_nofs_save();
 	sums = kvzalloc(btrfs_ordered_sum_size(fs_info, bio->bi_iter.bi_size),
@@ -473,6 +475,7 @@ blk_status_t btrfs_csum_one_bio(struct inode *inode, struct bio *bio,
 						 - 1);
 
 		for (i = 0; i < nr_sectors; i++) {
+			u32 tmp;
 			if (offset >= ordered->file_offset + ordered->len ||
 				offset < ordered->file_offset) {
 				unsigned long bytes_left;
@@ -498,17 +501,16 @@ blk_status_t btrfs_csum_one_bio(struct inode *inode, struct bio *bio,
 				index = 0;
 			}
 
-			sums->sums[index] = ~(u32)0;
+			memset(&sums->sums[index], 0xff, csum_size);
 			data = kmap_atomic(bvec.bv_page);
-			sums->sums[index]
-				= btrfs_csum_data(data + bvec.bv_offset
+			tmp = btrfs_csum_data(data + bvec.bv_offset
 						+ (i * fs_info->sectorsize),
-						sums->sums[index],
+						*(u32 *)&sums->sums[index],
 						fs_info->sectorsize);
 			kunmap_atomic(data);
-			btrfs_csum_final(sums->sums[index],
+			btrfs_csum_final(tmp,
 					(char *)(sums->sums + index));
-			index++;
+			index += csum_size;
 			offset += fs_info->sectorsize;
 			this_sum_bytes += fs_info->sectorsize;
 			total_bytes += fs_info->sectorsize;
@@ -904,9 +906,9 @@ found:
 	write_extent_buffer(leaf, sums->sums + index, (unsigned long)item,
 			    ins_size);
 
+	index += ins_size;
 	ins_size /= csum_size;
 	total_bytes += ins_size * fs_info->sectorsize;
-	index += ins_size;
 
 	btrfs_mark_buffer_dirty(path->nodes[0]);
 	if (total_bytes < sums->len) {
