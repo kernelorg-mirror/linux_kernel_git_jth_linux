@@ -2821,6 +2821,16 @@ int open_ctree(struct super_block *sb,
 		goto fail_alloc;
 	}
 
+	if (!btrfs_supported_super_csum(btrfs_super_csum_type(
+				 (struct btrfs_super_block *) bh->b_data))) {
+		btrfs_err(fs_info, "unsupported checksum algorithm: %u",
+			  btrfs_super_csum_type((struct btrfs_super_block *)
+						bh->b_data));
+		err = -EINVAL;
+		brelse(bh);
+		goto fail_alloc;
+	}
+
 	/*
 	 * We want to check superblock checksum, the type is stored inside.
 	 * Pass the whole disk block of size BTRFS_SUPER_INFO_SIZE (4k).
