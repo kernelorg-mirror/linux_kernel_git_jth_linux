@@ -19,6 +19,7 @@
 #include <linux/crc32c.h>
 #include <linux/sched/mm.h>
 #include <asm/unaligned.h>
+#include <crypto/hash.h>
 #include "ctree.h"
 #include "disk-io.h"
 #include "transaction.h"
@@ -2261,6 +2262,30 @@ static int btrfs_init_workqueues(struct btrfs_fs_info *fs_info,
 	return 0;
 }
 
+static int btrfs_init_csum_hash(struct btrfs_fs_info *fs_info,
+				struct btrfs_super_block *sb)
+{
+	struct crypto_shash *csum_shash;
+	const char *csum_name = btrfs_super_csum_name(sb);
+
+	csum_shash = crypto_alloc_shash(csum_name, 0, 0);
+
+	if (IS_ERR(csum_shash)) {
+		btrfs_err(fs_info, "error allocating %s hash for checksum\n",
+			  csum_name);
+		return PTR_ERR(csum_shash);
+	}
+
+	fs_info->csum_shash = csum_shash;
+
+	return 0;
+}
+
+static void btrfs_free_csum_hash(struct btrfs_fs_info *fs_info)
+{
+	crypto_free_shash(fs_info->csum_shash);
+}
+
 static int btrfs_replay_log(struct btrfs_fs_info *fs_info,
 			    struct btrfs_fs_devices *fs_devices)
 {
@@ -2819,6 +2844,14 @@ int open_ctree(struct super_block *sb,
 		goto fail_alloc;
 	}
 
+
+	ret = btrfs_init_csum_hash(fs_info, (struct btrfs_super_block *)
+							   bh->b_data);
+	if (ret) {
+		err = ret;
+		goto fail_alloc;
+	}
+
 	/*
 	 * We want to check superblock checksum, the type is stored inside.
 	 * Pass the whole disk block of size BTRFS_SUPER_INFO_SIZE (4k).
@@ -2827,7 +2860,7 @@ int open_ctree(struct super_block *sb,
 		btrfs_err(fs_info, "superblock checksum mismatch");
 		err = -EINVAL;
 		brelse(bh);
-		goto fail_alloc;
+		goto fail_csum;
 	}
 
 	/*
@@ -2864,11 +2897,11 @@ int open_ctree(struct super_block *sb,
 	if (ret) {
 		btrfs_err(fs_info, "superblock contains fatal errors");
 		err = -EINVAL;
-		goto fail_alloc;
+		goto fail_csum;
 	}
 
 	if (!btrfs_super_root(disk_super))
-		goto fail_alloc;
+		goto fail_csum;
 
 	/* check FS state, whether FS is broken. */
 	if (btrfs_super_flags(disk_super) & BTRFS_SUPER_FLAG_ERROR)
@@ -2890,7 +2923,7 @@ int open_ctree(struct super_block *sb,
 	ret = btrfs_parse_options(fs_info, options, sb->s_flags);
 	if (ret) {
 		err = ret;
-		goto fail_alloc;
+		goto fail_csum;
 	}
 
 	features = btrfs_super_incompat_flags(disk_super) &
@@ -2900,7 +2933,7 @@ int open_ctree(struct super_block *sb,
 		    "cannot mount because of unsupported optional features (%llx)",
 		    features);
 		err = -EINVAL;
-		goto fail_alloc;
+		goto fail_csum;
 	}
 
 	features = btrfs_super_incompat_flags(disk_super);
@@ -2944,7 +2977,7 @@ int open_ctree(struct super_block *sb,
 		btrfs_err(fs_info,
 "unequal nodesize/sectorsize (%u != %u) are not allowed for mixed block groups",
 			nodesize, sectorsize);
-		goto fail_alloc;
+		goto fail_csum;
 	}
 
 	/*
@@ -2960,7 +2993,7 @@ int open_ctree(struct super_block *sb,
 	"cannot mount read-write because of unsupported optional features (%llx)",
 		       features);
 		err = -EINVAL;
-		goto fail_alloc;
+		goto fail_csum;
 	}
 
 	ret = btrfs_init_workqueues(fs_info, fs_devices);
@@ -3338,6 +3371,8 @@ fail_tree_roots:
 fail_sb_buffer:
 	btrfs_stop_all_workers(fs_info);
 	btrfs_free_block_groups(fs_info);
+fail_csum:
+	btrfs_free_csum_hash(fs_info);
 fail_alloc:
 fail_iput:
 	btrfs_mapping_tree_free(&fs_info->mapping_tree);
