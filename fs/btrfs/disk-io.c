@@ -356,6 +356,16 @@ out:
 	return ret;
 }
 
+static bool btrfs_supported_super_csum(struct btrfs_super_block *sb)
+{
+	switch (btrfs_super_csum_type(sb)) {
+	case BTRFS_CSUM_TYPE_CRC32:
+		return true;
+	default:
+		return false;
+	}
+}
+
 /*
  * Return 0 if the superblock checksum type matches the checksum value of that
  * algorithm. Pass the raw disk superblock data.
@@ -367,6 +377,12 @@ static int btrfs_check_super_csum(struct btrfs_fs_info *fs_info,
 		(struct btrfs_super_block *)raw_disk_sb;
 	u16 csum_type = btrfs_super_csum_type(disk_sb);
 	int ret = 0;
+
+	if (!btrfs_supported_super_csum(disk_sb)) {
+		btrfs_err(fs_info, "unsupported checksum algorithm %u",
+			  csum_type);
+		ret = 1;
+	}
 
 	if (csum_type == BTRFS_CSUM_TYPE_CRC32) {
 		u32 crc = ~(u32)0;
@@ -383,12 +399,6 @@ static int btrfs_check_super_csum(struct btrfs_fs_info *fs_info,
 
 		if (memcmp(raw_disk_sb, result, sizeof(result)))
 			ret = 1;
-	}
-
-	if (csum_type >= ARRAY_SIZE(btrfs_csum_sizes)) {
-		btrfs_err(fs_info, "unsupported checksum algorithm %u",
-				csum_type);
-		ret = 1;
 	}
 
 	return ret;
@@ -2577,7 +2587,7 @@ static int btrfs_validate_write_super(struct btrfs_fs_info *fs_info,
 	ret = validate_super(fs_info, sb, -1);
 	if (ret < 0)
 		goto out;
-	if (btrfs_super_csum_type(sb) != BTRFS_CSUM_TYPE_CRC32) {
+	if (!btrfs_supported_super_csum(sb)) {
 		ret = -EUCLEAN;
 		btrfs_err(fs_info, "invalid csum type, has %u want %u",
 			  btrfs_super_csum_type(sb), BTRFS_CSUM_TYPE_CRC32);
