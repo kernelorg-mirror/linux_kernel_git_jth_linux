@@ -253,12 +253,36 @@ out:
 u32 btrfs_csum_data(struct btrfs_fs_info *fs_info, const char *data,
 		    u32 seed, size_t len)
 {
-	return crc32c(seed, data, len);
+	SHASH_DESC_ON_STACK(shash, fs_info->csum_shash);
+	u32 *ctx = (u32 *)shash_desc_ctx(shash);
+	u32 retval;
+	int err;
+
+	shash->tfm = fs_info->csum_shash;
+	shash->flags = 0;
+	*ctx = seed;
+
+	err = crypto_shash_update(shash, data, len);
+	ASSERT(err);
+
+	retval = *ctx;
+	barrier_data(ctx);
+
+	return retval;
 }
 
 void btrfs_csum_final(struct btrfs_fs_info *fs_info, u32 crc, u8 *result)
 {
-	put_unaligned_le32(~crc, result);
+	SHASH_DESC_ON_STACK(shash, fs_info->csum_shash);
+	u32 *ctx = (u32 *)shash_desc_ctx(shash);
+	int err;
+
+	shash->tfm = fs_info->csum_shash;
+	shash->flags = 0;
+	*ctx = crc;
+
+	err = crypto_shash_final(shash, result);
+	ASSERT(err);
 }
 
 /*
