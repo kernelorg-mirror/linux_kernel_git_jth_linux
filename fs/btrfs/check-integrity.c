@@ -1728,9 +1728,9 @@ static int btrfsic_test_for_metadata(struct btrfsic_state *state,
 		size_t sublen = i ? PAGE_SIZE :
 				    (PAGE_SIZE - BTRFS_CSUM_SIZE);
 
-		crc = btrfs_csum_data(data, crc, sublen);
+		crc = btrfs_csum_data(fs_info, data, crc, sublen);
 	}
-	btrfs_csum_final(crc, csum);
+	btrfs_csum_final(fs_info, crc, csum);
 	if (memcmp(csum, h->csum, state->csum_size))
 		return 1;
 

@@ -74,8 +74,8 @@ static int check_compressed_csum(struct btrfs_inode *inode,
 		csum = ~(u32)0;
 
 		kaddr = kmap_atomic(page);
-		csum = btrfs_csum_data(kaddr, csum, PAGE_SIZE);
-		btrfs_csum_final(csum, (u8 *)&csum);
+		csum = btrfs_csum_data(fs_info, kaddr, csum, PAGE_SIZE);
+		btrfs_csum_final(fs_info, csum, (u8 *)&csum);
 		kunmap_atomic(kaddr);
 
 		if (memcmp(&csum, cb_sum, csum_size)) {

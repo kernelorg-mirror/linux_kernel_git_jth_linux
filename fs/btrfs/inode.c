@@ -3203,6 +3203,7 @@ static int __readpage_endio_check(struct inode *inode,
 				  int icsum, struct page *page,
 				  int pgoff, u64 start, size_t len)
 {
+	struct btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
 	char *kaddr;
 	u32 csum_expected;
 	u32 csum = ~(u32)0;
@@ -3210,8 +3211,8 @@ static int __readpage_endio_check(struct inode *inode,
 	csum_expected = *(((u32 *)io_bio->csum) + icsum);
 
 	kaddr = kmap_atomic(page);
-	csum = btrfs_csum_data(kaddr + pgoff, csum,  len);
-	btrfs_csum_final(csum, (u8 *)&csum);
+	csum = btrfs_csum_data(fs_info, kaddr + pgoff, csum,  len);
+	btrfs_csum_final(fs_info, csum, (u8 *)&csum);
 	if (csum != csum_expected)
 		goto zeroit;
 

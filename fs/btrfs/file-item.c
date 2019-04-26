@@ -503,12 +503,12 @@ blk_status_t btrfs_csum_one_bio(struct inode *inode, struct bio *bio,
 
 			memset(&sums->sums[index], 0xff, csum_size);
 			data = kmap_atomic(bvec.bv_page);
-			tmp = btrfs_csum_data(data + bvec.bv_offset
+			tmp = btrfs_csum_data(fs_info, data + bvec.bv_offset
 						+ (i * fs_info->sectorsize),
 						*(u32 *)&sums->sums[index],
 						fs_info->sectorsize);
 			kunmap_atomic(data);
-			btrfs_csum_final(tmp,
+			btrfs_csum_final(fs_info, tmp,
 					(char *)(sums->sums + index));
 			index += csum_size;
 			offset += fs_info->sectorsize;
