@@ -346,6 +346,9 @@ static inline void btrfs_csum_format(struct btrfs_super_block *sb,
 	case BTRFS_CSUM_TYPE_CRC32:
 		snprintf(cbuf, size, "0x%08x", *(u32 *)csum);
 		break;
+	case BTRFS_CSUM_TYPE_SHA256:
+		memcpy(cbuf, csum, size);
+		break;
 	default: /* can't happen -  csum type is validated at mount time */
 		break;
 	}

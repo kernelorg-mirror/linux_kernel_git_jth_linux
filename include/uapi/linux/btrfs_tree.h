@@ -301,6 +301,7 @@
 
 /* csum types */
 #define BTRFS_CSUM_TYPE_CRC32	0
+#define BTRFS_CSUM_TYPE_SHA256	1
 
 /*
  * flags definitions for directory entry item type
