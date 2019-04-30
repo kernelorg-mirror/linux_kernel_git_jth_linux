@@ -338,13 +338,13 @@ static inline void btrfs_inode_resume_unlocked_dio(struct btrfs_inode *inode)
 }
 
 static inline void btrfs_csum_format(struct btrfs_super_block *sb,
-				     u32 csum, u8 *cbuf)
+				     u8 *csum, u8 *cbuf)
 {
 	size_t size = btrfs_super_csum_size(sb) * 8;
 
 	switch (btrfs_super_csum_type(sb)) {
 	case BTRFS_CSUM_TYPE_CRC32:
-		snprintf(cbuf, size, "0x%08x", csum);
+		snprintf(cbuf, size, "0x%08x", *(u32 *)csum);
 		break;
 	default: /* can't happen -  csum type is validated at mount time */
 		break;
@@ -352,7 +352,7 @@ static inline void btrfs_csum_format(struct btrfs_super_block *sb,
 }
 
 static inline void btrfs_print_data_csum_error(struct btrfs_inode *inode,
-		u64 logical_start, u32 csum, u32 csum_expected, int mirror_num)
+		u64 logical_start, u8 *csum, u8 *csum_expected, int mirror_num)
 {
 	struct btrfs_root *root = inode->root;
 	struct btrfs_super_block *sb = root->fs_info->super_copy;
