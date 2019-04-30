@@ -250,36 +250,35 @@ out:
 	return em;
 }
 
-u32 btrfs_csum_data(struct btrfs_fs_info *fs_info, const char *data,
-		    u32 seed, size_t len)
+void btrfs_csum_data(struct btrfs_fs_info *fs_info, const char *data,
+		    u8 *seed, size_t len)
 {
 	SHASH_DESC_ON_STACK(shash, fs_info->csum_shash);
-	u32 *ctx = (u32 *)shash_desc_ctx(shash);
-	u32 retval;
+	u8 *ctx = shash_desc_ctx(shash);
+	u16 csum_size = btrfs_super_csum_size(fs_info->super_copy);
 	int err;
 
 	shash->tfm = fs_info->csum_shash;
 	shash->flags = 0;
-	*ctx = seed;
+	memcpy(ctx, seed, csum_size);
 
 	err = crypto_shash_update(shash, data, len);
 	ASSERT(err);
 
-	retval = *ctx;
 	barrier_data(ctx);
-
-	return retval;
+	memcpy(seed, ctx, csum_size);
 }
 
-void btrfs_csum_final(struct btrfs_fs_info *fs_info, u32 crc, u8 *result)
+void btrfs_csum_final(struct btrfs_fs_info *fs_info, u8 *seed, u8 *result)
 {
 	SHASH_DESC_ON_STACK(shash, fs_info->csum_shash);
-	u32 *ctx = (u32 *)shash_desc_ctx(shash);
+	u8 *ctx = shash_desc_ctx(shash);
+	u16 csum_size = btrfs_super_csum_size(fs_info->super_copy);
 	int err;
 
 	shash->tfm = fs_info->csum_shash;
 	shash->flags = 0;
-	*ctx = crc;
+	memcpy(ctx, seed, csum_size);
 
 	err = crypto_shash_final(shash, result);
 	ASSERT(err);
@@ -292,6 +291,7 @@ void btrfs_csum_final(struct btrfs_fs_info *fs_info, u32 crc, u8 *result)
  */
 static int csum_tree_block(struct extent_buffer *buf, u8 *result)
 {
+	struct btrfs_fs_info *fs_info = buf->fs_info;
 	unsigned long len;
 	unsigned long cur_len;
 	unsigned long offset = BTRFS_CSUM_SIZE;
@@ -299,9 +299,12 @@ static int csum_tree_block(struct extent_buffer *buf, u8 *result)
 	unsigned long map_start;
 	unsigned long map_len;
 	int err;
-	u32 crc = ~(u32)0;
+	u8 csum[BTRFS_CSUM_SIZE];
 
 	len = buf->len - offset;
+
+	memset(csum, 0xff, btrfs_super_csum_size(fs_info->super_copy));
+
 	while (len > 0) {
 		/*
 		 * Note: we don't need to check for the err == 1 case here, as
@@ -314,14 +317,14 @@ static int csum_tree_block(struct extent_buffer *buf, u8 *result)
 		if (WARN_ON(err))
 			return err;
 		cur_len = min(len, map_len - (offset - map_start));
-		crc = btrfs_csum_data(buf->fs_info, kaddr + offset - map_start,
-				      crc, cur_len);
+		btrfs_csum_data(fs_info, kaddr + offset - map_start, csum,
+				cur_len);
 		len -= cur_len;
 		offset += cur_len;
 	}
 	memset(result, 0, BTRFS_CSUM_SIZE);
 
-	btrfs_csum_final(buf->fs_info, crc, result);
+	btrfs_csum_final(fs_info, csum, result);
 
 	return 0;
 }
@@ -401,19 +404,22 @@ static int btrfs_check_super_csum(struct btrfs_fs_info *fs_info,
 {
 	struct btrfs_super_block *disk_sb =
 		(struct btrfs_super_block *)raw_disk_sb;
-	u32 crc = ~(u32)0;
+	u8 csum[BTRFS_CSUM_SIZE];
 	char result[BTRFS_CSUM_SIZE];
+	u16 csum_size = btrfs_super_csum_size(disk_sb);
+
+	memset(csum, 0xff, csum_size);
 
 	/*
 	 * The super_block structure does not span the whole
 	 * BTRFS_SUPER_INFO_SIZE range, we expect that the unused space
 	 * is filled with zeros and is included in the checksum.
 	 */
-	crc = btrfs_csum_data(fs_info, raw_disk_sb + BTRFS_CSUM_SIZE,
-			      crc, BTRFS_SUPER_INFO_SIZE - BTRFS_CSUM_SIZE);
-	btrfs_csum_final(fs_info, crc, result);
+	btrfs_csum_data(fs_info, raw_disk_sb + BTRFS_CSUM_SIZE, csum,
+			BTRFS_SUPER_INFO_SIZE - BTRFS_CSUM_SIZE);
+	btrfs_csum_final(fs_info, csum, result);
 
-	if (memcmp(raw_disk_sb, result, btrfs_super_csum_size(disk_sb)))
+	if (memcmp(raw_disk_sb, result, csum_size))
 		return 1;
 
 	return 0;
@@ -3539,11 +3545,12 @@ struct buffer_head *btrfs_read_dev_super(struct block_device *bdev)
 static int write_dev_supers(struct btrfs_device *device,
 			    struct btrfs_super_block *sb, int max_mirrors)
 {
+	struct btrfs_fs_info *fs_info = device->fs_info;
 	struct buffer_head *bh;
 	int i;
 	int ret;
 	int errors = 0;
-	u32 crc;
+	u8 csum[BTRFS_CSUM_SIZE];
 	u64 bytenr;
 	int op_flags;
 
@@ -3558,11 +3565,10 @@ static int write_dev_supers(struct btrfs_device *device,
 
 		btrfs_set_super_bytenr(sb, bytenr);
 
-		crc = ~(u32)0;
-		crc = btrfs_csum_data(device->fs_info,
-				      (const char *)sb + BTRFS_CSUM_SIZE, crc,
-				      BTRFS_SUPER_INFO_SIZE - BTRFS_CSUM_SIZE);
-		btrfs_csum_final(device->fs_info, crc, sb->csum);
+		memset(csum, 0xff, btrfs_super_csum_size(fs_info->super_copy));
+		btrfs_csum_data(fs_info, (const char *)sb + BTRFS_CSUM_SIZE,
+				csum, BTRFS_SUPER_INFO_SIZE - BTRFS_CSUM_SIZE);
+		btrfs_csum_final(fs_info, csum, sb->csum);
 
 		/* One reference for us, and we leave it for the caller */
 		bh = __getblk(device->bdev, bytenr / BTRFS_BDEV_BLOCKSIZE,

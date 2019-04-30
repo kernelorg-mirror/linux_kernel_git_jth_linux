@@ -63,7 +63,7 @@ static int check_compressed_csum(struct btrfs_inode *inode,
 	struct page *page;
 	unsigned long i;
 	char *kaddr;
-	u32 csum;
+	u8 csum[BTRFS_CSUM_SIZE];
 	u8 *cb_sum = cb->sums;
 
 	if (inode->flags & BTRFS_INODE_NODATASUM)
@@ -71,16 +71,17 @@ static int check_compressed_csum(struct btrfs_inode *inode,
 
 	for (i = 0; i < cb->nr_pages; i++) {
 		page = cb->compressed_pages[i];
-		csum = ~(u32)0;
+		memset(csum, 0xff, csum_size);
 
 		kaddr = kmap_atomic(page);
-		csum = btrfs_csum_data(fs_info, kaddr, csum, PAGE_SIZE);
-		btrfs_csum_final(fs_info, csum, (u8 *)&csum);
+		btrfs_csum_data(fs_info, kaddr, csum, PAGE_SIZE);
+		btrfs_csum_final(fs_info, csum, csum);
 		kunmap_atomic(kaddr);
 
 		if (memcmp(&csum, cb_sum, csum_size)) {
-			btrfs_print_data_csum_error(inode, disk_start, csum,
-					*(u32 *)cb_sum, cb->mirror_num);
+			btrfs_print_data_csum_error(inode, disk_start,
+						    *(u32 *)csum, *(u32 *)cb_sum,
+						    cb->mirror_num);
 			ret = -EIO;
 			goto fail;
 		}

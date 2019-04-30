@@ -1791,7 +1791,6 @@ static int scrub_checksum_data(struct scrub_block *sblock)
 	u8 *on_disk_csum;
 	struct page *page;
 	void *buffer;
-	u32 crc = ~(u32)0;
 	u64 len;
 	int index;
 
@@ -1803,12 +1802,13 @@ static int scrub_checksum_data(struct scrub_block *sblock)
 	page = sblock->pagev[0]->page;
 	buffer = kmap_atomic(page);
 
+	memset(csum, 0xff, btrfs_super_csum_size(sctx->fs_info->super_copy));
 	len = sctx->fs_info->sectorsize;
 	index = 0;
 	for (;;) {
 		u64 l = min_t(u64, len, PAGE_SIZE);
 
-		crc = btrfs_csum_data(sctx->fs_info, buffer, crc, l);
+		btrfs_csum_data(sctx->fs_info, buffer, csum, l);
 		kunmap_atomic(buffer);
 		len -= l;
 		if (len == 0)
@@ -1820,7 +1820,7 @@ static int scrub_checksum_data(struct scrub_block *sblock)
 		buffer = kmap_atomic(page);
 	}
 
-	btrfs_csum_final(sctx->fs_info, crc, csum);
+	btrfs_csum_final(sctx->fs_info, csum, csum);
 	if (memcmp(csum, on_disk_csum, sctx->csum_size))
 		sblock->checksum_error = 1;
 
@@ -1838,7 +1838,7 @@ static int scrub_checksum_tree_block(struct scrub_block *sblock)
 	void *mapped_buffer;
 	u64 mapped_size;
 	void *p;
-	u32 crc = ~(u32)0;
+	u8 csum[BTRFS_CSUM_SIZE];
 	u64 len;
 	int index;
 
@@ -1872,10 +1872,11 @@ static int scrub_checksum_tree_block(struct scrub_block *sblock)
 	mapped_size = PAGE_SIZE - BTRFS_CSUM_SIZE;
 	p = ((u8 *)mapped_buffer) + BTRFS_CSUM_SIZE;
 	index = 0;
+	memset(csum, 0xff, btrfs_super_csum_size(fs_info->super_copy));
 	for (;;) {
 		u64 l = min_t(u64, len, mapped_size);
 
-		crc = btrfs_csum_data(fs_info, p, crc, l);
+		btrfs_csum_data(fs_info, p, csum, l);
 		kunmap_atomic(mapped_buffer);
 		len -= l;
 		if (len == 0)
@@ -1889,7 +1890,7 @@ static int scrub_checksum_tree_block(struct scrub_block *sblock)
 		p = mapped_buffer;
 	}
 
-	btrfs_csum_final(fs_info, crc, calculated_csum);
+	btrfs_csum_final(fs_info, csum, calculated_csum);
 	if (memcmp(calculated_csum, on_disk_csum, sctx->csum_size))
 		sblock->checksum_error = 1;
 
@@ -1906,7 +1907,7 @@ static int scrub_checksum_super(struct scrub_block *sblock)
 	void *mapped_buffer;
 	u64 mapped_size;
 	void *p;
-	u32 crc = ~(u32)0;
+	u8 csum[BTRFS_CSUM_SIZE];
 	int fail_gen = 0;
 	int fail_cor = 0;
 	u64 len;
@@ -1931,10 +1932,11 @@ static int scrub_checksum_super(struct scrub_block *sblock)
 	mapped_size = PAGE_SIZE - BTRFS_CSUM_SIZE;
 	p = ((u8 *)mapped_buffer) + BTRFS_CSUM_SIZE;
 	index = 0;
+	memset(csum, 0xff, btrfs_super_csum_size(s));
 	for (;;) {
 		u64 l = min_t(u64, len, mapped_size);
 
-		crc = btrfs_csum_data(sctx->fs_info, p, crc, l);
+		btrfs_csum_data(sctx->fs_info, p, csum, l);
 		kunmap_atomic(mapped_buffer);
 		len -= l;
 		if (len == 0)
@@ -1948,7 +1950,7 @@ static int scrub_checksum_super(struct scrub_block *sblock)
 		p = mapped_buffer;
 	}
 
-	btrfs_csum_final(sctx->fs_info, crc, calculated_csum);
+	btrfs_csum_final(sctx->fs_info, csum, calculated_csum);
 	if (memcmp(calculated_csum, on_disk_csum, sctx->csum_size))
 		++fail_cor;
 

@@ -1712,7 +1712,6 @@ static int btrfsic_test_for_metadata(struct btrfsic_state *state,
 	struct btrfs_fs_info *fs_info = state->fs_info;
 	struct btrfs_header *h;
 	u8 csum[BTRFS_CSUM_SIZE];
-	u32 crc = ~(u32)0;
 	unsigned int i;
 
 	if (num_pages * PAGE_SIZE < state->metablock_size)
@@ -1723,14 +1722,15 @@ static int btrfsic_test_for_metadata(struct btrfsic_state *state,
 	if (memcmp(h->fsid, fs_info->fs_devices->fsid, BTRFS_FSID_SIZE))
 		return 1;
 
+	memset(csum, 0xff, btrfs_super_csum_size(fs_info->super_copy));
 	for (i = 0; i < num_pages; i++) {
 		u8 *data = i ? datav[i] : (datav[i] + BTRFS_CSUM_SIZE);
 		size_t sublen = i ? PAGE_SIZE :
 				    (PAGE_SIZE - BTRFS_CSUM_SIZE);
 
-		crc = btrfs_csum_data(fs_info, data, crc, sublen);
+		btrfs_csum_data(fs_info, data, csum, sublen);
 	}
-	btrfs_csum_final(fs_info, crc, csum);
+	btrfs_csum_final(fs_info, csum, csum);
 	if (memcmp(csum, h->csum, state->csum_size))
 		return 1;
 

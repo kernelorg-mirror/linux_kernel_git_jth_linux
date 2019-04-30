@@ -475,7 +475,6 @@ blk_status_t btrfs_csum_one_bio(struct inode *inode, struct bio *bio,
 						 - 1);
 
 		for (i = 0; i < nr_sectors; i++) {
-			u32 tmp;
 			if (offset >= ordered->file_offset + ordered->len ||
 				offset < ordered->file_offset) {
 				unsigned long bytes_left;
@@ -503,13 +502,13 @@ blk_status_t btrfs_csum_one_bio(struct inode *inode, struct bio *bio,
 
 			memset(&sums->sums[index], 0xff, csum_size);
 			data = kmap_atomic(bvec.bv_page);
-			tmp = btrfs_csum_data(fs_info, data + bvec.bv_offset
-						+ (i * fs_info->sectorsize),
-						*(u32 *)&sums->sums[index],
-						fs_info->sectorsize);
+			btrfs_csum_data(fs_info, data + bvec.bv_offset
+					+ (i * fs_info->sectorsize),
+					&sums->sums[index],
+					fs_info->sectorsize);
 			kunmap_atomic(data);
-			btrfs_csum_final(fs_info, tmp,
-					(char *)(sums->sums + index));
+			btrfs_csum_final(fs_info, &sums->sums[index],
+					 &sums->sums[index]);
 			index += csum_size;
 			offset += fs_info->sectorsize;
 			this_sum_bytes += fs_info->sectorsize;
