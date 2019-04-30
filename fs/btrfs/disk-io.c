@@ -357,6 +357,7 @@ static bool btrfs_supported_super_csum(struct btrfs_super_block *sb)
 {
 	switch (btrfs_super_csum_type(sb)) {
 	case BTRFS_CSUM_TYPE_CRC32:
+	case BTRFS_CSUM_TYPE_SHA256:
 		return true;
 	default:
 		return false;

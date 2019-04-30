@@ -3,6 +3,7 @@
 config BTRFS_FS
 	tristate "Btrfs filesystem support"
 	select CRYPTO_CRC32C
+	select CRYPTO_SHA256
 	select ZLIB_INFLATE
 	select ZLIB_DEFLATE
 	select LZO_COMPRESS
