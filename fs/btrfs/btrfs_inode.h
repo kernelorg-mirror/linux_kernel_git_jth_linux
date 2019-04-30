@@ -341,7 +341,7 @@ static inline void btrfs_inode_resume_unlocked_dio(struct btrfs_inode *inode)
 #define CSUM_FORMAT_VALUE(size, bytes)  size, bytes
 
 static inline void btrfs_print_data_csum_error(struct btrfs_inode *inode,
-		u64 logical_start, u32 csum, u32 csum_expected, int mirror_num)
+		u64 logical_start, u8 *csum, u8 *csum_expected, int mirror_num)
 {
 	struct btrfs_root *root = inode->root;
 	struct btrfs_super_block *sb = root->fs_info->super_copy;
@@ -352,15 +352,15 @@ static inline void btrfs_print_data_csum_error(struct btrfs_inode *inode,
 		btrfs_warn_rl(root->fs_info,
 	"csum failed root %lld ino %lld off %llu csum " CSUM_FORMAT " expected csum " CSUM_FORMAT " mirror %d",
 			root->root_key.objectid, btrfs_ino(inode),
-			logical_start, CSUM_FORMAT_VALUE(csum_size, &csum),
-			CSUM_FORMAT_VALUE(csum_size, &csum_expected),
+			logical_start, CSUM_FORMAT_VALUE(csum_size, csum),
+			CSUM_FORMAT_VALUE(csum_size, csum_expected),
 			mirror_num);
 	else
 		btrfs_warn_rl(root->fs_info,
 	"csum failed root %llu ino %llu off %llu csum " CSUM_FORMAT " expected csum " CSUM_FORMAT " mirror %d",
 			root->root_key.objectid, btrfs_ino(inode),
-			logical_start, CSUM_FORMAT_VALUE(csum_size, &csum),
-			CSUM_FORMAT_VALUE(csum_size, &csum_expected),
+			logical_start, CSUM_FORMAT_VALUE(csum_size, csum),
+			CSUM_FORMAT_VALUE(csum_size, csum_expected),
 			mirror_num);
 }
 
