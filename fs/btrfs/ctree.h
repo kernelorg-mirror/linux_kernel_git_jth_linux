@@ -90,6 +90,7 @@ static const struct btrfs_csums {
 	const char	*name;
 } btrfs_csums[] = {
 	BTRFS_CHECKSUM_TYPE(BTRFS_CSUM_TYPE_CRC32, 4, "crc32c"),
+	BTRFS_CHECKSUM_TYPE(BTRFS_CSUM_TYPE_XXHASH, 8, "xxhash64"),
 };
 
 #define BTRFS_EMPTY_DIR_SIZE 0
