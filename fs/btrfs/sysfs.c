@@ -246,6 +246,24 @@ static umode_t btrfs_feature_visible(struct kobject *kobj,
 	return mode;
 }
 
+static ssize_t btrfs_supported_checksums_show(struct kobject *kobj,
+					      struct kobj_attribute *a,
+					      char *buf)
+{
+	ssize_t ret = 0;
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(btrfs_csums); i++) {
+		ret += snprintf(buf + ret, PAGE_SIZE, "%s%s",
+				(i == 0 ? "" : ", "),
+				btrfs_csums[i].name);
+
+	}
+
+	ret += snprintf(buf + ret, PAGE_SIZE, "\n");
+	return ret;
+}
+
 BTRFS_FEAT_ATTR_INCOMPAT(mixed_backref, MIXED_BACKREF);
 BTRFS_FEAT_ATTR_INCOMPAT(default_subvol, DEFAULT_SUBVOL);
 BTRFS_FEAT_ATTR_INCOMPAT(mixed_groups, MIXED_GROUPS);
@@ -258,6 +276,14 @@ BTRFS_FEAT_ATTR_INCOMPAT(skinny_metadata, SKINNY_METADATA);
 BTRFS_FEAT_ATTR_INCOMPAT(no_holes, NO_HOLES);
 BTRFS_FEAT_ATTR_INCOMPAT(metadata_uuid, METADATA_UUID);
 BTRFS_FEAT_ATTR_COMPAT_RO(free_space_tree, FREE_SPACE_TREE);
+
+static struct btrfs_feature_attr btrfs_attr_features_checksums_name = {
+	.kobj_attr = __INIT_KOBJ_ATTR(supported_checksums, S_IRUGO,
+				      btrfs_supported_checksums_show,
+				      NULL),
+	.feature_set	= FEAT_INCOMPAT,
+	.feature_bit	= 0,
+};
 
 static struct attribute *btrfs_supported_feature_attrs[] = {
 	BTRFS_FEAT_ATTR_PTR(mixed_backref),
@@ -272,6 +298,9 @@ static struct attribute *btrfs_supported_feature_attrs[] = {
 	BTRFS_FEAT_ATTR_PTR(no_holes),
 	BTRFS_FEAT_ATTR_PTR(metadata_uuid),
 	BTRFS_FEAT_ATTR_PTR(free_space_tree),
+
+	&btrfs_attr_features_checksums_name.kobj_attr.attr,
+
 	NULL
 };
 
