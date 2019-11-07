@@ -1061,11 +1061,16 @@ static void btrfs_close_bdev(struct btrfs_device *device)
 	blkdev_put(device->bdev, device->mode);
 }
 
-static void btrfs_close_one_device(struct btrfs_device *device)
+static int btrfs_close_one_device(struct btrfs_device *device)
 {
 	struct btrfs_fs_devices *fs_devices = device->fs_devices;
 	struct btrfs_device *new_device;
 	struct rcu_string *name;
+
+	new_device = btrfs_alloc_device(NULL, &device->devid,
+					device->uuid);
+	if (IS_ERR(new_device))
+		goto err_close_device;
 
 	if (test_bit(BTRFS_DEV_STATE_WRITEABLE, &device->dev_state) &&
 	    device->devid != BTRFS_DEV_REPLACE_DEVID) {
@@ -1080,10 +1085,6 @@ static void btrfs_close_one_device(struct btrfs_device *device)
 	if (device->bdev)
 		fs_devices->open_devices--;
 
-	new_device = btrfs_alloc_device(NULL, &device->devid,
-					device->uuid);
-	BUG_ON(IS_ERR(new_device)); /* -ENOMEM */
-
 	/* Safe because we are under uuid_mutex */
 	if (device->name) {
 		name = rcu_string_strdup(device->name->str, GFP_NOFS);
@@ -1096,18 +1097,32 @@ static void btrfs_close_one_device(struct btrfs_device *device)
 
 	synchronize_rcu();
 	btrfs_free_device(device);
+
+	return 0;
+
+err_close_device:
+	btrfs_close_bdev(device);
+	if (device->bdev) {
+		fs_devices->open_devices--;
+		btrfs_sysfs_rm_device_link(fs_devices, device);
+		device->bdev = NULL;
+	}
+
+	return -ENOMEM;
 }
 
 static int close_fs_devices(struct btrfs_fs_devices *fs_devices)
 {
 	struct btrfs_device *device, *tmp;
+	int ret;
 
 	if (--fs_devices->opened > 0)
 		return 0;
 
 	mutex_lock(&fs_devices->device_list_mutex);
 	list_for_each_entry_safe(device, tmp, &fs_devices->devices, dev_list) {
-		btrfs_close_one_device(device);
+		ret = btrfs_close_one_device(device);
+		BUG_ON(ret); /* -ENOMEM */
 	}
 	mutex_unlock(&fs_devices->device_list_mutex);
 
