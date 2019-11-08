@@ -1128,7 +1128,12 @@ static int close_fs_devices(struct btrfs_fs_devices *fs_devices)
 	mutex_lock(&fs_devices->device_list_mutex);
 	list_for_each_entry_safe(device, tmp, &fs_devices->devices, dev_list) {
 		ret = btrfs_close_one_device(device);
-		BUG_ON(ret); /* -ENOMEM */
+		if (ret) {
+			mutex_unlock(&fs_devices->device_list_mutex);
+			return ret;
+		}
+		fs_devices->opened--;
+		fs_devices->seeding--;
 	}
 	mutex_unlock(&fs_devices->device_list_mutex);
 
