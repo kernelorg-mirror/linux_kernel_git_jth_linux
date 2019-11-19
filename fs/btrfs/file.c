@@ -2599,7 +2599,7 @@ int btrfs_punch_hole_range(struct inode *inode, struct btrfs_path *path,
 			}
 		}
 
-		if (clone_info) {
+		if (clone_info && cur_offset >= clone_info->file_offset) {
 			u64 clone_len = drop_end - cur_offset;
 
 			ret = btrfs_insert_clone_extent(trans, inode, path,
