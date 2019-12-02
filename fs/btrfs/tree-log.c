@@ -2712,20 +2712,18 @@ static noinline int walk_down_log_tree(struct btrfs_trans_handle *trans,
 					free_extent_buffer(next);
 					return ret;
 				}
-
-				if (trans) {
-					btrfs_tree_lock(next);
-					btrfs_set_lock_blocking_write(next);
-					btrfs_clean_tree_block(next);
-					btrfs_wait_tree_block_writeback(next);
-					btrfs_tree_unlock(next);
-				} else {
+				if (!trans) {
 					if (test_and_clear_bit(EXTENT_BUFFER_DIRTY, &next->bflags))
 						clear_extent_buffer_dirty(next);
+					return ret;
 				}
 
-				WARN_ON(root_owner !=
-					BTRFS_TREE_LOG_OBJECTID);
+				btrfs_tree_lock(next);
+				btrfs_set_lock_blocking_write(next);
+				btrfs_clean_tree_block(next);
+				btrfs_wait_tree_block_writeback(next);
+				btrfs_tree_unlock(next);
+				WARN_ON(root_owner != BTRFS_TREE_LOG_OBJECTID);
 				ret = btrfs_pin_reserved_extent(fs_info,
 							bytenr, blocksize);
 				if (ret) {
@@ -2791,17 +2789,17 @@ static noinline int walk_up_log_tree(struct btrfs_trans_handle *trans,
 				struct extent_buffer *next;
 
 				next = path->nodes[*level];
-
-				if (trans) {
-					btrfs_tree_lock(next);
-					btrfs_set_lock_blocking_write(next);
-					btrfs_clean_tree_block(next);
-					btrfs_wait_tree_block_writeback(next);
-					btrfs_tree_unlock(next);
-				} else {
+				if (!trans) {
 					if (test_and_clear_bit(EXTENT_BUFFER_DIRTY, &next->bflags))
 						clear_extent_buffer_dirty(next);
+					return ret;
 				}
+
+				btrfs_tree_lock(next);
+				btrfs_set_lock_blocking_write(next);
+				btrfs_clean_tree_block(next);
+				btrfs_wait_tree_block_writeback(next);
+				btrfs_tree_unlock(next);
 
 				WARN_ON(root_owner != BTRFS_TREE_LOG_OBJECTID);
 				ret = btrfs_pin_reserved_extent(fs_info,
@@ -2873,16 +2871,17 @@ static int walk_log_tree(struct btrfs_trans_handle *trans,
 
 			next = path->nodes[orig_level];
 
-			if (trans) {
-				btrfs_tree_lock(next);
-				btrfs_set_lock_blocking_write(next);
-				btrfs_clean_tree_block(next);
-				btrfs_wait_tree_block_writeback(next);
-				btrfs_tree_unlock(next);
-			} else {
+			if (!trans) {
 				if (test_and_clear_bit(EXTENT_BUFFER_DIRTY, &next->bflags))
 					clear_extent_buffer_dirty(next);
+				goto out;
 			}
+
+			btrfs_tree_lock(next);
+			btrfs_set_lock_blocking_write(next);
+			btrfs_clean_tree_block(next);
+			btrfs_wait_tree_block_writeback(next);
+			btrfs_tree_unlock(next);
 
 			ret = btrfs_pin_reserved_extent(fs_info, next->start,
 							next->len);
