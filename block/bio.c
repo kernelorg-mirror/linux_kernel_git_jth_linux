@@ -679,6 +679,54 @@ struct bio *bio_clone_fast(struct bio *bio, gfp_t gfp_mask, struct bio_set *bs)
 }
 EXPORT_SYMBOL(bio_clone_fast);
 
+static bool bio_try_merge_zone_append_page(struct bio *bio, struct page *page,
+					   unsigned int len, unsigned int off,
+					   bool *same_page)
+{
+	struct request_queue *q = bio->bi_disk->queue;
+	struct bio_vec *bv;
+	unsigned long mask = queue_segment_boundary(q);
+	phys_addr_t addr1, addr2;
+
+	if (bio->bi_vcnt < 1)
+		return false;
+
+	bv = &bio->bi_io_vec[bio->bi_vcnt - 1];
+
+	addr1 = page_to_phys(bv->bv_page) + bv->bv_offset;
+	addr2 = page_to_phys(page) + off + len - 1;
+
+	if ((addr1 | mask) != (addr2 | mask))
+		return false;
+	if (bv->bv_len + len > queue_max_segment_size(q))
+		return false;
+	return __bio_try_merge_page(bio, page, len, off, same_page);
+}
+
+static int bio_add_append_page(struct bio *bio, struct page *page, unsigned len,
+			       size_t offset)
+{
+	struct request_queue *q = bio->bi_disk->queue;
+	unsigned int max_append_sectors = queue_max_zone_append_sectors(q);
+	bool same_page = false;
+
+	if (WARN_ON_ONCE(!max_append_sectors))
+		return 0;
+
+	if (((bio->bi_iter.bi_size + len) >> 9) > max_append_sectors)
+		return 0;
+
+	if (bio_try_merge_zone_append_page(bio, page, len, offset, &same_page))
+		return len;
+
+	if (bio->bi_vcnt >= queue_max_segments(q))
+		return 0;
+
+	__bio_add_page(bio, page, len, offset);
+
+	return len;
+}
+
 static inline bool page_is_mergeable(const struct bio_vec *bv,
 		struct page *page, unsigned int len, unsigned int off,
 		bool *same_page)
@@ -944,8 +992,22 @@ static int __bio_iov_iter_get_pages(struct bio *bio, struct iov_iter *iter)
 		struct page *page = pages[i];
 
 		len = min_t(size_t, PAGE_SIZE - offset, left);
+		if (bio_op(bio) == REQ_OP_ZONE_APPEND) {
+			int ret;
 
-		if (__bio_try_merge_page(bio, page, len, offset, &same_page)) {
+			if (bio_try_merge_zone_append_page(bio, page, len,
+							   offset,
+							   &same_page)) {
+				if (same_page)
+					put_page(page);
+			} else {
+				ret = bio_add_append_page(bio, page, len,
+							  offset);
+				if (ret != len)
+					return -EINVAL;
+			}
+		} else if (__bio_try_merge_page(bio, page, len, offset,
+						&same_page)) {
 			if (same_page)
 				put_page(page);
 		} else {
@@ -1894,6 +1956,10 @@ struct bio *bio_split(struct bio *bio, int sectors,
 
 	BUG_ON(sectors <= 0);
 	BUG_ON(sectors >= bio_sectors(bio));
+
+	/* Zone append commands cannot be split */
+	if (WARN_ON_ONCE(bio_op(bio) == REQ_OP_ZONE_APPEND))
+		return NULL;
 
 	split = bio_clone_fast(bio, gfp, bs);
 	if (!split)
