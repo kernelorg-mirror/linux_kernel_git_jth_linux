@@ -353,6 +353,8 @@ struct queue_limits {
 typedef int (*report_zones_cb)(struct blk_zone *zone, unsigned int idx,
 			       void *data);
 
+typedef void (*revalidate_zones_cb)(struct gendisk *disk, void *data);
+
 #ifdef CONFIG_BLK_DEV_ZONED
 
 #define BLK_ALL_ZONES  ((unsigned int)-1)
@@ -362,7 +364,13 @@ unsigned int blkdev_nr_zones(struct gendisk *disk);
 extern int blkdev_zone_mgmt(struct block_device *bdev, enum req_opf op,
 			    sector_t sectors, sector_t nr_sectors,
 			    gfp_t gfp_mask);
-extern int blk_revalidate_disk_zones(struct gendisk *disk);
+int __blk_revalidate_disk_zones(struct gendisk *disk,
+				revalidate_zones_cb revalidate_cb,
+				void *revalidate_data);
+static inline int blk_revalidate_disk_zones(struct gendisk *disk)
+{
+	return __blk_revalidate_disk_zones(disk, NULL, NULL);
+}
 
 extern int blkdev_report_zones_ioctl(struct block_device *bdev, fmode_t mode,
 				     unsigned int cmd, unsigned long arg);

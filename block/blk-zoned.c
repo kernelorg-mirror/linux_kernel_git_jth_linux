@@ -437,20 +437,27 @@ static int blk_revalidate_zone_cb(struct blk_zone *zone, unsigned int idx,
 }
 
 /**
- * blk_revalidate_disk_zones - (re)allocate and initialize zone bitmaps
- * @disk:	Target disk
+ * __blk_revalidate_disk_zones - (re)allocate and initialize zone bitmaps
+ * @disk:		Target disk
+ * @revalidate_cb:	LLD callback
+ * @revalidate_data:	LLD callback argument
  *
  * Helper function for low-level device drivers to (re) allocate and initialize
  * a disk request queue zone bitmaps. This functions should normally be called
  * within the disk ->revalidate method for blk-mq based drivers.  For BIO based
  * drivers only q->nr_zones needs to be updated so that the sysfs exposed value
  * is correct.
+ * If the @revalidate_cb callback function is not NULL, the callback will be
+ * executed with the device request queue frozen after all zones have been
+ * checked.
  */
-int blk_revalidate_disk_zones(struct gendisk *disk)
+int __blk_revalidate_disk_zones(struct gendisk *disk,
+				revalidate_zones_cb revalidate_cb,
+				void *revalidate_data)
 {
 	struct request_queue *q = disk->queue;
 	struct blk_revalidate_zone_args args = {
-		.disk		= disk,
+		.disk			= disk,
 	};
 	unsigned int noio_flag;
 	int ret;
@@ -480,6 +487,8 @@ int blk_revalidate_disk_zones(struct gendisk *disk)
 		q->nr_zones = args.nr_zones;
 		swap(q->seq_zones_wlock, args.seq_zones_wlock);
 		swap(q->conv_zones_bitmap, args.conv_zones_bitmap);
+		if (revalidate_cb)
+			revalidate_cb(disk, revalidate_data);
 		ret = 0;
 	} else {
 		pr_warn("%s: failed to revalidate zones\n", disk->disk_name);
@@ -491,4 +500,4 @@ int blk_revalidate_disk_zones(struct gendisk *disk)
 	kfree(args.conv_zones_bitmap);
 	return ret;
 }
-EXPORT_SYMBOL_GPL(blk_revalidate_disk_zones);
+EXPORT_SYMBOL_GPL(__blk_revalidate_disk_zones);
