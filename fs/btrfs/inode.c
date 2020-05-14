@@ -10056,6 +10056,15 @@ static int btrfs_swap_activate(struct swap_info_struct *sis, struct file *file,
 	u64 start;
 
 	/*
+	 * Swapfiles and authenticated filesystems are mutually exclusie, as
+	 * swap file are written in-place and do not get checksum updates.
+	 */
+	if (btrfs_test_opt(fs_info, AUTH_KEY)) {
+		btrfs_warn(fs_info, "swapfiles are not supported on an authenticated file-system");
+		return -EINVAL;
+	}
+
+	/*
 	 * If the swap file was just created, make sure delalloc is done. If the
 	 * file changes again after this, the user is doing something stupid and
 	 * we don't really care.

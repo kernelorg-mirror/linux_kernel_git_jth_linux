@@ -634,7 +634,7 @@ struct btrfs_fs_info {
 	 * is required instead of the faster short fsync log commits
 	 */
 	u64 last_trans_log_full_commit;
-	unsigned long mount_opt;
+	unsigned long long mount_opt;
 	/*
 	 * Track requests for actions that need to be done during transaction
 	 * commit (like for some mount options).
@@ -944,6 +944,7 @@ struct btrfs_fs_info {
 	struct rb_root swapfile_pins;
 
 	struct crypto_shash *csum_shash;
+	char *auth_key_name;
 
 	/*
 	 * Number of send operations in progress.
@@ -1360,6 +1361,7 @@ static inline u32 BTRFS_MAX_XATTR_SIZE(const struct btrfs_fs_info *info)
 #define BTRFS_MOUNT_DISCARD_ASYNC	(1 << 29)
 #define BTRFS_MOUNT_IGNOREBADROOTS	(1 << 30)
 #define BTRFS_MOUNT_IGNOREDATACSUMS	(1 << 31)
+#define BTRFS_MOUNT_AUTH_KEY		(1ULL << 32)
 
 #define BTRFS_DEFAULT_COMMIT_INTERVAL	(30)
 #define BTRFS_DEFAULT_MAX_INLINE	(2048)
@@ -2362,11 +2364,16 @@ BTRFS_SETGET_STACK_FUNCS(super_magic, struct btrfs_super_block, magic, 64);
 BTRFS_SETGET_STACK_FUNCS(super_uuid_tree_generation, struct btrfs_super_block,
 			 uuid_tree_generation, 64);
 
+enum {
+	BTRFS_CSUM_TYPE_PLAIN	= 0,
+	BTRFS_CSUM_TYPE_AUTH	= 1,
+};
+
 int btrfs_super_csum_size(const struct btrfs_super_block *s);
 const char *btrfs_super_csum_name(u16 csum_type);
 const char *btrfs_super_csum_driver(u16 csum_type);
 size_t __attribute_const__ btrfs_get_num_csums(void);
-
+int btrfs_auth_csum_name_valid(const char *name);
 
 /*
  * The leaf data grows from end-to-front in the node.
